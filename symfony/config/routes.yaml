@@ -1,0 +1,11 @@
+game:
+    resource:
+        path: ../src/Game/
+        namespace: App\Game
+    type: attribute
+
+entry:
+    resource:
+        path: ../src/Entry/
+        namespace: App\Entry
+    type: attribute

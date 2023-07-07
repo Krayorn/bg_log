@@ -1,0 +1,37 @@
+version: '3'
+
+volumes:
+  db:
+
+services:
+  symfony:
+    build:
+      context: ./symfony
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "9000:9000"
+    environment:
+      APP_ENV: dev
+
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    environment:
+      HOSTNAME_INTERNAL_PHP: symfony:9000
+      HOSTNAME_PUBLIC_BACKEND: localhost:9000
+      HOSTNAME_INTERNAL_NGINX: nginx
+
+  postgres:
+    image: postgres:14.1-alpine
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - 'db:/var/lib/postgresql/data'
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bg_log
