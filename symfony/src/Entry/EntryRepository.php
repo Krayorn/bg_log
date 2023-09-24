@@ -15,4 +15,17 @@ class EntryRepository extends ServiceEntityRepository
         parent::__construct($registry, Entry::class);
     }
 
+    public function query(?string $gameId)
+    {
+        $qb = $this->createQueryBuilder('e');
+
+        if ($gameId !== null) {
+            $qb->andWhere('e.game = :gameId')
+            ->setParameter('gameId', $gameId);;
+        }
+
+        $qb->orderBy('e.playedAt', 'DESC');
+
+        return $qb->getQuery()->getResult();
+    }
 }

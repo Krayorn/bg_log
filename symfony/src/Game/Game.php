@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Player\Player;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -15,11 +16,21 @@ class Game
     public UuidInterface $id;
 
     public function __construct(
-        #[ORM\Column(type:"string", unque: true)]
+        #[ORM\ManyToOne(targetEntity:Player::class)]
+        #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: false)]
+        private readonly Player $player,
+        #[ORM\Column(type:"string", unique: true)]
         private readonly string $name,
+        #[ORM\Column(type:"integer", nullable: true)]
+        private readonly ?int $price = null,
     )
     {
         $this->id = Uuid::uuid4();
+    }
+
+    public function getId(): UuidInterface
+    {
+        return $this->id;
     }
 
     public function view(): array
@@ -27,6 +38,16 @@ class Game
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'price' => $this->price,
         ];
+    }
+
+    public function getPricePerGame(int $count): ?int
+    {
+        if ($this->price === null || $count < 1) {
+            return null;
+        }
+
+        return $this->price/$count;
     }
 }

@@ -19,11 +19,15 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class EntryController extends AbstractController
 {
-
     #[Route('/entries', name: 'list_entries', methods: 'GET')]
-    public function list(EntryRepository $entryRepository): Response
+    public function list(
+        Request $request,
+        EntryRepository $entryRepository,
+    ): Response
     {
-        $entries = $entryRepository->findAll();
+        $gameId = $request->query->getAlnum('gameId');
+
+        $entries = $entryRepository->query($gameId === '' ? null : $gameId);
 
         return new JsonResponse(array_map(fn($entry) => $entry->view(), $entries), Response::HTTP_OK);
     }
@@ -46,7 +50,7 @@ class EntryController extends AbstractController
         $game = $gameRepository->findOneBy(['name' => $gameName]);
 
         if ($game === null) {
-            throw new BadRequestException();
+            return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
         }
 
         $players = [];
@@ -59,7 +63,7 @@ class EntryController extends AbstractController
             $player = $playerRepository->findOneBy(['name' => $playerName]);
 
             if ($player === null) {
-                $player = new Player($playerName);
+                $player = new Player($playerName, $playerRepository->findNextNumber());
                 $entityManager->persist($player);
             }
 
@@ -104,7 +108,7 @@ class EntryController extends AbstractController
                 $player = $playerRepository->findOneBy(['name' => $playerName]);
 
                 if ($player === null) {
-                    $player = new Player($playerName);
+                    $player = new Player($playerName, $playerRepository->findNextNumber());
                     $entityManager->persist($player);
                 }
 

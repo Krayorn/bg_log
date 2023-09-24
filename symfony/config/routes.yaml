@@ -9,3 +9,9 @@ entry:
         path: ../src/Entry/
         namespace: App\Entry
     type: attribute
+
+player:
+    resource:
+        path: ../src/Player/
+        namespace: App\Player
+    type: attribute
