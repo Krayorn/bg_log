@@ -55,7 +55,7 @@ class EntryController extends AbstractController
 
         $players = [];
 
-        foreach ($playersData as $playerData) {
+        foreach ($playersData as $key => $playerData) {
             $playerName = $playerData['name'] ?? '';
             $playerNote = $playerData['note'] ?? '';
             $playerWon = $playerData['won'] ?? null;
@@ -63,7 +63,7 @@ class EntryController extends AbstractController
             $player = $playerRepository->findOneBy(['name' => $playerName]);
 
             if ($player === null) {
-                $player = new Player($playerName, $playerRepository->findNextNumber());
+                $player = new Player($playerName, $playerRepository->findNextNumber() + $key);
                 $entityManager->persist($player);
             }
 

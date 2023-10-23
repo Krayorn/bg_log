@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-
-const playerId = '0daad0d7-7f3c-443e-83b0-3363187f4f3c'
+import { useParams, Link } from "react-router-dom"
 
 
 function Home() {
-  return (
+    let { playerId } = useParams() as { playerId: string }
+    console.log('playerId', playerId)
+    return (
     <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)]  h-full min-h-screen p-6'> 
         <header className="border-b-2 border-white pb-2 flex justify-between">
             <div className="flex" >
@@ -30,16 +31,16 @@ function Home() {
 
         <main className="flex flex-wrap mt-12">
             <Box title="Personal details">
-                <PlayerBox/>
+                <PlayerBox playerId={playerId} />
             </Box>
             <Box title="User General Statistics">
-                <GeneralStatistics/>
+                <GeneralStatistics playerId={playerId}/>
             </Box>
             <Box title="Games Statistics">
-                <GameStatistics/>
+                <GameStatistics playerId={playerId}/>
             </Box>
             <Box title="Players statistics">
-                <PlayerStatistics/>
+                <PlayerStatistics playerId={playerId}/>
             </Box>
         </main>
 
@@ -70,7 +71,7 @@ interface Player {
     }|null
 }
 
-function PlayerBox() {
+function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
     
         useEffect(() => {
@@ -90,7 +91,7 @@ function PlayerBox() {
             return () => {
                 ignore = true;
             }
-        }, [])
+        }, [playerId])
     
     return (
         <>
@@ -134,7 +135,7 @@ interface GeneralStatistics {
     lastGameDate: Date
 }
 
-function GeneralStatistics() {
+function GeneralStatistics({ playerId }: {playerId: string}) {
     const [generalStats, setGeneralStats] = useState<GeneralStatistics|null>(null)
     
         useEffect(() => {
@@ -154,7 +155,7 @@ function GeneralStatistics() {
             return () => {
                 ignore = true;
             }
-        }, [])
+        }, [playerId])
     
 
     const dateNow = new Date()
@@ -189,7 +190,7 @@ interface GameStats {
     player_id: string
 }
 
-function GameStatistics() {
+function GameStatistics({ playerId }: {playerId: string}) {
     const [gameStats, setGameStats] = useState<GameStats[]>([])
     
         useEffect(() => {
@@ -209,7 +210,7 @@ function GameStatistics() {
             return () => {
                 ignore = true;
             }
-        }, [])
+        }, [playerId])
     
 
     return (
@@ -223,17 +224,17 @@ function GameStatistics() {
                             {
                                 gameStats.sort((a, b) => b.count - a.count).slice(0, 5).map(game => {
                                     return (
-                                        <span className="truncate" >{game.count} - {game.name}</span>
+                                        <span key={game.id} className="truncate" >{game.count} - {game.name}</span>
                                     )
                                 })
                             }
                         </div>
                         <div className="flex flex-col w-1/2" >
-                            <h3>Least played Games (in your library):</h3>
+                            <h3>Least played Games (in library):</h3>
                             {
                                 gameStats.sort((a, b) => a.count - b.count).filter(a => a.player_id == playerId).slice(0, 5).map(game => {
                                     return (
-                                        <span className="truncate" >{game.count} - {game.name}</span>
+                                        <span key={game.id} className="truncate" >{game.count} - {game.name}</span>
                                     )
                                 })
                             }
@@ -246,13 +247,14 @@ function GameStatistics() {
 }
 
 interface PlayerStats {
+    id: string
     count: number
     name: string
     losses: number
     wins: number
 }
 
-function PlayerStatistics() {
+function PlayerStatistics({ playerId }: {playerId: string}) {
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([])
     
         useEffect(() => {
@@ -272,7 +274,7 @@ function PlayerStatistics() {
             return () => {
                 ignore = true;
             }
-        }, [])
+        }, [playerId])
     
         let wins = []
         let losses = []
@@ -289,13 +291,22 @@ function PlayerStatistics() {
                 : ( <>
                         <div className="flex flex-col w-1/2" >
                             <h3>Played most with:</h3>
+                            <div className="overflow-scroll h-32" >
                             {
-                                playerStats.sort((a, b) => b.count - a.count).slice(0, 5).map(player => {
+                                playerStats.sort((a, b) => b.count - a.count).map(player => {
                                     return (
-                                        <span className="truncate" >{player.count} - {player.name}</span>
+                                        <div key={player.id} className="flex justify-between mr-8" >
+                                            <span className="truncate" >{player.count} - {player.name}</span>
+                                            <Link to={`/players/${player.id}`} >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                                </svg>
+                                            </Link>
+                                        </div>
                                     )
                                 })
                             }
+                            </div>
                         </div>
                         <div className="flex flex-col w-1/2" >
                             <span>Most victories against: {wins.filter(player => player.wins === wins[0].wins).map(p => p.name).join(', ')} ({wins[0].wins})</span>

@@ -60,6 +60,7 @@ class PlayerRepository extends ServiceEntityRepository
 
         $sql = '
             SELECT 
+            p.id,
             p.name, 
             count(p), 
             SUM(CASE WHEN opr.won = true and pr.won = false THEN 1 ELSE 0 END) losses, 
@@ -68,7 +69,7 @@ class PlayerRepository extends ServiceEntityRepository
             JOIN player_result opr on opr.entry_id = pr.entry_id
             JOIN player p on opr.player_id = p.id
             WHERE pr.player_id = :playerId and opr.player_id != :playerId
-            group by p.name  
+            group by p.id, p.name  
             ;';
 
         $conn->prepare($sql);

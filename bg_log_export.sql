@@ -1,0 +1,366 @@
+-- -------------------------------------------------------------
+-- TablePlus 5.5.2(512)
+--
+-- https://tableplus.com/
+--
+-- Database: bg_log
+-- Generation Time: 2023-10-23 16:41:23.1990
+-- -------------------------------------------------------------
+
+
+-- This script only contains the table creation statements and does not fully represent the table in the database. It's still missing: indices, triggers. Do not use it as a backup.
+
+-- Table Definition
+CREATE TABLE "public"."entry" (
+    "id" uuid NOT NULL,
+    "game_id" uuid,
+    "note" varchar(255) NOT NULL,
+    "played_at" timestamptz(0) NOT NULL,
+    PRIMARY KEY ("id")
+);
+
+-- Column Comment
+COMMENT ON COLUMN "public"."entry"."id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."entry"."game_id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."entry"."played_at" IS '(DC2Type:datetimetz_immutable)';
+
+-- This script only contains the table creation statements and does not fully represent the table in the database. It's still missing: indices, triggers. Do not use it as a backup.
+
+-- Table Definition
+CREATE TABLE "public"."game" (
+    "id" uuid NOT NULL,
+    "name" varchar(255) NOT NULL,
+    "price" int4,
+    "player_id" uuid NOT NULL,
+    PRIMARY KEY ("id")
+);
+
+-- Column Comment
+COMMENT ON COLUMN "public"."game"."id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."game"."player_id" IS '(DC2Type:uuid)';
+
+-- This script only contains the table creation statements and does not fully represent the table in the database. It's still missing: indices, triggers. Do not use it as a backup.
+
+-- Table Definition
+CREATE TABLE "public"."player" (
+    "id" uuid NOT NULL,
+    "name" varchar(255) NOT NULL,
+    "number" int4 NOT NULL,
+    "registered_on" timestamptz(0) DEFAULT NULL::timestamp with time zone,
+    "password" varchar(255) DEFAULT NULL::character varying,
+    PRIMARY KEY ("id")
+);
+
+-- Column Comment
+COMMENT ON COLUMN "public"."player"."id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."player"."registered_on" IS '(DC2Type:datetimetz_immutable)';
+
+-- This script only contains the table creation statements and does not fully represent the table in the database. It's still missing: indices, triggers. Do not use it as a backup.
+
+-- Table Definition
+CREATE TABLE "public"."player_result" (
+    "id" uuid NOT NULL,
+    "entry_id" uuid,
+    "player_id" uuid,
+    "note" varchar(255) NOT NULL,
+    "won" bool,
+    PRIMARY KEY ("id")
+);
+
+-- Column Comment
+COMMENT ON COLUMN "public"."player_result"."id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."player_result"."entry_id" IS '(DC2Type:uuid)';
+COMMENT ON COLUMN "public"."player_result"."player_id" IS '(DC2Type:uuid)';
+
+INSERT INTO "public"."entry" ("id", "game_id", "note", "played_at") VALUES
+('02f91dbd-cb5f-4166-9a59-9f824c601730', 'dc9ecefb-f7f9-4330-bd49-bd851ce35bd7', '', '2023-04-26 18:30:00+00'),
+('046e8686-ac22-4461-b9cc-4784d9861408', '84090699-0303-4778-9658-9388dbebd765', 'Base game + extension', '2023-06-04 15:00:00+00'),
+('06b3a271-39d9-4630-ab4e-894245dc2854', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Gathering;difficulty: hard', '2022-12-31 22:00:00+00'),
+('07d1d940-bfa0-4df4-ab03-4a002f7e1fc0', '2bebbe92-c82f-487e-a7dc-c16f53eecb45', 'extensions: Monster Trail Extension: Monster Weakness;time:8 turns', '2023-07-15 12:30:00+00'),
+('08a10825-4429-464f-a3fd-42e2c465fb57', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario:The Midnight Masks;difficulty: standard', '2023-09-09 11:30:00+00'),
+('0e3a2f3d-aff5-469b-b205-06cabe114b94', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'First level VS Barroth', '2023-05-04 17:00:00+00'),
+('1ee85411-f9c6-454c-81f6-126f29eb9a01', '416c7067-3b4f-45a4-809e-f3cb37e360e7', 'mission:Changement de priorité;extra: teaching rules', '2023-08-21 20:00:00+00'),
+('1f64366d-17d7-41c8-bd54-5e0a53d43f6d', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 4', '2023-05-30 20:30:00+00'),
+('2295a263-7d2d-4fc3-85ca-60253b522968', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 2', '2023-05-01 19:15:00+00'),
+('2b259ec3-747c-4cf8-8e29-3cb1452e32da', '61eb5a67-1733-46fc-a8ce-b513e8161bf3', 'Scenario: My Dear Friend', '2023-07-22 11:00:00+00'),
+('2c4f277e-e76a-421d-a472-0786f4928110', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'First level VS Jagras; Learning rules', '2023-04-30 16:00:00+00'),
+('3158ff34-9513-4c6d-a8b9-443efce0ba50', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:35:00+00'),
+('323c1bc2-391b-4947-ae42-0b28fe142eb0', 'cacd5eca-8fea-488c-b769-5c51b8e01b11', 'King of the Hill & Loki extension', '2023-06-04 15:14:00+00'),
+('33114446-208c-45f1-9a53-85bd45c77269', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 5', '2023-06-07 21:45:00+00'),
+('361de417-81d5-467a-8365-59e196237586', '2bebbe92-c82f-487e-a7dc-c16f53eecb45', 'Learning rules, base game', '2023-07-02 16:00:00+00'),
+('3b78dd6f-c34b-4065-8367-9a89813036e6', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario:The Midnight Masks;difficulty: standard', '2023-09-08 11:30:00+00'),
+('3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', 'dc9ecefb-f7f9-4330-bd49-bd851ce35bd7', '', '2023-07-09 14:00:00+00'),
+('41731e92-0247-4bfe-a463-159b92e69125', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Campaign 1: Day 1 Assigned Quest Barroth. Time Loss', '2023-06-13 17:00:00+00'),
+('4216cab8-12a4-4450-9735-ac29ca9f81f3', 'f227876f-9d54-473b-868a-0511003288d1', 'extensions: Monster Trail Extension: Monster Weakness;time:8 turns', '2023-07-16 15:00:00+00'),
+('4371be37-a3a1-4e6a-8a1c-eb1b2739f9cb', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 3', '2023-05-15 20:00:00+00'),
+('4653e620-c609-450e-b3d1-ec13649f9d80', '3e0de5e5-4445-4439-bd17-83bcdee04996', 'Learning rules', '2023-06-04 11:00:00+00'),
+('46911716-ae94-4546-9734-25d991ef2298', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:50:00+00'),
+('4707ff6f-23dd-480a-8bf2-43c80005248c', 'dc9ecefb-f7f9-4330-bd49-bd851ce35bd7', '', '2023-07-12 17:00:00+00'),
+('4a04eca6-94d4-4142-ac5d-2b1f33f826c5', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Gathering;difficulty: hard', '2023-07-05 17:00:00+00'),
+('4d3714bf-bbbc-49ba-b990-d6c96b8caa00', '2aae633d-340a-4bd0-93a3-3ca7ce275d16', 'learning rules', '2023-09-22 16:30:00+00'),
+('4fc309a3-855d-4574-9baa-0690fd3f298f', 'f227876f-9d54-473b-868a-0511003288d1', '', '2023-06-22 13:00:00+00'),
+('5f6454f3-1855-4a20-af81-f1fa0e238e13', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:30:00+00'),
+('63b7f842-06d4-4457-bf97-93a78ccd4a42', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:40:00+00'),
+('85d0f8db-fd0b-4396-9568-5399b1615261', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 8', '2023-07-11 21:00:00+00'),
+('8710a2e7-9eab-4628-9a35-973adf849591', 'c7b7295d-9657-43f0-8370-adcbd3c7e879', 'map 1; score: 41 points', '2023-06-24 13:00:00+00'),
+('8e03cc54-9fcf-46ea-83d6-bcdb615d2713', '416c7067-3b4f-45a4-809e-f3cb37e360e7', 'mission:Changement de priorité;extra: first time, learning rules, playing 2v2', '2023-08-11 15:20:00+00'),
+('8e84469e-5ba4-4a46-824d-be23d52a1640', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:45:00+00'),
+('90bf7dab-92bd-4688-8e0d-b384c08395dd', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Arena Quest vs Assigned Quest Nergigante', '2023-07-22 13:00:00+00'),
+('95553390-77d0-4f08-8c47-9a2fe2685a84', '005e1e4a-18b1-4e09-876f-d70f1eddf043', '', '2023-10-22 14:30:00+00'),
+('98cb9678-18e0-46c6-8231-925f70eec61b', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot + extension;scenario: Murder at the Excelsior Hotel;difficulty: standard', '2023-09-06 11:30:00+00'),
+('99732fd4-66ea-4d6c-b149-ff2d966131e8', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Campaign 1: Day 1 retry Assigned Quest Barroth', '2023-06-13 20:00:00+00'),
+('9b619f48-fff7-42cc-8fb3-6af6308cc94c', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Devourer Below;difficulty: standard', '2022-12-31 22:00:00+00'),
+('9e0d3602-930b-4e69-a867-d471518a933f', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 7', '2023-06-16 21:00:00+00'),
+('9eed45a7-5a47-455c-9a1d-103004baf986', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Gathering;difficulty: standard', '2022-12-31 22:00:00+00'),
+('a076e88b-c934-40df-b344-f2f6e3f3fca6', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 6', '2023-06-07 21:45:00+00'),
+('a24b6f63-ea9a-471b-aeaa-047fc2913672', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 1', '2023-04-26 19:15:00+00'),
+('abe051c3-ba69-441c-8dbd-e98988595905', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:25:00+00'),
+('b19e6311-b8b1-4d59-99a1-f7e619e4999c', '6720b744-957c-4427-ae53-928f2998efd2', 'new_campaign:fear:5;influence:6;quest:hunting_quest;last_character: Octren Glimscry', '2023-10-20 14:30:00+00'),
+('b445e86e-00b6-47e3-80fa-549e0b1efa40', '2efec7ea-abc8-403f-b777-085c404364fa', 'Vignette 5', '2023-06-05 21:55:00+00'),
+('b7ede580-2765-4278-a50e-270dd5d4d855', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Gathering;difficulty: hard', '2023-07-19 16:30:00+00'),
+('bec48b44-f8d2-4ba3-9031-a5e08848c966', '2bebbe92-c82f-487e-a7dc-c16f53eecb45', 'extensions: Ciri,Monster Trail Extension: Monster Weakness and special attacks,Witcher Unique Action Cards', '2023-07-14 14:00:00+00'),
+('bfc2a578-20fb-47ab-9161-04b71b4d8987', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Midnight Masks;difficulty: standard', '2022-12-31 22:00:00+00'),
+('c3b4a833-53d4-4a6a-9062-40b2eb73ded5', '84090699-0303-4778-9658-9388dbebd765', 'Extension only', '2023-04-26 19:15:00+00'),
+('c507d72d-31fa-4434-9c5a-dde358fcaf7d', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario:The Devourer Below;difficulty: standard', '2023-09-10 11:30:00+00'),
+('c95097fb-f920-4a97-aa1f-805b9af188b3', 'f227876f-9d54-473b-868a-0511003288d1', 'Learning rules', '2023-06-19 13:00:00+00'),
+('d588d553-ae5d-4f74-ae22-0e61a0c4efd1', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Arena Quest vs Tobi-Kadashi', '2023-05-24 17:00:00+00'),
+('d77e581f-688e-4277-b572-644657bcfe2f', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Gathering;difficulty: standard', '2023-09-05 11:30:00+00'),
+('daaf9915-ac56-4adf-8a7f-897f2c23d968', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'First level VS Jagras', '2023-05-12 17:45:00+00'),
+('dc4bafaa-b9e8-4a49-a9be-f00bd86125c1', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Devourer Below;difficulty: hard', '2022-12-31 22:00:00+00'),
+('e0f10098-83c1-4a0a-9ffc-185cdd5cd272', '2bebbe92-c82f-487e-a7dc-c16f53eecb45', 'extensions:Wild Hunt;boss:Nithral;life_left:37', '2023-08-05 13:00:00+00'),
+('e0f2b29a-4b44-41ac-9175-816af40749d4', 'c7b7295d-9657-43f0-8370-adcbd3c7e879', 'map 1; score: 27 points', '2023-06-20 13:00:00+00'),
+('e334dfd4-ea5f-4623-8365-5a4bf85c4b74', '4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Arena Quest vs Jyuratodus Assigned Quest. time_left:1 turn', '2023-09-30 11:30:00+00'),
+('e6daa5fb-38e6-487a-8e9d-9b7d462f6245', '2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', '', '2023-07-12 16:55:00+00'),
+('ee2e7b0a-246c-41e8-aac2-af66ec12d0cc', '3d671618-75c7-480b-acb8-a26a046cf01d', 'campaign: Night of the Zealot;scenario: The Midnight Masks;difficulty: hard', '2022-12-31 22:00:00+00'),
+('fa2f5e3d-058e-4ca9-91ce-a82cb4b23689', '93a02267-2342-4da2-ab80-efe6768c731b', 'mission:1. suicide mission;', '2023-08-21 16:50:00+00');
+
+INSERT INTO "public"."game" ("id", "name", "price", "player_id") VALUES
+('005e1e4a-18b1-4e09-876f-d70f1eddf043', 'Cryptide', 2565, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('2aae633d-340a-4bd0-93a3-3ca7ce275d16', 'OrcQuest Warpath', 25820, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('2bebbe92-c82f-487e-a7dc-c16f53eecb45', 'The Witcher Old World', 36300, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('2e55bf5d-2eaf-4a02-be2c-0eb3bc936abf', 'Infected', 3000, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('2efec7ea-abc8-403f-b777-085c404364fa', 'Veilwraith', 13001, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('3d671618-75c7-480b-acb8-a26a046cf01d', 'Arkham Horror: The Card Game', 7215, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('3e0de5e5-4445-4439-bd17-83bcdee04996', 'Dead men tell no tales', NULL, '0daad0d7-7f3c-443e-83b0-3363187f4f3c'),
+('416c7067-3b4f-45a4-809e-f3cb37e360e7', 'Star Wars Shatterpoint', 17540, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('4ffdfa3d-91c4-44ec-b2b6-2977fb1fc2d7', 'Monster Hunter World', 29528, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('61eb5a67-1733-46fc-a8ce-b513e8161bf3', 'Catan', 5390, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('6720b744-957c-4427-ae53-928f2998efd2', 'Cursed City', 15500, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('84090699-0303-4778-9658-9388dbebd765', 'Oriflamme', 3000, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('93a02267-2342-4da2-ab80-efe6768c731b', 'Space Hulk', 11500, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('c7b7295d-9657-43f0-8370-adcbd3c7e879', 'Complices', NULL, '4d9239f2-040d-451a-8c66-6174bf67b5d5'),
+('cacd5eca-8fea-488c-b769-5c51b8e01b11', 'Valhalla', 11644, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('cc823ce4-b85d-4541-9455-4936d454c23a', 'In Too Deep', NULL, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('dc9ecefb-f7f9-4330-bd49-bd851ce35bd7', 'Bristol', 2480, '12af27d8-1d20-464c-95da-5918355feb7a'),
+('f227876f-9d54-473b-868a-0511003288d1', 'Schotten Totten 2', 1250, '12af27d8-1d20-464c-95da-5918355feb7a');
+
+INSERT INTO "public"."player" ("id", "name", "number", "registered_on", "password") VALUES
+('0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'Louis', 7, NULL, NULL),
+('113ae614-613d-4f54-91d2-48d9f71be378', 'Amandine', 6, NULL, NULL),
+('12af27d8-1d20-464c-95da-5918355feb7a', 'Nathael', 1, '2023-08-30 21:58:06+00', '$2y$13$5CxNKNviYHfFMs6umHe1H.Iv2f9ED5a6zC5wsVzIyUQvf68gIhhXW'),
+('4d9239f2-040d-451a-8c66-6174bf67b5d5', 'Anne-Sophie', 2, NULL, NULL),
+('60b1f720-60c5-464a-80ae-e1fcb49416d5', 'Eloi', 12, NULL, NULL),
+('6baec961-0803-4d4d-b679-0c15a7090e57', 'Axel', 13, NULL, NULL),
+('8205d826-7183-4294-9d25-00ea468cbcf6', 'Arnaud', 15, NULL, NULL),
+('83cc7506-d43e-48b5-8213-e6714134c589', 'Emmanuel', 4, NULL, NULL),
+('95767a77-6ab0-4b35-b782-77feb155ece5', 'Ludovic', 5, NULL, NULL),
+('a6ce5289-33d8-4b93-afcb-461fd3990d49', 'Camille', 8, NULL, NULL),
+('b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'Vincent', 3, NULL, NULL),
+('ba9640c6-a49e-4e3d-8b2b-2c3c1483453f', 'Nikolas', 14, NULL, NULL),
+('bd29b852-ed99-4720-a5b3-8ac7a0f5e37a', 'Beatrice', 21, NULL, NULL),
+('bf82f50d-e8a6-407f-aa22-0b431db5474a', 'Anne-sophie', 18, NULL, NULL),
+('c2876299-8223-434f-92b4-dc26b2558804', 'Justin', 9, NULL, NULL),
+('c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'Margot', 11, NULL, NULL),
+('e295ea66-d607-48bd-906b-bdb2f113856b', 'Franck', 20, NULL, NULL),
+('f2a155f1-96d5-44ae-9e3a-19318de8fb3f', 'Faustine', 16, NULL, NULL),
+('f6f06dc0-96c9-4f31-acf4-544cad0b011e', 'Damien', 17, NULL, NULL),
+('f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'William', 10, NULL, NULL);
+
+INSERT INTO "public"."player_result" ("id", "entry_id", "player_id", "note", "won") VALUES
+('011aa2bf-4ef4-4fa8-9170-190ea08f6723', '4d3714bf-bbbc-49ba-b990-d6c96b8caa00', '12af27d8-1d20-464c-95da-5918355feb7a', 'hero: Thalla', NULL),
+('026df23b-2de9-4a4a-b8bb-08c6dd6f4d23', '361de417-81d5-467a-8365-59e196237586', '12af27d8-1d20-464c-95da-5918355feb7a', 'character: Snake School Witcher;time: 9 turns;trophies: harpy,penitent,glustyworp,combat_lvl_5', 't'),
+('039c907e-c810-4aef-8d6e-8412b0631891', 'e334dfd4-ea5f-4623-8365-5a4bf85c4b74', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'weapon: Insect Glaive; deaths_count: 0', 't'),
+('03dce009-4c83-47cf-8f56-db55d7ce1481', '98cb9678-18e0-46c6-8231-925f70eec61b', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Stella Clark', 'f'),
+('040cc25d-3fa5-4327-a234-84ad15b29da2', 'dc4bafaa-b9e8-4a49-a9be-f00bd86125c1', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 'f'),
+('05be0668-c56f-4162-975b-24c8b6b9a012', '02f91dbd-cb5f-4166-9a59-9f824c601730', '113ae614-613d-4f54-91d2-48d9f71be378', '', 't'),
+('05d6518f-a3df-49c4-8854-79113897e14c', 'c3b4a833-53d4-4a6a-9062-40b2eb73ded5', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'score: 7', 'f'),
+('05faa340-a9a9-47e3-b898-c412efd300f7', '046e8686-ac22-4461-b9cc-4784d9861408', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'score: 12', 'f'),
+('087eda4c-e6a7-4536-a9e9-d7ca9bcb588c', '33114446-208c-45f1-9a53-85bd45c77269', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 16, upgrade: -1 Memory of Honour / +1 Memory of Sorrow', 't'),
+('08f972a1-c8a4-4edd-bedc-76e406cdccb7', 'bfc2a578-20fb-47ab-9161-04b71b4d8987', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Roland Banks:', 't'),
+('0bb1d7ea-527d-4297-be99-8add9c0ed667', '0e3a2f3d-aff5-469b-b205-06cabe114b94', 'c2876299-8223-434f-92b4-dc26b2558804', 'weapon: Charge Blade; deaths_count: 1', 't'),
+('0be04c94-e4ee-47a9-ba57-7a0d707c1832', '90bf7dab-92bd-4688-8e0d-b384c08395dd', '113ae614-613d-4f54-91d2-48d9f71be378', 'weapon: Hammer; deaths_count: 0', 'f'),
+('0c28b868-1cd5-4a18-9f71-af39fac76868', 'd588d553-ae5d-4f74-ae22-0e61a0c4efd1', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'weapon: Hammer; deaths_count: 0', 't'),
+('0cc45b29-d541-49dd-b0a1-320105c5a9fd', 'abe051c3-ba69-441c-8dbd-e98988595905', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:peasant', 't'),
+('0ea1cc67-44e2-4d4b-9c46-000adb9f12ed', 'c507d72d-31fa-4434-9c5a-dde358fcaf7d', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 't'),
+('1162a986-0489-47a2-9b96-327936e92dd0', '4d3714bf-bbbc-49ba-b990-d6c96b8caa00', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'hero: Abgral', NULL),
+('11c56c42-affa-486c-a4be-4062dc967267', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', '4d9239f2-040d-451a-8c66-6174bf67b5d5', '', 'f'),
+('1208d38d-cc95-4a48-9f82-3e4b35687600', '90bf7dab-92bd-4688-8e0d-b384c08395dd', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Hunting Horn; deaths_count: 0', 'f'),
+('140ca9d1-c0a9-443e-a67d-9007984991af', '99732fd4-66ea-4d6c-b149-ff2d966131e8', '6baec961-0803-4d4d-b679-0c15a7090e57', 'weapon: Long Sword(Bone); deaths_count: 0;got: 1 Monster Bone Medium, 1 Barroth Shell, 1 Barroth Ridge, 1 Barroth Claw, 1 Barroth Carapace, 1 Fertile Mud, 1 Monster Bone Small', 't'),
+('17c3b0c1-8258-4e94-9be1-d7590d3dae2b', '323c1bc2-391b-4947-ae42-0b28fe142eb0', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'score: 16', 'f'),
+('17ef6e08-5f5b-49d0-98c9-f6847c4cf521', '41731e92-0247-4bfe-a463-159b92e69125', '6baec961-0803-4d4d-b679-0c15a7090e57', 'weapon: Long Sword; deaths_count: 0;got: 1 Carbalite Ore, 1 Malachite Ore, 1 Fucium Ore, 1 Quality Bone, 1 Monster Bone Small, 1 Monster Bone Medium', 'f'),
+('180ddbca-390c-4ce2-aff9-cf2f5f7203f9', 'e334dfd4-ea5f-4623-8365-5a4bf85c4b74', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'weapon: Switch Axe; deaths_count: 1', 't'),
+('198d494a-a143-4e6b-9fd0-404446494044', 'd588d553-ae5d-4f74-ae22-0e61a0c4efd1', '60b1f720-60c5-464a-80ae-e1fcb49416d5', 'weapon: Hunting Horn; deaths_count: 0', 't'),
+('1a92d437-bb51-4888-9699-f03bf394ef3b', 'e334dfd4-ea5f-4623-8365-5a4bf85c4b74', 'bf82f50d-e8a6-407f-aa22-0b431db5474a', 'weapon: Hunting Horn; deaths_count: 0', 't'),
+('1ad27d74-30fa-4b3e-94b7-aa345580cc2b', '0e3a2f3d-aff5-469b-b205-06cabe114b94', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'weapon: Insect Glaive; deaths_count: 0', 't'),
+('1cb20861-ba27-4893-9495-2a159452a432', 'e0f10098-83c1-4a0a-9ffc-185cdd5cd272', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'character: Bear School Witcher;trophies:Water hag;', 'f'),
+('1d75c8c2-9ffa-4c39-8915-ad2f428cd3f4', '5f6454f3-1855-4a20-af81-f1fa0e238e13', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:peasant', 't'),
+('1e018b0b-bcfb-4355-b46d-ef2979330db2', 'ee2e7b0a-246c-41e8-aac2-af66ec12d0cc', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 't'),
+('1fc138e4-5941-4dd1-a346-8e2cdd857ea2', '4216cab8-12a4-4450-9735-ac29ca9f81f3', '12af27d8-1d20-464c-95da-5918355feb7a', 'side: assaillant', 't'),
+('1fe4e652-2cb5-4e72-9af5-cbc7bd6031d6', '9b619f48-fff7-42cc-8fb3-6af6308cc94c', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'investigator: Agnes Baker', 't'),
+('1ff5b0ce-a862-473d-9a7a-2f878d12837a', 'abe051c3-ba69-441c-8dbd-e98988595905', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 't'),
+('216a1397-e3b0-44f2-b03c-fd82801f1189', '41731e92-0247-4bfe-a463-159b92e69125', 'ba9640c6-a49e-4e3d-8b2b-2c3c1483453f', 'weapon: Hammer; deaths_count: 0;got: 1 Carbalite Ore, 1 Malachite Ore, 1 Fucium Ore, 1 Quality Bone, 1 Monster Bone Small, 1 Monster Bone Medium', 'f'),
+('21768d85-1801-4951-8bf5-18969ed64079', '8e84469e-5ba4-4a46-824d-be23d52a1640', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 't'),
+('22ec5057-7b80-4177-813d-a6e2c83d838f', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', '12af27d8-1d20-464c-95da-5918355feb7a', '', 'f'),
+('26f24b3a-e175-4729-a86a-63bcece90692', '323c1bc2-391b-4947-ae42-0b28fe142eb0', '113ae614-613d-4f54-91d2-48d9f71be378', 'score: 15', 'f'),
+('28959ad6-0e9d-41ac-ab1e-51eb18611e74', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', '', 'f'),
+('2c66ddc3-a935-4eda-ae1c-13e853c593bf', 'b445e86e-00b6-47e3-80fa-549e0b1efa40', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 0;keys: 5;ribbons: -1', 'f'),
+('2d9f6e89-dcee-46dc-b45f-f247bf56d794', '95553390-77d0-4f08-8c47-9a2fe2685a84', 'e295ea66-d607-48bd-906b-bdb2f113856b', '', 'f'),
+('2ec12911-6531-496f-8e28-39acb609b490', '4a04eca6-94d4-4142-ac5d-2b1f33f826c5', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 'f'),
+('2f0c7fb9-3716-4a2b-b68e-4d4ee2c569b7', '8e03cc54-9fcf-46ea-83d6-bcdb615d2713', '12af27d8-1d20-464c-95da-5918355feb7a', 'Team:Lord Maul, Kalani, B1 combat droids,Asajj Ventress,Super Commandos Mandalorians,Gar Saxon;luttes:Steal secrets plans,So much for the surprise effect;wounded:Gar Saxon,Super Commandos,Asajj Ventress,B1 combat droids', 't'),
+('304da8bb-eee2-401a-80e6-8e18fe69e210', 'dc4bafaa-b9e8-4a49-a9be-f00bd86125c1', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Wendy Adams:', 'f'),
+('30b09573-947c-4f6c-bf47-43a46175e3db', '5f6454f3-1855-4a20-af81-f1fa0e238e13', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 't'),
+('31aa0230-1827-4960-987d-0b73e0c8de41', '3158ff34-9513-4c6d-a8b9-443efce0ba50', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:peasant', 'f'),
+('3264aad1-83e0-46ea-92ee-3ba0953a7abe', '323c1bc2-391b-4947-ae42-0b28fe142eb0', '12af27d8-1d20-464c-95da-5918355feb7a', 'score: 26', 't'),
+('33ab0532-31d9-4830-89e4-f3d39bfa4c9b', 'd588d553-ae5d-4f74-ae22-0e61a0c4efd1', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Long Sword; deaths_count: 0', 't'),
+('3880c637-ccf7-43e3-a5c3-ea0c951061bb', '90bf7dab-92bd-4688-8e0d-b384c08395dd', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'weapon: Insect Glaive; deaths_count: 1', 'f'),
+('39196f89-9038-4670-b3a8-4fe6f9660ef0', '2c4f277e-e76a-421d-a472-0786f4928110', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Great Sword; deaths_count: 1', 't'),
+('3a0d2efa-8c99-4e5e-8676-8c75fe4d484a', 'd77e581f-688e-4277-b572-644657bcfe2f', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 't'),
+('3a7ccb0a-1ace-4ad1-9a25-52f7b8a02688', '3158ff34-9513-4c6d-a8b9-443efce0ba50', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 'f'),
+('3d3e1578-598f-466a-abd5-7c1f15386394', 'daaf9915-ac56-4adf-8a7f-897f2c23d968', '95767a77-6ab0-4b35-b782-77feb155ece5', 'weapon: Great Sword; deaths_count: 0', 't'),
+('3d5060e3-993a-45cb-b96f-792cb556f8bc', '2b259ec3-747c-4cf8-8e29-3cb1452e32da', '113ae614-613d-4f54-91d2-48d9f71be378', 'score: 6', 'f'),
+('4452cdca-7ca6-4914-b9ef-e9b3a0eb7d02', 'a076e88b-c934-40df-b344-f2f6e3f3fca6', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 9, upgrade: -1 Memory of Creation / +1 Memory of Vision', 't'),
+('45ab30c3-3eb9-4a09-8a39-6c16c264a962', 'abe051c3-ba69-441c-8dbd-e98988595905', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:peasant', 't'),
+('4bd26db3-9bb7-4ff2-95d5-911d19aa4003', '63b7f842-06d4-4457-bf97-93a78ccd4a42', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:peasant', 't'),
+('4bf41f6b-ee51-4b5e-9f61-5d906d4a4e3e', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', '', 'f'),
+('4d339ad7-76a7-4974-8f37-0afefe50ef49', '1f64366d-17d7-41c8-bd54-5e0a53d43f6d', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 9, upgrade: -1 Memory of might / +1 Memory of Law / Upgrade action Fight', 't'),
+('4f49de5d-444e-4f86-acef-aeede9f32967', 'c95097fb-f920-4a97-aa1f-805b9af188b3', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'side: assailant', 't'),
+('512ab91a-65f6-4db3-83fb-79f8cd3ef52e', '98cb9678-18e0-46c6-8231-925f70eec61b', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 'f'),
+('51a12116-2514-4e44-9aee-0c2dd7b4724c', '46911716-ae94-4546-9734-25d991ef2298', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 't'),
+('51ad06e6-76c6-4431-9db0-bc52860fb541', '4371be37-a3a1-4e6a-8a1c-eb1b2739f9cb', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 4, upgrade: -1 Memory of cold / +1 Memory of elements / -1 Memory of home / +1 Memory of vision', 't'),
+('523f0bab-efb0-439f-96f1-caac2adaece2', '3b78dd6f-c34b-4065-8367-9a89813036e6', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 'f'),
+('527d3aff-c109-46b3-9d50-9bbca80efa8b', '8e84469e-5ba4-4a46-824d-be23d52a1640', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 't'),
+('530266e6-f462-4acb-95a7-16695072ca98', '9b619f48-fff7-42cc-8fb3-6af6308cc94c', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Roland Banks:', 't'),
+('54332292-4df0-42b0-8e1a-3531b7cbd26f', '3158ff34-9513-4c6d-a8b9-443efce0ba50', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 'f'),
+('58421fe7-30c1-456f-8b0e-bfbc00034c14', '99732fd4-66ea-4d6c-b149-ff2d966131e8', 'ba9640c6-a49e-4e3d-8b2b-2c3c1483453f', 'weapon: Hammer(Bone); deaths_count: 0;got: 1 Monster Bone Medium, 2 Barroth Shell, 1 Barroth Ridge, 2 Barroth Claw, 1 Barroth Carapace, 1 Fertile Mud', 't'),
+('5a28bcb4-c355-4f24-a28d-a64d2f69c3c3', '99732fd4-66ea-4d6c-b149-ff2d966131e8', '8205d826-7183-4294-9d25-00ea468cbcf6', 'weapon: Dual Blade(Bone); deaths_count: 0;got: 1 Monster Bone Medium, 1 Barroth Shell, 1 Barroth Ridge, 1 Barroth Claw, 1 Barroth Carapace, 1 Fertile Mud, 1 Monster Bone Small', 't'),
+('5bf1f81e-c143-41b6-9cea-41987783d5be', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:doctor', 't'),
+('5c472829-8e36-4bd4-970b-a4421f1c8081', '046e8686-ac22-4461-b9cc-4784d9861408', '113ae614-613d-4f54-91d2-48d9f71be378', 'score: 9', 'f'),
+('5cf5b865-4585-4bd9-9e2b-971c8a9c4db7', '8e84469e-5ba4-4a46-824d-be23d52a1640', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:peasant', 't'),
+('60175fbc-1300-4ffd-8382-4ac6ba645e5a', 'b19e6311-b8b1-4d59-99a1-f7e619e4999c', '83cc7506-d43e-48b5-8213-e6714134c589', 'character: Jelsen Darrock;loot: Médaillon Etrille-Ame ', 't'),
+('60ebbe6a-5be0-4529-a70b-8e58490e9469', 'abe051c3-ba69-441c-8dbd-e98988595905', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 't'),
+('6206aa39-bf2f-448c-8d34-8a1b35cf4f3e', '46911716-ae94-4546-9734-25d991ef2298', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:peasant', 't'),
+('646a93b1-3dbc-49b4-8cc2-e8ec159643d6', '3b78dd6f-c34b-4065-8367-9a89813036e6', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Stella Clark', 'f'),
+('65f170d7-b975-4c69-8d92-4fe1b9b397fe', '1ee85411-f9c6-454c-81f6-126f29eb9a01', '12af27d8-1d20-464c-95da-5918355feb7a', 'Team:Lord Maul,Bo-Katan,Clan Kryze Mandalorians,Asajj Ventress,Super Commandos Mandalorians,Gar Saxon;struggle:Locate the ressource;wounded:Bo-Katan,Clan Kryze Mandalorians', 't'),
+('6642f999-3fb5-4dee-b5d2-9a77a52447d8', 'fa2f5e3d-058e-4ca9-91ce-a82cb4b23689', '12af27d8-1d20-464c-95da-5918355feb7a', 'team: space_marines;loss:2;', 't'),
+('669b444e-151d-4b7d-bb0d-841205d837cc', '8e03cc54-9fcf-46ea-83d6-bcdb615d2713', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'Team:Lord Maul, Kalani, B1 combat droids,Asajj Ventress,Super Commandos Mandalorians,Gar Saxon;luttes:Steal secrets plans,So much for the surprise effect;wounded:Gar Saxon,Super Commandos,Asajj Ventress,B1 combat droids', 't'),
+('6794398d-d899-457d-8313-0ad51f644556', '8710a2e7-9eab-4628-9a35-973adf849591', '12af27d8-1d20-464c-95da-5918355feb7a', '', 't'),
+('687f8d24-d359-4e6a-9fd7-c3fbbadb255b', '5f6454f3-1855-4a20-af81-f1fa0e238e13', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:doctor', 'f'),
+('6a97f2d6-f988-40c0-8f1c-f88f05d12da9', '02f91dbd-cb5f-4166-9a59-9f824c601730', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', '', 'f'),
+('6b5643d6-a0a0-41d4-bf10-2cea3bbda18a', '5f6454f3-1855-4a20-af81-f1fa0e238e13', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 't'),
+('6d83c318-9663-4d31-8297-2866cb5f3004', '02f91dbd-cb5f-4166-9a59-9f824c601730', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', '', 't'),
+('6e03ef28-c06c-4280-99fc-75c46be16b75', '46911716-ae94-4546-9734-25d991ef2298', 'f2a155f1-96d5-44ae-9e3a-19318de8fb3f', 'role:traitor', 'f'),
+('6e881c49-6dff-47bf-af31-dcf55064fbb5', '06b3a271-39d9-4630-ab4e-894245dc2854', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Wendy Adams:', 't'),
+('7010dfb7-3247-47b9-8e1f-0964f5c0b75e', '8710a2e7-9eab-4628-9a35-973adf849591', '4d9239f2-040d-451a-8c66-6174bf67b5d5', '', 't'),
+('703a3afb-6016-4a6b-82a8-26c09ccf63fb', '07d1d940-bfa0-4df4-ab03-4a002f7e1fc0', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'character: Cat School Witcher;trophies: Archespore,Manticore', 'f'),
+('70d01f58-ed6d-4de0-a68c-49070313f5e4', '07d1d940-bfa0-4df4-ab03-4a002f7e1fc0', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'character: Wolf School Witcher;trophies: Drowner,Whispess', 'f'),
+('7265ae04-5273-415d-b159-5d3f88aaa7f2', '046e8686-ac22-4461-b9cc-4784d9861408', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'score: 7', 'f'),
+('73ad1170-de85-4492-a635-a504f3a95a38', 'e0f10098-83c1-4a0a-9ffc-185cdd5cd272', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'character: Wolf School Witcher;trophies:;', 'f'),
+('73fc6acc-07c0-4b96-a0e0-7648aa2b54f0', 'b7ede580-2765-4278-a50e-270dd5d4d855', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 'f'),
+('76690dd9-5547-46ab-8e5d-0fec63fae236', 'b19e6311-b8b1-4d59-99a1-f7e619e4999c', '12af27d8-1d20-464c-95da-5918355feb7a', 'character: Capitaine Emelda Braskov', 't'),
+('76caa38b-1e46-4ba1-9e6d-d4ab25bc29a6', 'c3b4a833-53d4-4a6a-9062-40b2eb73ded5', '12af27d8-1d20-464c-95da-5918355feb7a', 'score: 17', 't'),
+('77d09a37-ced4-4e3b-b7bb-cd0a298117f9', 'c507d72d-31fa-4434-9c5a-dde358fcaf7d', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 't'),
+('797c9791-5059-4216-a853-46bb83538050', '4707ff6f-23dd-480a-8bf2-43c80005248c', '83cc7506-d43e-48b5-8213-e6714134c589', '', 'f'),
+('7a63dd70-dc4c-4f16-93e7-afe8d32c351a', '4d3714bf-bbbc-49ba-b990-d6c96b8caa00', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'hero: Mek', NULL),
+('7ce91ffb-a7b7-4e58-8557-60828b13058b', '2295a263-7d2d-4fc3-85ca-60253b522968', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 10; upgrade: -1 Memory of cold / +1 Memory of sorrow', 't'),
+('7e3130c3-f49e-4e34-bed7-8f1c4fda01f7', 'fa2f5e3d-058e-4ca9-91ce-a82cb4b23689', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'team:genestealers', 'f'),
+('7fbb353a-4703-4b35-a80c-3573db79eda6', '3158ff34-9513-4c6d-a8b9-443efce0ba50', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:peasant', 'f'),
+('7ff03f0e-0ea5-41fa-bcd6-cc1d3574e74f', '323c1bc2-391b-4947-ae42-0b28fe142eb0', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'score: 13', 'f'),
+('84052589-8602-4bdd-ad5c-1b0f1974e19c', '2b259ec3-747c-4cf8-8e29-3cb1452e32da', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'score: 11', 't'),
+('89597fe0-4a30-4c55-b682-58d40df48952', '2b259ec3-747c-4cf8-8e29-3cb1452e32da', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'score: 7', 'f'),
+('8b77adb4-25ca-48e9-a648-76d297281fac', '2b259ec3-747c-4cf8-8e29-3cb1452e32da', '12af27d8-1d20-464c-95da-5918355feb7a', 'score: 9', 'f'),
+('8b9cb387-d3a5-411c-813a-deffcc31cc70', '9e0d3602-930b-4e69-a867-d471518a933f', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 2, upgrade: -1 Memory of Honor / +1 Memory of Fear', 't'),
+('8c1c0fb3-a38f-4dc3-9059-16615f87906b', 'bec48b44-f8d2-4ba3-9031-a5e08848c966', '12af27d8-1d20-464c-95da-5918355feb7a', 'character: Ciri;time: 9 turns;trophies: Arachas,Griffin,Striga,speciality_lvl_5', 't'),
+('8d19528b-8ca5-44cd-b4cd-c9205aa6ff9f', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:peasant', 'f'),
+('8e8867d9-aed1-4840-857b-1d6d7486dd27', 'e0f2b29a-4b44-41ac-9175-816af40749d4', '4d9239f2-040d-451a-8c66-6174bf67b5d5', '', 'f'),
+('8ee599e7-5230-4750-8ccb-56d1a4866c0f', '85d0f8db-fd0b-4396-9568-5399b1615261', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 0;keys: 1;ribbons: -1', 'f'),
+('9440710c-af41-45f3-8eea-9bdfbb6b4671', '02f91dbd-cb5f-4166-9a59-9f824c601730', 'c2876299-8223-434f-92b4-dc26b2558804', '', 'f'),
+('9492bb31-b38b-427b-8255-20d7ab76985b', 'e0f10098-83c1-4a0a-9ffc-185cdd5cd272', '95767a77-6ab0-4b35-b782-77feb155ece5', 'character: Cat School Witcher;trophies:;', 'f'),
+('98bb10bf-0fef-4ca4-b4b0-7a9785a04b67', '07d1d940-bfa0-4df4-ab03-4a002f7e1fc0', '12af27d8-1d20-464c-95da-5918355feb7a', 'character: Bear School Witcher;trophies: Noonwraith,Nekkers,Cat School Witcher,defense_lvl_5', 't'),
+('9941ae81-8a47-4889-8b60-ee48a6ab0253', 'c95097fb-f920-4a97-aa1f-805b9af188b3', '12af27d8-1d20-464c-95da-5918355feb7a', 'side: defender', 'f'),
+('9c784413-7839-41b8-b265-2356a48f4b76', '08a10825-4429-464f-a3fd-42e2c465fb57', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 't'),
+('9c9a2318-c607-4832-b75b-55f6ce2429e1', '9eed45a7-5a47-455c-9a1d-103004baf986', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Roland Banks:', 't'),
+('a02cfd5a-ce90-457b-814e-6496ee8f2006', 'e334dfd4-ea5f-4623-8365-5a4bf85c4b74', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Long Sword; deaths_count: 1', 't'),
+('a2293ee7-8393-456e-a8ce-15e23f38ffb2', 'b7ede580-2765-4278-a50e-270dd5d4d855', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 'f'),
+('a24473a7-06e4-4321-8153-db403e485be3', 'a24b6f63-ea9a-471b-aeaa-047fc2913672', '12af27d8-1d20-464c-95da-5918355feb7a', 'life_left: 6; upgrade: -1 Memory of creation / +1 Memory of elements', 't'),
+('a299a2e2-7527-4e80-8ae9-b0aa7f04d57c', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', '113ae614-613d-4f54-91d2-48d9f71be378', '', 'f'),
+('a4154bcf-d3d4-45d3-80b3-0eea48da8925', '46911716-ae94-4546-9734-25d991ef2298', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 't'),
+('a6dd20dd-3f6f-4931-b0d3-214843446919', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', 'f2a155f1-96d5-44ae-9e3a-19318de8fb3f', 'role:peasant', 'f'),
+('a734848e-e625-4e4e-b51d-14cf5d44fe3c', '4d3714bf-bbbc-49ba-b990-d6c96b8caa00', '113ae614-613d-4f54-91d2-48d9f71be378', 'hero: Maridess', NULL),
+('a8052684-624a-44c4-8f3a-255eaaf488bb', '46911716-ae94-4546-9734-25d991ef2298', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:doctor', 'f'),
+('a828cdd0-fc9e-4c01-a5f1-2d3e82c3c131', '41731e92-0247-4bfe-a463-159b92e69125', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Gunlance; deaths_count: 1;got: 1 Carbalite Ore, 1 Malachite Ore, 1 Dragonite Ore, 1 Quality Bone, 1 Monster Bone Small, 1 Monster Bone Medium', 'f'),
+('a8988165-c562-4e49-b2a9-3e9198bc960c', '8e84469e-5ba4-4a46-824d-be23d52a1640', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:doctor', 'f'),
+('a8a0db48-200b-4525-9c3d-a8c4efd6bbd0', '06b3a271-39d9-4630-ab4e-894245dc2854', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 't'),
+('ab2f8b4d-4e31-4179-b3cc-21a1e0c9a578', '8e84469e-5ba4-4a46-824d-be23d52a1640', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:peasant', 't'),
+('ab43723c-49d5-4a2b-ae0a-e4991f2960e7', '9eed45a7-5a47-455c-9a1d-103004baf986', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'investigator: Agnes Baker', 't'),
+('ab8417d1-3a62-472b-a15c-c6145ca08377', '99732fd4-66ea-4d6c-b149-ff2d966131e8', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Insect Glaive(Bone); deaths_count: 0;got: 1 Monster Bone Medium, 1 Barroth Shell, 2 Barroth Ridge, 2 Barroth Claw, 1 Barroth Carapace, 1 Fertile Mud', 't'),
+('ad1708a8-9c7f-4496-9ac1-564d38cca4d2', '4653e620-c609-450e-b3d1-ec13649f9d80', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', '', 'f'),
+('ae021d6a-4fe1-41f1-a49f-3e00d508ffb4', 'b19e6311-b8b1-4d59-99a1-f7e619e4999c', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'character: Brutogg Croque-Morts;loot: Potion de vitalité coagulée', 't'),
+('ae3d8af3-423a-4e04-86a7-0f3b45452e8c', '90bf7dab-92bd-4688-8e0d-b384c08395dd', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'weapon: Spear; deaths_count: 1', 'f'),
+('aee53865-7f8c-4d48-8dd4-ca28d2218a65', '4707ff6f-23dd-480a-8bf2-43c80005248c', '12af27d8-1d20-464c-95da-5918355feb7a', '', 'f'),
+('afb1cfa2-1e21-4d52-87e8-a54fffb629a4', '3158ff34-9513-4c6d-a8b9-443efce0ba50', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:doctor', 't'),
+('b22e2f5f-d576-4c78-9af3-9da2915fadf6', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', '', 'f'),
+('b2604302-dcf0-4e61-af89-5a9cb1afde57', '4a04eca6-94d4-4142-ac5d-2b1f33f826c5', '113ae614-613d-4f54-91d2-48d9f71be378', 'investigator: Agnes Baker', 'f'),
+('b2f8317c-52ea-484f-827e-c25c8e606e8b', 'c3b4a833-53d4-4a6a-9062-40b2eb73ded5', '113ae614-613d-4f54-91d2-48d9f71be378', 'score: 11', 'f'),
+('b8081c15-b58b-421c-82ca-4b546c8753c8', 'c3b4a833-53d4-4a6a-9062-40b2eb73ded5', 'c2876299-8223-434f-92b4-dc26b2558804', 'score: 9', 'f'),
+('b89e2b45-be3a-424b-ba85-7fa778c18966', '08a10825-4429-464f-a3fd-42e2c465fb57', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Stella Clark', 't'),
+('b8a1aee0-7977-4569-830f-1e701017ef0a', '63b7f842-06d4-4457-bf97-93a78ccd4a42', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 't'),
+('b916e679-2a36-4c45-87e1-b9a0eae50ea4', '4653e620-c609-450e-b3d1-ec13649f9d80', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', '', 'f'),
+('bab9e01f-7ee8-4d6f-ab7b-3e3ea6890c58', '63b7f842-06d4-4457-bf97-93a78ccd4a42', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:peasant', 't'),
+('bb4bcab9-810d-472c-9f91-bb257ad4f6f8', '63b7f842-06d4-4457-bf97-93a78ccd4a42', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:peasant', 't'),
+('bc28d1be-7bd9-4fbe-8876-25f25463ae5e', 'c3b4a833-53d4-4a6a-9062-40b2eb73ded5', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'score: 13', 'f'),
+('bc5c8bb7-190d-4ae6-a6fd-ef471ac768b8', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', '83cc7506-d43e-48b5-8213-e6714134c589', 'role:peasant', 'f'),
+('bd11f0f6-5d05-4808-8f06-f2fa8b1ca9cc', '046e8686-ac22-4461-b9cc-4784d9861408', '12af27d8-1d20-464c-95da-5918355feb7a', 'score: 14', 't'),
+('bedcf213-f22d-446d-a675-cd8e10e633f1', 'e0f10098-83c1-4a0a-9ffc-185cdd5cd272', '12af27d8-1d20-464c-95da-5918355feb7a', 'character: Griffin School Witcher;trophies:Drowner;', 'f'),
+('c017525f-7d90-4f74-81f3-2aa3a0e8a8b4', 'c507d72d-31fa-4434-9c5a-dde358fcaf7d', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Stella Clark', 't'),
+('c074e1c8-fd37-4317-ba85-5aa4bae36afa', '1ee85411-f9c6-454c-81f6-126f29eb9a01', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'Team:General Skywalker, Captain Rex,Clones from the 501st,Obi-Wan kenobi, Commandant Cody,Clones from the 212th;wounded:Clones from the 501st,Clones from the 212th', 'f'),
+('c1272973-f074-4aa3-8ca4-4fe1deb3d306', 'd588d553-ae5d-4f74-ae22-0e61a0c4efd1', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'weapon: Great Sword; deaths_count: 0', 't'),
+('c1436579-f6e2-4df2-b04d-e4b5681ac729', '5f6454f3-1855-4a20-af81-f1fa0e238e13', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:peasant', 't'),
+('c48ec587-bafd-4298-8146-d3c384e47d3c', '4fc309a3-855d-4574-9baa-0690fd3f298f', '12af27d8-1d20-464c-95da-5918355feb7a', 'side: assailant', 'f'),
+('c6e7ff36-06dc-459b-ad85-a19782497ed5', '4653e620-c609-450e-b3d1-ec13649f9d80', '4d9239f2-040d-451a-8c66-6174bf67b5d5', '', 'f'),
+('c7bb311e-b362-4202-b199-c26fbf108aec', '95553390-77d0-4f08-8c47-9a2fe2685a84', '12af27d8-1d20-464c-95da-5918355feb7a', '', 't'),
+('c9484262-c683-476a-87d0-f21ff7073c16', '8e03cc54-9fcf-46ea-83d6-bcdb615d2713', '95767a77-6ab0-4b35-b782-77feb155ece5', 'Team:General Skywalker, Captain Rex,Clones from the 501st,Ashoka Tano,Bo-Katan,Clan Kryze Mandalorians;wounded:Ashoka Tano,Captain Rex,Clan Kryze Mandalorians', 'f'),
+('c99d2c77-aa2b-4354-b9c3-d88e90d689c9', '323c1bc2-391b-4947-ae42-0b28fe142eb0', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', 'score: 19', 'f'),
+('ca0c88b2-356c-44f2-b7e2-1561445940e1', 'daaf9915-ac56-4adf-8a7f-897f2c23d968', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Dual Blades; deaths_count: 2', 't'),
+('ca83b255-f125-4869-bdea-ef362eed5dd2', '4707ff6f-23dd-480a-8bf2-43c80005248c', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', '', 't'),
+('ccb668c0-52b5-4c6e-9103-6704ea43e045', 'ee2e7b0a-246c-41e8-aac2-af66ec12d0cc', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Wendy Adams:', 't'),
+('cd970829-5576-490d-8e3f-c6dbc8a5be8a', 'd77e581f-688e-4277-b572-644657bcfe2f', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Stella Clark', 't'),
+('ce9236bb-66ae-41ce-85cd-4ae56dfe9b70', '08a10825-4429-464f-a3fd-42e2c465fb57', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 't'),
+('cf7a7486-a74d-41b3-97c1-c04e22beb310', '4653e620-c609-450e-b3d1-ec13649f9d80', '113ae614-613d-4f54-91d2-48d9f71be378', '', 'f'),
+('d36245c2-9325-439b-8c48-75a5368dbb8d', '4653e620-c609-450e-b3d1-ec13649f9d80', '12af27d8-1d20-464c-95da-5918355feb7a', '', 'f'),
+('d3c22e18-a47f-4d02-98c5-11d3d3570b39', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'role:peasant', 'f'),
+('d7a0e3ba-8535-47d8-a64f-0e48f22549a0', '0e3a2f3d-aff5-469b-b205-06cabe114b94', '12af27d8-1d20-464c-95da-5918355feb7a', 'weapon: Heavy Bowgun; deaths_count: 1', 't'),
+('da2d9657-2598-4992-bc2b-55ada8c5952a', '95553390-77d0-4f08-8c47-9a2fe2685a84', 'bd29b852-ed99-4720-a5b3-8ac7a0f5e37a', '', 'f'),
+('e1447a3e-ae86-494f-907d-740b8804db49', 'e0f2b29a-4b44-41ac-9175-816af40749d4', '12af27d8-1d20-464c-95da-5918355feb7a', '', 'f'),
+('e2e25ec8-1356-4199-9340-f01b5c76a7d1', '98cb9678-18e0-46c6-8231-925f70eec61b', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'investigator: Harvey Walters', 'f'),
+('e45fe9bc-656c-4c55-9848-b9ca0d36d042', '02f91dbd-cb5f-4166-9a59-9f824c601730', '12af27d8-1d20-464c-95da-5918355feb7a', '', 'f'),
+('e6225cc8-b48d-4c20-9a91-5ac2132956e6', '98cb9678-18e0-46c6-8231-925f70eec61b', '0daad0d7-7f3c-443e-83b0-3363187f4f3c', 'investigator: “Skids” O’Toole', 'f'),
+('e75ba349-ece9-4863-97c7-a6ce1cf49491', 'abe051c3-ba69-441c-8dbd-e98988595905', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', 'role:doctor', 'f'),
+('edaf5269-c85b-45e0-9752-0780916eacee', '4fc309a3-855d-4574-9baa-0690fd3f298f', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'side: defender', 't'),
+('ee8de399-ab4c-428d-b665-eb0902b8ea6a', '4216cab8-12a4-4450-9735-ac29ca9f81f3', '83cc7506-d43e-48b5-8213-e6714134c589', 'side: defender', 'f'),
+('ef65fab8-1317-43de-b8f7-4d0640aa3c8b', '07d1d940-bfa0-4df4-ab03-4a002f7e1fc0', '83cc7506-d43e-48b5-8213-e6714134c589', 'character: Viper School Witcher;trophies: Bargheist,Leshen', 'f'),
+('efeff723-10b2-44fe-a352-7644055105da', '0e3a2f3d-aff5-469b-b205-06cabe114b94', 'b7111b18-d8d7-4418-8b10-9e19f8bd9f4b', 'weapon: Switch Axe; deaths_count: 0', 't'),
+('f1211a51-b071-4a70-bf24-c864f6c0f52a', '8e03cc54-9fcf-46ea-83d6-bcdb615d2713', 'f6f06dc0-96c9-4f31-acf4-544cad0b011e', 'Team:General Skywalker, Captain Rex,Clones from the 501st,Ashoka Tano,Bo-Katan,Clan Kryze Mandalorians;wounded:Ashoka Tano,Captain Rex,Clan Kryze Mandalorians', 'f'),
+('f2348d47-d0f1-45ff-beca-a69d505fb761', '63b7f842-06d4-4457-bf97-93a78ccd4a42', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:doctor', 'f'),
+('f35c6914-3883-4f43-b023-2200c033e079', 'bfc2a578-20fb-47ab-9161-04b71b4d8987', '4d9239f2-040d-451a-8c66-6174bf67b5d5', 'investigator: Agnes Baker', 't'),
+('f50bf439-5af7-46c7-8555-8828174b3358', '4707ff6f-23dd-480a-8bf2-43c80005248c', 'f9c46a06-2eaf-4dca-8fea-d55b71ce721e', '', 't'),
+('f5278208-a4fd-4d5c-8e40-0feec4cb04db', '3d79b2f2-3c89-4c1d-87d8-ee1f362ac7bf', 'a6ce5289-33d8-4b93-afcb-461fd3990d49', '', 'f'),
+('f6397399-1aed-4515-bfaa-71a575ff2e42', '46911716-ae94-4546-9734-25d991ef2298', '12af27d8-1d20-464c-95da-5918355feb7a', 'role:peasant', 't'),
+('f94c00cc-41e0-4a94-93b0-525f19195982', 'e6daa5fb-38e6-487a-8e9d-9b7d462f6245', 'c35f21e2-b1f1-4966-a8aa-81db4da7e87e', 'role:traitor', 't'),
+('f9ad566a-1536-4de1-811a-47ebedc19e05', '41731e92-0247-4bfe-a463-159b92e69125', '8205d826-7183-4294-9d25-00ea468cbcf6', 'weapon: Great Sword; deaths_count: 1;got: 1 Carbalite Ore, 1 Malachite Ore, 1 Fucium Ore, 1 Quality Bone, 1 Monster Bone Small, 1 Monster Bone Medium', 'f'),
+('fbee230f-43cb-41cf-a75d-9c64612d1d2e', 'b7ede580-2765-4278-a50e-270dd5d4d855', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Roland Banks', 'f'),
+('fd2fe376-4cc9-4017-983d-cca0376e0b1b', '4a04eca6-94d4-4142-ac5d-2b1f33f826c5', '12af27d8-1d20-464c-95da-5918355feb7a', 'investigator: Daisy Walker', 'f');
+
+ALTER TABLE "public"."entry" ADD FOREIGN KEY ("game_id") REFERENCES "public"."game"("id");
+ALTER TABLE "public"."game" ADD FOREIGN KEY ("player_id") REFERENCES "public"."player"("id");
+ALTER TABLE "public"."player_result" ADD FOREIGN KEY ("player_id") REFERENCES "public"."player"("id");
+ALTER TABLE "public"."player_result" ADD FOREIGN KEY ("entry_id") REFERENCES "public"."entry"("id");
