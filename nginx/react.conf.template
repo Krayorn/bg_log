@@ -1,0 +1,11 @@
+server {
+    listen 80;
+    server_name bglog.com www.bglog.com;
+
+    root /root/bg_log/react/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
