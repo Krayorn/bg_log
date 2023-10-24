@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class EntryController extends AbstractController
 {
-    #[Route('/entries', name: 'list_entries', methods: 'GET')]
+    #[Route('api/entries', name: 'list_entries', methods: 'GET')]
     public function list(
         Request $request,
         EntryRepository $entryRepository,
@@ -32,7 +32,7 @@ class EntryController extends AbstractController
         return new JsonResponse(array_map(fn($entry) => $entry->view(), $entries), Response::HTTP_OK);
     }
 
-    #[Route('/entries', name: 'create_entry', methods: 'POST')]
+    #[Route('api/entries', name: 'create_entry', methods: 'POST')]
     public function create(Request                $request,
                            EntityManagerInterface $entityManager,
                            GameRepository         $gameRepository,
@@ -84,7 +84,7 @@ class EntryController extends AbstractController
     }
 
 
-    #[Route('/entries/{entry}', name: 'patch_entry', methods: 'PATCH')]
+    #[Route('api/entries/{entry}', name: 'patch_entry', methods: 'PATCH')]
     public function update(Request                $request,
                            Entry $entry,
                            EntityManagerInterface $entityManager,

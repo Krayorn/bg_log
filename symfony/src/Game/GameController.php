@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class GameController extends AbstractController
 {
-    #[Route('players/{player}/games', name: 'create_game', methods: 'POST')]
+    #[Route('api/players/{player}/games', name: 'create_game', methods: 'POST')]
     public function create(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
     {
         $content = $request->getContent();
@@ -51,19 +51,19 @@ class GameController extends AbstractController
         return new JsonResponse($game->view(), Response::HTTP_CREATED);
     }
 
-    #[Route('/players/{player}/games/stats', name: 'stats_games', methods: 'GET')]
+    #[Route('api/players/{player}/games/stats', name: 'stats_games', methods: 'GET')]
     public function gamesStats(Player $player, GameRepository $gameRepository): Response
     {
         return new JsonResponse($gameRepository->getStats($player), Response::HTTP_OK);
     }
 
-    #[Route('/games/{game}', name: 'game', methods: 'GET')]
+    #[Route('api/games/{game}', name: 'game', methods: 'GET')]
     public function game(Game $game, GameRepository $gameRepository): Response
     {
         return new JsonResponse($game->view(), Response::HTTP_OK);
     }
 
-    #[Route('/games/{game}/stats', name: 'stats_game', methods: 'GET')]
+    #[Route('api/games/{game}/stats', name: 'stats_game', methods: 'GET')]
     public function gameStats(Game $game, GameRepository $gameRepository): Response
     {
         $count = $gameRepository->getGamePlayed($game);

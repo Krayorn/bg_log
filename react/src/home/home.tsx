@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"
 
+const host = 'http://localhost/api'
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
@@ -76,7 +77,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
     
         useEffect(() => {
             async function getPlayer() {
-                const res = await fetch(`http://localhost/players/${playerId}`)
+                const res = await fetch(`${host}/players/${playerId}`)
                 const data = await res.json()
         
                 if (!ignore) {
@@ -140,7 +141,7 @@ function GeneralStatistics({ playerId }: {playerId: string}) {
     
         useEffect(() => {
             async function getGeneralStats() {
-                const res = await fetch(`http://localhost/players/${playerId}/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/stats`)        
                 const data = await res.json()
         
                 if (!ignore) {
@@ -195,7 +196,7 @@ function GameStatistics({ playerId }: {playerId: string}) {
     
         useEffect(() => {
             async function getGameStats() {
-                const res = await fetch(`http://localhost/players/${playerId}/games/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/games/stats`)        
                 const data = await res.json()
         
                 if (!ignore) {
@@ -259,7 +260,7 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
     
         useEffect(() => {
             async function getPlayerStats() {
-                const res = await fetch(`http://localhost/players/${playerId}/friends/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/friends/stats`)        
                 const data = await res.json()
         
                 if (!ignore) {

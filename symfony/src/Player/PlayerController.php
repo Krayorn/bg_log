@@ -16,7 +16,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 class PlayerController extends AbstractController
 {
 
-    #[Route('/players/{player}/register', name: 'register')]
+    #[Route('api/players/{player}/register', name: 'register')]
     public function register(Player                      $player,
                              Request                     $request,
                              EntityManagerInterface $entityManager,
@@ -38,7 +38,7 @@ class PlayerController extends AbstractController
 
         return new Response(null);
     }
-    #[Route('/api/login', name: 'api_login')]
+    #[Route('api/login', name: 'api_login')]
     public function login(Request $request, #[CurrentUser] ?UserInterface $user): Response
     {
         $player = $user;
@@ -55,7 +55,7 @@ class PlayerController extends AbstractController
         ]);
     }
 
-    #[Route('/players/{player}', name: 'get_player', methods: 'GET')]
+    #[Route('api/players/{player}', name: 'get_player', methods: 'GET')]
     public function player(Player $player): Response
     {
         return new JsonResponse(
@@ -63,7 +63,7 @@ class PlayerController extends AbstractController
             , Response::HTTP_OK);
     }
 
-    #[Route('/players/{player}/stats', name: 'stats_player', methods: 'GET')]
+    #[Route('api/players/{player}/stats', name: 'stats_player', methods: 'GET')]
     public function playerStats(Player $player, PlayerRepository $playerRepository): Response
     {
         $stats = $playerRepository->getGeneralStats($player);
@@ -78,7 +78,7 @@ class PlayerController extends AbstractController
             , Response::HTTP_OK);
     }
 
-    #[Route('/players/{player}/friends/stats', name: 'stats_friends_player', methods: 'GET')]
+    #[Route('api/players/{player}/friends/stats', name: 'stats_friends_player', methods: 'GET')]
     public function friendsStats(Player $player, PlayerRepository $playerRepository): Response
     {
         $stats = $playerRepository->getFriendsStats($player);

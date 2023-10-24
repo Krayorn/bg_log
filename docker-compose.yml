@@ -17,6 +17,8 @@ services:
   nginx:
     build:
       context: ./nginx
+    volumes:
+      - ./react/dist/:/usr/share/nginx/html
     ports:
       - "80:80"
     environment:
