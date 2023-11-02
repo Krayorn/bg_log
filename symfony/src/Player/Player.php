@@ -66,7 +66,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return ".";
+        return $this->getName();
     }
 
     public function eraseCredentials()

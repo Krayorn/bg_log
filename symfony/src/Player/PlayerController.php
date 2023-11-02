@@ -38,22 +38,6 @@ class PlayerController extends AbstractController
 
         return new Response(null);
     }
-    #[Route('api/login', name: 'api_login')]
-    public function login(Request $request, #[CurrentUser] ?UserInterface $user): Response
-    {
-        $player = $user;
-
-        if (null === $player) {
-            return $this->json([
-                    'message' => 'missing credentials',
-                ], Response::HTTP_UNAUTHORIZED);
-        }
-
-        return $this->json([
-            'player' => $player->view(),
-            'token' => "??",
-        ]);
-    }
 
     #[Route('api/players/{player}', name: 'get_player', methods: 'GET')]
     public function player(Player $player): Response

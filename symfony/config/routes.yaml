@@ -15,3 +15,7 @@ player:
         path: ../src/Player/
         namespace: App\Player
     type: attribute
+
+# config/routes.yaml
+api_login_check:
+    path: /api/login_check

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 const host = 'http://localhost/api'
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
-    console.log('playerId', playerId)
+
     return (
-    <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)]  h-full min-h-screen p-6'> 
+    <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6'> 
         <header className="border-b-2 border-white pb-2 flex justify-between">
             <div className="flex" >
                 <div className="border-b-2 border-gray-600" >
@@ -74,10 +75,10 @@ interface Player {
 
 function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
-    
+    const [token, _] = useLocalStorage('jwt', null)
         useEffect(() => {
             async function getPlayer() {
-                const res = await fetch(`${host}/players/${playerId}`)
+                const res = await fetch(`${host}/players/${playerId}`, { headers: { "Authorization": `Bearer ${token}`}})
                 const data = await res.json()
         
                 if (!ignore) {
@@ -138,10 +139,10 @@ interface GeneralStatistics {
 
 function GeneralStatistics({ playerId }: {playerId: string}) {
     const [generalStats, setGeneralStats] = useState<GeneralStatistics|null>(null)
-    
+    const [token, _] = useLocalStorage('jwt', null)
         useEffect(() => {
             async function getGeneralStats() {
-                const res = await fetch(`${host}/players/${playerId}/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
                 const data = await res.json()
         
                 if (!ignore) {
@@ -193,10 +194,10 @@ interface GameStats {
 
 function GameStatistics({ playerId }: {playerId: string}) {
     const [gameStats, setGameStats] = useState<GameStats[]>([])
-    
+    const [token, _] = useLocalStorage('jwt', null)
         useEffect(() => {
             async function getGameStats() {
-                const res = await fetch(`${host}/players/${playerId}/games/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/games/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
                 const data = await res.json()
         
                 if (!ignore) {
@@ -257,10 +258,10 @@ interface PlayerStats {
 
 function PlayerStatistics({ playerId }: {playerId: string}) {
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([])
-    
+    const [token, _] = useLocalStorage('jwt', null)
         useEffect(() => {
             async function getPlayerStats() {
-                const res = await fetch(`${host}/players/${playerId}/friends/stats`)        
+                const res = await fetch(`${host}/players/${playerId}/friends/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
                 const data = await res.json()
         
                 if (!ignore) {
