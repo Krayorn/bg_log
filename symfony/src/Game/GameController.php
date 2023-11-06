@@ -3,7 +3,9 @@
 namespace App\Game;
 
 use App\Player\Player;
+use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,6 +51,26 @@ class GameController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse($game->view(), Response::HTTP_CREATED);
+    }
+
+
+    #[Route('api/games', name: 'create_game', methods: 'GET')]
+    public function getGames(Request $request, GameRepository $gameRepository, PlayerRepository $playerRepository): Response
+    {
+        $filters = [];
+
+        $playerId = $request->query->getAlnum('playerId');
+        if ($playerId !== '') {
+            $player = $playerRepository->find(Uuid::fromString($playerId));
+            $this->denyAccessUnlessGranted([], $player);
+
+            $filters['player'] = $player;
+        }
+
+
+        $games = $gameRepository->findBy($filters);
+
+        return new JsonResponse(array_map(fn($game): array => $game->view(), $games), Response::HTTP_CREATED);
     }
 
     #[Route('api/players/{player}/games/stats', name: 'stats_games', methods: 'GET')]

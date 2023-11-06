@@ -39,6 +39,16 @@ class PlayerController extends AbstractController
         return new Response(null);
     }
 
+    #[Route('api/players/', name: 'get_players', methods: 'GET')]
+    public function players(PlayerRepository $playerRepository): Response
+    {
+        $players = $playerRepository->findAll();
+
+        return new JsonResponse(
+            array_map(fn($player): array => $player->view(), $players)
+            , Response::HTTP_OK);
+    }
+
     #[Route('api/players/{player}', name: 'get_player', methods: 'GET')]
     public function player(Player $player): Response
     {

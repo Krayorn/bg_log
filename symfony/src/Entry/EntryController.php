@@ -41,13 +41,13 @@ class EntryController extends AbstractController
         $content = $request->getContent();
         $body = json_decode($content, true);
 
-        $gameName = $body['game'];
+        $gameId = $body['game'];
         $note = $body['note'];
         $playedAt = $body['playedAt'];
         $playersData = $body['players'] ?? [];
 
         /** @var ?Game $game */
-        $game = $gameRepository->findOneBy(['name' => $gameName]);
+        $game = $gameRepository->find($gameId);
 
         if ($game === null) {
             return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
@@ -56,17 +56,11 @@ class EntryController extends AbstractController
         $players = [];
 
         foreach ($playersData as $key => $playerData) {
-            $playerName = $playerData['name'] ?? '';
+            $playerId = $playerData['id'];
             $playerNote = $playerData['note'] ?? '';
             $playerWon = $playerData['won'] ?? null;
 
-            $player = $playerRepository->findOneBy(['name' => $playerName]);
-
-            if ($player === null) {
-                $player = new Player($playerName, $playerRepository->findNextNumber() + $key);
-                $entityManager->persist($player);
-            }
-
+            $player = $playerRepository->find($playerId);
             $players[] = ['player' => $player, 'note' => $playerNote, 'won' => $playerWon];
         }
 

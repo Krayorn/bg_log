@@ -1,53 +1,67 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import NewEntryModal from "../entry/newEntryModal"
 
-const host = 'http://localhost/api'
+const host = import.meta.env.VITE_API_HOST
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
+    const [addEntryModalOpen, setAddEntryModalOpen] = useState(false)
 
     return (
-    <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6'> 
-        <header className="border-b-2 border-white pb-2 flex justify-between">
-            <div className="flex" >
-                <div className="border-b-2 border-gray-600" >
-                    <div className="rounded-full border-white border-2 p-1" >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" className="w-8 h-8">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                        </svg>
+    <>
+        {addEntryModalOpen && <NewEntryModal playerId={playerId} close={() => setAddEntryModalOpen(false)} />}
+        <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6 flex flex-col'> 
+            <header className="border-b-2 border-white pb-2 flex justify-between">
+                <div className="flex" >
+                    <div className="border-b-2 border-gray-600" >
+                        <div className="rounded-full border-white border-2 p-1" >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" className="w-8 h-8">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="ml-4 text-white flex-col border-b-2 border-gray-600">
+                        <h1 className="text-lg" >Game log</h1>
+                        <h2 className="text-base" >
+                            Welcome to your personalized game log network
+                        </h2>
                     </div>
                 </div>
-                <div className="ml-4 text-white flex-col border-b-2 border-gray-600">
-                    <h1 className="text-lg" >Game log</h1>
-                    <h2 className="text-base" >
-                        Welcome to your personalized game log network
-                    </h2>
+                <div className="text-gray-600 flex flex-col">
+                    <span>version 0.1.2</span>
+                    <span>released 2023-11-06</span>
                 </div>
-            </div>
-            <div className="text-gray-600 flex flex-col">
-                <span>version 0.1.0</span>
-                <span>released 2023-09-27</span>
-            </div>
-        </header>
+            </header>
 
-        <main className="flex flex-wrap mt-12">
-            <Box title="Personal details">
-                <PlayerBox playerId={playerId} />
-            </Box>
-            <Box title="User General Statistics">
-                <GeneralStatistics playerId={playerId}/>
-            </Box>
-            <Box title="Games Statistics">
-                <GameStatistics playerId={playerId}/>
-            </Box>
-            <Box title="Players statistics">
-                <PlayerStatistics playerId={playerId}/>
-            </Box>
-        </main>
+            <main className="flex flex-wrap mt-12">
+                <Box title="Personal details">
+                    <PlayerBox playerId={playerId} />
+                </Box>
+                <Box title="User General Statistics">
+                    <GeneralStatistics playerId={playerId}/>
+                </Box>
+                <Box title="Games Statistics">
+                    <GameStatistics playerId={playerId}/>
+                </Box>
+                <Box title="Players statistics">
+                    <PlayerStatistics playerId={playerId}/>
+                </Box>
+            </main>
 
-        <div className="mt-12 border-t-2 border-white w-full" ></div>
-    </div>
+            <footer className="w-full mb-6 mt-auto" >
+                <div className="mt-12 border-t-2 border-white w-full" ></div>
+                <section className="flex mt-6 justify-center ">
+                    <button onClick={() => setAddEntryModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl" >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </button>
+                </section>
+            </footer>
+        </div>
+    </>
   )
 }
 

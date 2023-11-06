@@ -22,7 +22,7 @@ export default function Login() {
         e.preventDefault();
         const formData = new FormData(e.target);
         
-        const response = await fetch('http://localhost/api/login_check', { method: "POST",    headers: {
+        const response = await fetch(`${import.meta.env.VITE_API_HOST}/login_check`, { method: "POST",    headers: {
             "Content-Type": "application/json",
           }, body: JSON.stringify(Object.fromEntries(formData))})
         

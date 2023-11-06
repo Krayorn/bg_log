@@ -21,6 +21,7 @@ const router = createBrowserRouter([
   {
     path: "/players",
     element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: "/players/:playerId",
