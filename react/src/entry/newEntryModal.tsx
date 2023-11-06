@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { useLocalStorage } from '../hooks/useLocalStorage'
+// replace by crypto.UUID() when site migrated to https
+import { v4 as uuidv4 } from 'uuid'
 
 const host = import.meta.env.VITE_API_HOST
 
@@ -10,12 +12,12 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
 
     const [token, _] = useLocalStorage('jwt', null)
     
-    const [players, setPlayers] = useState([{genId: crypto.randomUUID(), id: "", note: "", won: false}])
+    const [players, setPlayers] = useState([{genId: uuidv4(), id: "", note: "", won: false}])
     const [errors, setErrors] = useState([])
 
     const addPlayer = (e) => {
         e.preventDefault();
-        setPlayers([...players, {genId: crypto.randomUUID(), id: "", note: "", won: false}])
+        setPlayers([...players, {genId: uuidv4(), id: "", note: "", won: false}])
     }
 
     useEffect(() => {
