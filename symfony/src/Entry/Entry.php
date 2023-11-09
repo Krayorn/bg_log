@@ -4,6 +4,7 @@ namespace App\Entry;
 
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\Game;
+use App\Game\GameOwned;
 use App\Player\Player;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -32,7 +33,10 @@ class Entry
         private string $note,
         #[ORM\Column(type:'datetimetz_immutable')]
         private readonly DateTimeImmutable $playedAt,
-        array $players
+        array $players,
+        #[ORM\ManyToOne(targetEntity:GameOwned::class)]
+        #[ORM\JoinColumn(name: 'game_owned_id', referencedColumnName: 'id', nullable: true)]
+        private ?GameOwned   $gameUsed,
         )
     {
         $this->id = Uuid::uuid4();
@@ -46,6 +50,11 @@ class Entry
     public function addPlayerResult(PlayerResult $player): void
     {
         $this->playerResults->add($player);
+    }
+
+    public function playedWith(GameOwned $gameUsed): void
+    {
+        $this->gameUsed = $gameUsed;
     }
 
     public function updateNote(string $note): void

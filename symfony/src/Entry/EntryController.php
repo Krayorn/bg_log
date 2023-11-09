@@ -69,6 +69,7 @@ class EntryController extends AbstractController
             $note,
             DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt),
             $players,
+            null
         );
 
         $entityManager->persist($entry);

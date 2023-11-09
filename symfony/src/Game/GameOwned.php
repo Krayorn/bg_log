@@ -7,9 +7,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
-#[ORM\Table(name: 'game')]
-#[ORM\Entity(repositoryClass: GameRepository::class)]
-class Game
+#[ORM\Table(name: 'game_owned')]
+#[ORM\Entity()]
+class GameOwned
 {
     #[ORM\Id]
     #[ORM\Column(type:"uuid", unique: true)]
@@ -19,8 +19,9 @@ class Game
         #[ORM\ManyToOne(targetEntity:Player::class)]
         #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: false)]
         private readonly Player $player,
-        #[ORM\Column(type:"string", unique: true)]
-        private readonly string $name,
+        #[ORM\ManyToOne(targetEntity:Game::class)]
+        #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id', nullable: false)]
+        private readonly Game $game,
         #[ORM\Column(type:"integer", nullable: true)]
         private readonly ?int $price = null,
     )
@@ -33,21 +34,11 @@ class Game
         return $this->id;
     }
 
-    public function getPlayer(): Player
-    {
-        return $this->player;
-    }
-
-    public function getPrice(): ?int
-    {
-        return $this->price;
-    }
-
     public function view(): array
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'game' => $this->game->view(),
             'price' => $this->price,
         ];
     }
