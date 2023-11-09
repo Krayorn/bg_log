@@ -13,7 +13,7 @@ class Game
 {
     #[ORM\Id]
     #[ORM\Column(type:"uuid", unique: true)]
-    public UuidInterface $id;
+    private UuidInterface $id;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity:Player::class)]

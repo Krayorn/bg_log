@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLocalStorage } from './hooks/useLocalStorage'
-
-function parseJwt (token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-}
+import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
 
 export default function Login() {
     const [error, setError] = useState('')
@@ -30,8 +20,6 @@ export default function Login() {
         if (response.status >= 400) {
             setError(data.error)
         } else {
-            console.log('data', data)
-
             const obj = parseJwt(data.token)
             setToken(data.token)
             navigate('/players/' + obj.id)

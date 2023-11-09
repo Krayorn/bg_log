@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import Home from './home/home.tsx'
+import Confirm from './invitation/confirm.tsx'
 import Login from './login.tsx'
 import './index.css'
 import '../dist/output.css'
@@ -16,6 +17,11 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Login />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/join/:inviteCode",
+    element: <Confirm />,
     errorElement: <ErrorPage />,
   },
   {
@@ -55,7 +61,7 @@ function ProtectedRoute() {
   </div>)
 }
 
-function ErrorPage() {
+function ErrorPage(e) {
   return (
     <main>
       This page does not exist.

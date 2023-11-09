@@ -15,13 +15,13 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
-    public UuidInterface $id;
+    private UuidInterface $id;
 
     #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
-    public ?DateTimeImmutable $registeredOn;
+    private ?DateTimeImmutable $registeredOn;
 
     #[ORM\Column(type: "string", nullable: true)]
-    public ?string $password;
+    private ?string $password;
 
     public function __construct(
         #[ORM\Column(type: "string", unique: true)]
@@ -69,12 +69,14 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->getName();
     }
 
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
+        $this->password = null;
     }
 
-    public function setPassword($hashedPassword): void
+    public function register(string $hashedPassword): void
     {
         $this->password = $hashedPassword;
+        $this->registeredOn = new DateTimeImmutable();
     }
 }

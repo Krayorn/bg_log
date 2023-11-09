@@ -2,41 +2,72 @@
 
 namespace App\Player;
 
+use App\Player\Invitation\Invitation;
+use App\Player\Invitation\InvitationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
-
 class PlayerController extends AbstractController
 {
-
-    #[Route('api/players/{player}/register', name: 'register')]
-    public function register(Player                      $player,
-                             Request                     $request,
-                             EntityManagerInterface $entityManager,
-                             UserPasswordHasherInterface $passwordHasher): Response
+    #[Route('api/players/{player}/invitations', name: 'create_invitation', methods: 'POST')]
+    public function createInvitation(Player $player, EntityManagerInterface $entityManager): Response
     {
+        $invitation = new Invitation($player);
+        $entityManager->persist($invitation);
+        $entityManager->flush();
+
+        return new JsonResponse($invitation->view(), Response::HTTP_OK);
+    }
+
+    #[Route('api/invitations/{invitationId}', methods: 'GET')]
+    public function getInvitation(
+        string $invitationId,
+        InvitationRepository $invitationRepository
+    ): Response
+    {
+        $invitation = $invitationRepository->find($invitationId);
+
+        return new JsonResponse(
+            $invitation->view(), Response::HTTP_OK);
+    }
+
+    #[Route('api/invitations/{invitationId}/validate', methods: 'POST')]
+    public function validateInvitation(
+        string $invitationId,
+        InvitationRepository $invitationRepository,
+        Request                     $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher
+
+    ): Response
+    {
+        $invitation = $invitationRepository->findOneBy(['id' => $invitationId, 'used' => false]);
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 
         $pwd = $body['password'];
+        $player = $invitation->getPlayer();
 
         $hashedPassword = $passwordHasher->hashPassword(
             $player,
             $pwd
         );
-        $player->setPassword($hashedPassword);
+
+        $player->register($hashedPassword);
+        $invitation->useInvitation();
 
         $entityManager->persist($player);
+
+
         $entityManager->flush();
 
-        return new Response(null);
+        return new JsonResponse(
+            $player->view(), Response::HTTP_OK);
     }
 
     #[Route('api/players/', name: 'get_players', methods: 'GET')]

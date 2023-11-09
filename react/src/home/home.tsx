@@ -30,8 +30,8 @@ function Home() {
                     </div>
                 </div>
                 <div className="text-gray-600 flex flex-col">
-                    <span>version 0.1.2</span>
-                    <span>released 2023-11-06</span>
+                    <span>version 0.1.3</span>
+                    <span>released 2023-11-09</span>
                 </div>
             </header>
 
@@ -90,24 +90,24 @@ interface Player {
 function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
     const [token, _] = useLocalStorage('jwt', null)
-        useEffect(() => {
-            async function getPlayer() {
-                const res = await fetch(`${host}/players/${playerId}`, { headers: { "Authorization": `Bearer ${token}`}})
-                const data = await res.json()
-        
-                if (!ignore) {
-                    setPlayerInfos(data)
-                }
-            }
-              
+    useEffect(() => {
+        async function getPlayer() {
+            const res = await fetch(`${host}/players/${playerId}`, { headers: { "Authorization": `Bearer ${token}`}})
+            const data = await res.json()
     
-            let ignore = false
-            getPlayer()
-    
-            return () => {
-                ignore = true;
+            if (!ignore) {
+                setPlayerInfos(data)
             }
-        }, [playerId])
+        }
+            
+
+        let ignore = false
+        getPlayer()
+
+        return () => {
+            ignore = true;
+        }
+    }, [playerId])
     
     return (
         <>
