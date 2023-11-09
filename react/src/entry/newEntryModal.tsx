@@ -9,6 +9,13 @@ const host = import.meta.env.VITE_API_HOST
 export default function NewEntryModal({ close, playerId }: {close: Function, playerId: string}) {
     const [playerGames, setPlayerGames] = useState([])
     const [playersList, setPlayersList] = useState([])
+    const [playersOwningGame, setPlayersOwningGame] = useState([])
+    
+    const [selectedGame, setSelectedGame] = useState('');
+
+    const handleSelectChange = (event) => {
+      setSelectedGame(event.target.value);
+    };
 
     const [token, _] = useLocalStorage('jwt', null)
     
@@ -22,7 +29,7 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
 
     useEffect(() => {
         async function getPlayerGames() {
-            const res = await fetch(`${host}/games?playerId=${playerId}`, { headers: { "Authorization": `Bearer ${token}`}})
+            const res = await fetch(`${host}/games`, { headers: { "Authorization": `Bearer ${token}`}})
             const data = await res.json()
     
             if (!ignore) {
@@ -48,6 +55,25 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
             ignore = true;
         }
     }, [playerId])
+
+    useEffect(() => {
+        async function getPlayersOwningGame() {
+            const res = await fetch(`${host}/games/${selectedGame}/owners`, { headers: { "Authorization": `Bearer ${token}`}})
+            const data = await res.json()
+    
+            if (!ignore) {
+                setPlayersOwningGame(data)
+            }
+        }
+
+
+        let ignore = false
+
+        if (selectedGame !== "") {
+            setPlayersOwningGame([])
+            getPlayersOwningGame()
+        }
+    }, [selectedGame])
     
     const handleFieldChange = (e, genId) => {
         setPlayers(players.map(player => {
@@ -98,12 +124,21 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
                     <h2 className="text-center text-xl mb-8" >Add an Entry</h2>
                     <form className="text-black flex flex-col" onSubmit={addEntry} >
                         <section className="flex flex-col" >
-                            <select className="mb-2" name="game" defaultValue="" >
+                            <select className="mb-2" name="game" value={selectedGame} onChange={handleSelectChange}>
                                 <option value="">Select the game</option>
                                 {playerGames.map(game => (
                                     <option value={game.id}> {game.name} </option>
                                     ))}
                             </select>
+                            {
+                                playersOwningGame.length > 0 && 
+                                <select className="mb-2" name="gameUsed" defaultValue="" >
+                                    <option value="">Select the Owner or keep here if none</option>
+                                    {playersOwningGame.map(playersOwningGame => (
+                                        <option value={playersOwningGame.id}> {playersOwningGame.player.name} </option>
+                                        ))}
+                                </select>
+                            }
                             <textarea className="mb-2" name="note" placeholder="Any note on the general game..." ></textarea>
                             <input className="mb-2" name="playedAt" type="datetime-local" ></input>
                         </section>

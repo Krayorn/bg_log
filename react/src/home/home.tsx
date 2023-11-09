@@ -203,7 +203,7 @@ interface GameStats {
     id: string
     count: number
     name: string
-    player_id: string
+    in_library: boolean
 }
 
 function GameStatistics({ playerId }: {playerId: string}) {
@@ -248,7 +248,7 @@ function GameStatistics({ playerId }: {playerId: string}) {
                         <div className="flex flex-col w-1/2" >
                             <h3>Least played Games (in library):</h3>
                             {
-                                gameStats.sort((a, b) => a.count - b.count).filter(a => a.player_id == playerId).slice(0, 5).map(game => {
+                                gameStats.sort((a, b) => a.count - b.count).filter(a => a.in_library).slice(0, 5).map(game => {
                                     return (
                                         <span key={game.id} className="truncate" >{game.count} - {game.name}</span>
                                     )

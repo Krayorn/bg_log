@@ -4,6 +4,7 @@ namespace App\Entry;
 
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\Game;
+use App\Game\GameOwnedRepository;
 use App\Game\GameRepository;
 use App\Player\Player;
 use App\Player\PlayerRepository;
@@ -36,18 +37,22 @@ class EntryController extends AbstractController
     public function create(Request                $request,
                            EntityManagerInterface $entityManager,
                            GameRepository         $gameRepository,
-                           PlayerRepository       $playerRepository): Response
+                           GameOwnedRepository         $gameOwnedRepository,
+                           PlayerRepository       $playerRepository
+    ): Response
     {
         $content = $request->getContent();
         $body = json_decode($content, true);
 
         $gameId = $body['game'];
+        $gameUsedId = $body['gameUsed'];
         $note = $body['note'];
         $playedAt = $body['playedAt'];
         $playersData = $body['players'] ?? [];
 
         /** @var ?Game $game */
         $game = $gameRepository->find($gameId);
+        $gameUsed = $gameOwnedRepository->find($gameUsedId);
 
         if ($game === null) {
             return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
@@ -69,7 +74,7 @@ class EntryController extends AbstractController
             $note,
             DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt),
             $players,
-            null
+            $gameUsed
         );
 
         $entityManager->persist($entry);

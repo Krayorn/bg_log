@@ -34,12 +34,23 @@ class GameOwned
         return $this->id;
     }
 
+    public function getGame(): Game
+    {
+        return $this->game;
+    }
+
+    public function getPlayer(): Player
+    {
+        return $this->player;
+    }
+
     public function view(): array
     {
         return [
             'id' => $this->id,
             'game' => $this->game->view(),
             'price' => $this->price,
+            'player' => $this->player->view(),
         ];
     }
 

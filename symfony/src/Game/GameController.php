@@ -55,47 +55,24 @@ class GameController extends AbstractController
 
 
     #[Route('api/games', methods: 'GET')]
-    public function getGames(Request $request, GameRepository $gameRepository, PlayerRepository $playerRepository): Response
+    public function getGames(GameRepository $gameRepository, PlayerRepository $playerRepository): Response
     {
-        $filters = [];
-
-        $playerId = $request->query->getAlnum('playerId');
-        if ($playerId !== '') {
-            $player = $playerRepository->find(Uuid::fromString($playerId));
-            $this->denyAccessUnlessGranted([], $player);
-
-            $filters['player'] = $player;
-        }
-
-
-        $games = $gameRepository->findBy($filters);
+        $games = $gameRepository->findAll();
 
         return new JsonResponse(array_map(fn($game): array => $game->view(), $games), Response::HTTP_CREATED);
+    }
+
+    #[Route('api/games/{game}/owners', methods: 'GET')]
+    public function getGamesOwners(Game $game, GameOwnedRepository $gameOwnedRepository): Response
+    {
+        $games = $gameOwnedRepository->findBy(['game' => $game]);
+
+        return new JsonResponse(array_map(fn($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_CREATED);
     }
 
     #[Route('api/players/{player}/games/stats', methods: 'GET')]
     public function gamesStats(Player $player, GameRepository $gameRepository): Response
     {
         return new JsonResponse($gameRepository->getStats($player), Response::HTTP_OK);
-    }
-
-    #[Route('api/games/{game}', methods: 'GET')]
-    public function game(Game $game, GameRepository $gameRepository): Response
-    {
-        return new JsonResponse($game->view(), Response::HTTP_OK);
-    }
-
-    #[Route('api/games/{game}/stats', methods: 'GET')]
-    public function gameStats(Game $game, GameRepository $gameRepository): Response
-    {
-        $count = $gameRepository->getGamePlayed($game);
-
-        return new JsonResponse([
-            'playerParticipation' => $gameRepository->getPlayerParticipation($game),
-            'game' => [
-                'count' => $count,
-                'pricePerGame' => $game->getPricePerGame($count),
-            ],
-        ], Response::HTTP_OK);
     }
 }

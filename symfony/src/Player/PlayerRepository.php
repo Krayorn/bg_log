@@ -22,7 +22,7 @@ class PlayerRepository extends ServiceEntityRepository
         $sql = '
             WITH games AS (
                 SELECT count(*) totalGames
-                FROM game
+                FROM game_owned
                 WHERE player_id = :playerId
             ), playerStats AS (
                 SELECT *
