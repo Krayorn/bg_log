@@ -71,7 +71,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
-        $this->password = null;
+        // $this->password = null; never called ?
     }
 
     public function register(string $hashedPassword): void

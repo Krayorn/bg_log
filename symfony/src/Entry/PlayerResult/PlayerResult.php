@@ -23,7 +23,7 @@ class PlayerResult
         #[ORM\ManyToOne(targetEntity:Player::class)]
         #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id')]
         private readonly Player   $player,
-        #[ORM\Column(type:'string')]
+        #[ORM\Column(type:'text')]
         private string $note = '',
         #[ORM\Column(type: 'boolean', nullable: true)]
         private ?bool $won = null,

@@ -29,7 +29,7 @@ class Entry
         #[ORM\ManyToOne(targetEntity:Game::class)]
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id')]
         private readonly Game   $game,
-        #[ORM\Column(type:'string')]
+        #[ORM\Column(type:'text')]
         private string $note,
         #[ORM\Column(type:'datetimetz_immutable')]
         private readonly DateTimeImmutable $playedAt,
