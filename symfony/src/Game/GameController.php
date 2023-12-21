@@ -15,23 +15,19 @@ use Symfony\Component\Routing\Annotation\Route;
 class GameController extends AbstractController
 {
     #[Route('api/players/{player}/games', methods: 'POST')]
-    public function create(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+    public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
     {
         $content = $request->getContent();
         $body = json_decode($content, true);
 
-        $name = $body['name'];
+        $gameId = $body['gameId'];
         $price = $body['price'] ?? null;
 
         $errors = [];
 
-        if ($name === '') {
-            $errors[] = 'Name can\'t be empty';
-        }
-
-        $gameWithSameName = $gameRepository->findOneBy(['name' => $name]);
-        if($gameWithSameName !== null) {
-            $errors[] = 'Already a game with the same name';
+        $game = $gameRepository->find($gameId);
+        if($game === null) {
+            $errors[] = 'No game found with this ID';
         }
 
         if ($price !== null) {
@@ -45,14 +41,45 @@ class GameController extends AbstractController
             return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
         }
 
-        $game = new Game($player, $name, $price);
+        $gameOwned = new GameOwned($player, $game, $price);
+
+        $entityManager->persist($gameOwned);
+        $entityManager->flush();
+
+        return new JsonResponse($gameOwned->view(), Response::HTTP_CREATED);
+    }
+
+
+    #[Route('api/games', methods: 'POST')]
+    public function create(Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+    {
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+
+        $name = $body['name'];
+
+        $errors = [];
+
+        if ($name === '') {
+            $errors[] = 'Name can\'t be empty';
+        }
+
+        $gameWithSameName = $gameRepository->findOneBy(['name' => $name]);
+        if($gameWithSameName !== null) {
+            $errors[] = 'Already a game with the same name';
+        }
+
+        if (count($errors) > 0) {
+            return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+        }
+
+        $game = new Game($name);
 
         $entityManager->persist($game);
         $entityManager->flush();
 
         return new JsonResponse($game->view(), Response::HTTP_CREATED);
     }
-
 
     #[Route('api/games', methods: 'GET')]
     public function getGames(GameRepository $gameRepository, PlayerRepository $playerRepository): Response
