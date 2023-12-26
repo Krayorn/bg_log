@@ -66,7 +66,6 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
             }
         }
 
-
         let ignore = false
 
         if (selectedGame !== "") {
@@ -82,6 +81,27 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
             }
             return player
         }))
+    }
+    
+    const addPlayerGuest = async (e) => {
+        e.preventDefault();
+        console.log(e)
+        const formData = new FormData(e.target);
+        const formJson = Object.fromEntries(formData.entries())
+
+        const response = await fetch(`${host}/players`, 
+            { 
+                method: "POST", 
+                headers: { "Authorization": `Bearer ${token}`},
+                body: JSON.stringify(formJson)
+            })
+
+        const data = await response.json()
+        if (response.status === 400) {
+            setErrors(data.errors)
+        } else {
+            console.log(data)
+        }
     }
 
     const addEntry = async (e) => {
@@ -181,6 +201,11 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
                             </button>
                         </div>
                         <button className="rounded-xl border-2 border-[#536878] mt-6 p-2 self-center text-white" >Submit</button>
+                    </form>
+                    <form name="registerPlayer" className="w-1/6 my-1 mx-1 h-64 border-dashed border-2 rounded border-white flex items-center justify-center flex-col text-black" onSubmit={addPlayerGuest}>       
+                            <input className="w-5/6" name="name" type="text" placeholder="player name"></input>
+
+                            <button className="rounded-xl border-2 border-[#536878] mt-6 p-2 self-center text-white">Register a new guest player</button>
                     </form>
                     {
                         errors.length > 0 &&

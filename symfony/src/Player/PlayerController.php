@@ -80,6 +80,36 @@ class PlayerController extends AbstractController
             , Response::HTTP_OK);
     }
 
+    #[Route('api/players', methods: 'POST')]
+    public function createPlayer(Request $request, PlayerRepository $playerRepository, EntityManagerInterface $entityManager): Response
+    {
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+
+        $name = $body['name'] ?? "";
+        if ($name === "") {
+            return new JsonResponse(['errors' => ['Player Name cannot be empty']], Response::HTTP_BAD_REQUEST);
+        }
+
+        $errors = [];
+
+        $playerWithSameName = $playerRepository->findOneBy(['name' => $name]);
+        if($playerWithSameName !== null) {
+            $errors[] = 'Already a game with the same name';
+        }
+
+        if (count($errors) > 0) {
+            return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $player = new Player($name, $playerRepository->findNextNumber());
+
+        $entityManager->persist($player);
+        $entityManager->flush();
+
+        return new JsonResponse($player->view(), Response::HTTP_OK);
+    }
+
     #[Route('api/players/{player}', name: 'get_player', methods: 'GET')]
     public function player(Player $player): Response
     {
