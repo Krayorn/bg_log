@@ -87,7 +87,7 @@ class Entry
             'note' => $this->note,
             'playedAt' => $this->playedAt,
             'players' => array_map(fn($playerResult) => $playerResult->view(), $this->playerResults->toArray()),
-            'gameUsed' => $this->gameUsed->view(),
+            'gameUsed' => $this->gameUsed ? $this->gameUsed->view() : null,
         ];
     }
 }
