@@ -95,7 +95,7 @@ class PlayerController extends AbstractController
 
         $playerWithSameName = $playerRepository->findOneBy(['name' => $name]);
         if($playerWithSameName !== null) {
-            $errors[] = 'Already a game with the same name';
+            $errors[] = 'Already a player with the same name';
         }
 
         if (count($errors) > 0) {

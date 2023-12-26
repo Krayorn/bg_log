@@ -45,14 +45,14 @@ class EntryController extends AbstractController
         $body = json_decode($content, true);
 
         $gameId = $body['game'];
-        $gameUsedId = $body['gameUsed'];
+        $gameUsedId = $body['gameUsed'] ?? null;
         $note = $body['note'];
         $playedAt = $body['playedAt'];
         $playersData = $body['players'] ?? [];
 
         /** @var ?Game $game */
         $game = $gameRepository->find($gameId);
-        $gameUsed = $gameOwnedRepository->find($gameUsedId);
+        $gameUsed = $gameUsedId ? $gameOwnedRepository->find($gameUsedId) : null;
 
         if ($game === null) {
             return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
