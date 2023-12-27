@@ -4,6 +4,7 @@ namespace App\Game;
 
 use App\Player\Player;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -16,6 +17,9 @@ class GameRepository extends ServiceEntityRepository
         parent::__construct($registry, Game::class);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getStats(Player $player): array
     {
         $conn = $this->getEntityManager()->getConnection();

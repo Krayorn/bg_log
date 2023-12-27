@@ -2,33 +2,23 @@
 
 namespace App\EventListener;
 
+use App\Player\Player;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class JWTCreatedListener {
     /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * @param RequestStack $requestStack
-     */
-    public function __construct(RequestStack $requestStack)
-    {
-        $this->requestStack = $requestStack;
-    }
-
-    /**
      * @param JWTCreatedEvent $event
      *
      * @return void
      */
-    public function onJWTCreated(JWTCreatedEvent $event)
+    public function onJWTCreated(JWTCreatedEvent $event): void
     {
-        $request = $this->requestStack->getCurrentRequest();
         $payload       = $event->getData();
-        $payload['id'] = $event->getUser()->getId();
+
+        /** @var Player $user */
+        $user = $event->getUser();
+        $payload['id'] = $user->getId();
 
         $event->setData($payload);
     }

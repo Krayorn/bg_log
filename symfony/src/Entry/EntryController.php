@@ -22,13 +22,10 @@ class EntryController extends AbstractController
 {
     #[Route('api/entries', name: 'list_entries', methods: 'GET')]
     public function list(
-        Request $request,
         EntryRepository $entryRepository,
     ): Response
     {
-        $gameId = $request->query->getAlnum('gameId');
-
-        $entries = $entryRepository->query($gameId === '' ? null : $gameId);
+        $entries = $entryRepository->findAll();
 
         return new JsonResponse(array_map(fn($entry) => $entry->view(), $entries), Response::HTTP_OK);
     }
@@ -52,7 +49,7 @@ class EntryController extends AbstractController
 
         /** @var ?Game $game */
         $game = $gameRepository->find($gameId);
-        $gameUsed = $gameUsedId ? $gameOwnedRepository->find($gameUsedId) : null;
+        $gameUsed = $gameUsedId !== null ? $gameOwnedRepository->find($gameUsedId) : null;
 
         if ($game === null) {
             return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
@@ -65,14 +62,24 @@ class EntryController extends AbstractController
             $playerNote = $playerData['note'] ?? '';
             $playerWon = $playerData['won'] ?? null;
 
+            /** @var ?Player $player */
             $player = $playerRepository->find($playerId);
+            if ($player === null) {
+                return new JsonResponse(['errors' => ['Player not found']], Response::HTTP_BAD_REQUEST);
+            }
+
             $players[] = ['player' => $player, 'note' => $playerNote, 'won' => $playerWon];
+        }
+
+        $date = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt);
+        if ($date === false) {
+            return new JsonResponse(['errors' => ['Wrong date format']], Response::HTTP_BAD_REQUEST);
         }
 
         $entry = new Entry(
             $game,
             $note,
-            DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt),
+            $date,
             $players,
             $gameUsed
         );

@@ -29,6 +29,9 @@ class Game
     }
 
 
+    /**
+     * @return array{id: UuidInterface, name: string}
+     */
     public function view(): array
     {
         return [

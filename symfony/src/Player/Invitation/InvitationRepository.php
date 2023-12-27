@@ -5,6 +5,9 @@ namespace App\Player\Invitation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Invitation>
+ */
 class InvitationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

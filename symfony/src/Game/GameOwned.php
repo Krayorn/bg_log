@@ -44,6 +44,9 @@ class GameOwned
         return $this->player;
     }
 
+    /**
+     * @return array{id: UuidInterface, game: array<string, mixed>, price: int|null, player: array<string, mixed>}
+     */
     public function view(): array
     {
         return [

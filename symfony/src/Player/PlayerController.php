@@ -2,6 +2,7 @@
 
 namespace App\Player;
 
+use _PHPStan_39fe102d2\Nette\Utils\Json;
 use App\Player\Invitation\Invitation;
 use App\Player\Invitation\InvitationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,7 +30,12 @@ class PlayerController extends AbstractController
         InvitationRepository $invitationRepository
     ): Response
     {
+        /** @var ?Invitation $invitation */
         $invitation = $invitationRepository->find($invitationId);
+
+        if ($invitation === null) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        }
 
         return new JsonResponse(
             $invitation->view(), Response::HTTP_OK);
@@ -45,7 +51,12 @@ class PlayerController extends AbstractController
 
     ): Response
     {
+        /** @var ?Invitation $invitation */
         $invitation = $invitationRepository->findOneBy(['id' => $invitationId, 'used' => false]);
+
+        if ($invitation === null) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        }
 
         $content = $request->getContent();
         $body = json_decode($content, true);

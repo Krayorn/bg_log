@@ -4,6 +4,7 @@ namespace App\Player;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use JetBrains\PhpStorm\ArrayShape;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -49,6 +50,9 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->name;
     }
 
+    /**
+     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null}
+     */
     public function view(): array
     {
         return [

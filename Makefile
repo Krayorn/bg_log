@@ -11,3 +11,7 @@ down:
 
 symfony:
 	docker exec -it bglog-symfony-1 bash
+
+.PHONY: phpstan
+phpstan:
+	docker exec -it bglog-symfony-1 vendor/bin/phpstan analyse

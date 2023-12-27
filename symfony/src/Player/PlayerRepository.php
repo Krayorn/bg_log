@@ -2,7 +2,9 @@
 
 namespace App\Player;
 
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -15,6 +17,9 @@ class PlayerRepository extends ServiceEntityRepository
         parent::__construct($registry, Player::class);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getGeneralStats(Player $player): array
     {
         $conn = $this->getEntityManager()->getConnection();
@@ -51,9 +56,12 @@ class PlayerRepository extends ServiceEntityRepository
         $conn->prepare($sql);
         $result = $conn->executeQuery($sql, ['playerId' => $player->getId()]);
 
-        return $result->fetchAssociative();
+        return $result->fetchAllAssociative()[0];
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getFriendsStats(Player $player): array
     {
         $conn = $this->getEntityManager()->getConnection();

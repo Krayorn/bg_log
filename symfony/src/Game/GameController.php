@@ -40,7 +40,7 @@ class GameController extends AbstractController
         if (count($errors) > 0) {
             return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
         }
-
+        /** @var Game $game */
         $gameOwned = new GameOwned($player, $game, $price);
 
         $entityManager->persist($gameOwned);
@@ -92,6 +92,7 @@ class GameController extends AbstractController
     #[Route('api/games/{game}/owners', methods: 'GET')]
     public function getGamesOwners(Game $game, GameOwnedRepository $gameOwnedRepository): Response
     {
+        /** @var array<GameOwned> $games */
         $games = $gameOwnedRepository->findBy(['game' => $game]);
 
         return new JsonResponse(array_map(fn($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_CREATED);

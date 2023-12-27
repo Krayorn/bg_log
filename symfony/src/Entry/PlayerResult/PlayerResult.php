@@ -32,21 +32,11 @@ class PlayerResult
         $this->id = Uuid::uuid4();
     }
 
-    public function getPlayer(): Player
-    {
-        return $this->player;
-    }
 
-    public function updateNote(string $note): void
-    {
-        $this->note = $note;
-    }
 
-    public function updateWon(bool $won): void
-    {
-        $this->won = $won;
-    }
-
+    /**
+     * @return array{id: UuidInterface, player: array<string, mixed>, note: string, won: bool|null}
+     */
     public function view(): array
     {
         return [

@@ -42,6 +42,9 @@ class Invitation
         return $this->player;
     }
 
+    /**
+        * @return array{id: UuidInterface, player: array<string, mixed>}
+     */
     public function view(): array
     {
         return [
