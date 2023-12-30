@@ -12,18 +12,17 @@ use Ramsey\Uuid\UuidInterface;
 class Invitation
 {
     #[ORM\Id]
-    #[ORM\Column(type:"uuid", unique: true)]
+    #[ORM\Column(type: 'uuid', unique: true)]
     private UuidInterface $id;
 
     #[ORM\Column(type: 'boolean', nullable: false)]
     private bool $used;
 
     public function __construct(
-        #[ORM\ManyToOne(targetEntity: Player::class,)]
+        #[ORM\ManyToOne(targetEntity: Player::class, )]
         #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: false)]
         private readonly Player $player
-    )
-    {
+    ) {
         $this->id = Uuid::uuid4();
         $this->used = false;
     }
@@ -33,7 +32,8 @@ class Invitation
         return $this->id;
     }
 
-    public function useInvitation(): void {
+    public function useInvitation(): void
+    {
         $this->used = true;
     }
 
@@ -43,7 +43,7 @@ class Invitation
     }
 
     /**
-        * @return array{id: UuidInterface, player: array<string, mixed>}
+     * @return array{id: UuidInterface, player: array<string, mixed>}
      */
     public function view(): array
     {

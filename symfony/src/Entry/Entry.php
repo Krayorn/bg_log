@@ -10,7 +10,6 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Exception;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -19,7 +18,7 @@ use Ramsey\Uuid\UuidInterface;
 class Entry
 {
     #[ORM\Id]
-    #[ORM\Column(type:"uuid", unique: true)]
+    #[ORM\Column(type: 'uuid', unique: true)]
     public UuidInterface $id;
 
     /**
@@ -32,19 +31,18 @@ class Entry
      * @param array<array{player: Player, note: string, won: boolean}> $players
      */
     public function __construct(
-        #[ORM\ManyToOne(targetEntity:Game::class)]
+        #[ORM\ManyToOne(targetEntity: Game::class)]
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id')]
         private readonly Game              $game,
-        #[ORM\Column(type:'text')]
+        #[ORM\Column(type: 'text')]
         private readonly string            $note,
-        #[ORM\Column(type:'datetimetz_immutable')]
+        #[ORM\Column(type: 'datetimetz_immutable')]
         private readonly DateTimeImmutable $playedAt,
         array                              $players,
-        #[ORM\ManyToOne(targetEntity:GameOwned::class)]
+        #[ORM\ManyToOne(targetEntity: GameOwned::class)]
         #[ORM\JoinColumn(name: 'game_owned_id', referencedColumnName: 'id', nullable: true)]
         private readonly ?GameOwned        $gameUsed,
-        )
-    {
+    ) {
         $this->id = Uuid::uuid4();
 
         $this->playerResults = new ArrayCollection();
@@ -63,7 +61,7 @@ class Entry
             'game' => $this->game->view(),
             'note' => $this->note,
             'playedAt' => $this->playedAt,
-            'players' => array_map(fn($playerResult) => $playerResult->view(), $this->playerResults->toArray()),
+            'players' => array_map(fn ($playerResult) => $playerResult->view(), $this->playerResults->toArray()),
             'gameUsed' => $this->gameUsed?->view(),
         ];
     }

@@ -2,7 +2,6 @@
 
 namespace App\Entry;
 
-use App\Entry\PlayerResult\PlayerResult;
 use App\Game\Game;
 use App\Game\GameOwnedRepository;
 use App\Game\GameRepository;
@@ -12,7 +11,6 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,21 +21,20 @@ class EntryController extends AbstractController
     #[Route('api/entries', name: 'list_entries', methods: 'GET')]
     public function list(
         EntryRepository $entryRepository,
-    ): Response
-    {
+    ): Response {
         $entries = $entryRepository->findAll();
 
-        return new JsonResponse(array_map(fn($entry) => $entry->view(), $entries), Response::HTTP_OK);
+        return new JsonResponse(array_map(fn ($entry) => $entry->view(), $entries), Response::HTTP_OK);
     }
 
     #[Route('api/entries', name: 'create_entry', methods: 'POST')]
-    public function create(Request                $request,
-                           EntityManagerInterface $entityManager,
-                           GameRepository         $gameRepository,
-                           GameOwnedRepository         $gameOwnedRepository,
-                           PlayerRepository       $playerRepository
-    ): Response
-    {
+    public function create(
+        Request                $request,
+        EntityManagerInterface $entityManager,
+        GameRepository         $gameRepository,
+        GameOwnedRepository         $gameOwnedRepository,
+        PlayerRepository       $playerRepository
+    ): Response {
         $content = $request->getContent();
         $body = json_decode($content, true);
 
@@ -52,7 +49,9 @@ class EntryController extends AbstractController
         $gameUsed = $gameUsedId !== null ? $gameOwnedRepository->find($gameUsedId) : null;
 
         if ($game === null) {
-            return new JsonResponse(['errors' => ['No game exists with this name']], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse([
+                'errors' => ['No game exists with this name'],
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         $players = [];
@@ -65,15 +64,23 @@ class EntryController extends AbstractController
             /** @var ?Player $player */
             $player = $playerRepository->find($playerId);
             if ($player === null) {
-                return new JsonResponse(['errors' => ['Player not found']], Response::HTTP_BAD_REQUEST);
+                return new JsonResponse([
+                    'errors' => ['Player not found'],
+                ], Response::HTTP_BAD_REQUEST);
             }
 
-            $players[] = ['player' => $player, 'note' => $playerNote, 'won' => $playerWon];
+            $players[] = [
+                'player' => $player,
+                'note' => $playerNote,
+                'won' => $playerWon,
+            ];
         }
 
         $date = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt);
         if ($date === false) {
-            return new JsonResponse(['errors' => ['Wrong date format']], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse([
+                'errors' => ['Wrong date format'],
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         $entry = new Entry(

@@ -2,7 +2,6 @@
 
 namespace App\Game;
 
-use App\Player\Player;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -12,14 +11,13 @@ use Ramsey\Uuid\UuidInterface;
 class Game
 {
     #[ORM\Id]
-    #[ORM\Column(type:"uuid", unique: true)]
+    #[ORM\Column(type: 'uuid', unique: true)]
     private UuidInterface $id;
 
     public function __construct(
-        #[ORM\Column(type:"string", unique: true)]
+        #[ORM\Column(type: 'string', unique: true)]
         private readonly string $name,
-    )
-    {
+    ) {
         $this->id = Uuid::uuid4();
     }
 
@@ -27,7 +25,6 @@ class Game
     {
         return $this->id;
     }
-
 
     /**
      * @return array{id: UuidInterface, name: string}

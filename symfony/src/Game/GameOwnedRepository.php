@@ -14,5 +14,4 @@ class GameOwnedRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, GameOwned::class);
     }
-
 }

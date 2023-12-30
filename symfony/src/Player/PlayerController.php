@@ -2,7 +2,6 @@
 
 namespace App\Player;
 
-use _PHPStan_39fe102d2\Nette\Utils\Json;
 use App\Player\Invitation\Invitation;
 use App\Player\Invitation\InvitationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+
 class PlayerController extends AbstractController
 {
     #[Route('api/players/{player}/invitations', name: 'create_invitation', methods: 'POST')]
@@ -28,8 +28,7 @@ class PlayerController extends AbstractController
     public function getInvitation(
         string $invitationId,
         InvitationRepository $invitationRepository
-    ): Response
-    {
+    ): Response {
         /** @var ?Invitation $invitation */
         $invitation = $invitationRepository->find($invitationId);
 
@@ -38,7 +37,9 @@ class PlayerController extends AbstractController
         }
 
         return new JsonResponse(
-            $invitation->view(), Response::HTTP_OK);
+            $invitation->view(),
+            Response::HTTP_OK
+        );
     }
 
     #[Route('api/invitations/{invitationId}/validate', methods: 'POST')]
@@ -48,11 +49,12 @@ class PlayerController extends AbstractController
         Request                     $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher
-
-    ): Response
-    {
+    ): Response {
         /** @var ?Invitation $invitation */
-        $invitation = $invitationRepository->findOneBy(['id' => $invitationId, 'used' => false]);
+        $invitation = $invitationRepository->findOneBy([
+            'id' => $invitationId,
+            'used' => false,
+        ]);
 
         if ($invitation === null) {
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
@@ -74,11 +76,12 @@ class PlayerController extends AbstractController
 
         $entityManager->persist($player);
 
-
         $entityManager->flush();
 
         return new JsonResponse(
-            $player->view(), Response::HTTP_OK);
+            $player->view(),
+            Response::HTTP_OK
+        );
     }
 
     #[Route('api/players/', name: 'get_players', methods: 'GET')]
@@ -87,8 +90,9 @@ class PlayerController extends AbstractController
         $players = $playerRepository->findAll();
 
         return new JsonResponse(
-            array_map(fn($player): array => $player->view(), $players)
-            , Response::HTTP_OK);
+            array_map(fn ($player): array => $player->view(), $players),
+            Response::HTTP_OK
+        );
     }
 
     #[Route('api/players', methods: 'POST')]
@@ -97,22 +101,28 @@ class PlayerController extends AbstractController
         $content = $request->getContent();
         $body = json_decode($content, true);
 
-        $name = $body['name'] ?? "";
-        if ($name === "") {
-            return new JsonResponse(['errors' => ['Player Name cannot be empty']], Response::HTTP_BAD_REQUEST);
+        $name = $body['name'] ?? '';
+        if ($name === '') {
+            return new JsonResponse([
+                'errors' => ['Player Name cannot be empty'],
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         $errors = [];
 
-        $playerWithSameName = $playerRepository->findOneBy(['name' => $name]);
-        if($playerWithSameName !== null) {
+        $playerWithSameName = $playerRepository->findOneBy([
+            'name' => $name,
+        ]);
+        if ($playerWithSameName !== null) {
             $errors[] = 'Already a player with the same name';
         }
 
         if (count($errors) > 0) {
-            return new JsonResponse(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse([
+                'errors' => $errors,
+            ], Response::HTTP_BAD_REQUEST);
         }
-        
+
         $player = new Player($name, $playerRepository->findNextNumber());
 
         $entityManager->persist($player);
@@ -125,8 +135,9 @@ class PlayerController extends AbstractController
     public function player(Player $player): Response
     {
         return new JsonResponse(
-            $player->view()
-            , Response::HTTP_OK);
+            $player->view(),
+            Response::HTTP_OK
+        );
     }
 
     #[Route('api/players/{player}/stats', name: 'stats_player', methods: 'GET')]
@@ -140,8 +151,9 @@ class PlayerController extends AbstractController
                 'gamePartners' => $stats['game_partners'],
                 'globalWinrate' => $stats['global_winrate'],
                 'lastGameDate' => $stats['last_game_date'],
-            ]
-            , Response::HTTP_OK);
+            ],
+            Response::HTTP_OK
+        );
     }
 
     #[Route('api/players/{player}/friends/stats', name: 'stats_friends_player', methods: 'GET')]
@@ -149,7 +161,8 @@ class PlayerController extends AbstractController
     {
         $stats = $playerRepository->getFriendsStats($player);
         return new JsonResponse(
-            $stats
-            , Response::HTTP_OK);
+            $stats,
+            Response::HTTP_OK
+        );
     }
 }

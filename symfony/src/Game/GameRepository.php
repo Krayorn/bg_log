@@ -4,7 +4,6 @@ namespace App\Game;
 
 use App\Player\Player;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -34,7 +33,9 @@ class GameRepository extends ServiceEntityRepository
             GROUP BY g.name, g.id, go.player_id ORDER BY count DESC;';
 
         $conn->prepare($sql);
-        $result = $conn->executeQuery($sql, ['playerId' => $player->getId()]);
+        $result = $conn->executeQuery($sql, [
+            'playerId' => $player->getId(),
+        ]);
 
         return $result->fetchAllAssociative();
     }

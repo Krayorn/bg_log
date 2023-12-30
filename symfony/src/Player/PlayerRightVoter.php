@@ -11,11 +11,11 @@ class PlayerRightVoter implements VoterInterface
     {
         $user = $token->getUser();
 
-        if (!$user instanceof Player) {
+        if (! $user instanceof Player) {
             return self::ACCESS_DENIED;
         }
 
-        if (!$subject instanceof Player) {
+        if (! $subject instanceof Player) {
             return self::ACCESS_ABSTAIN;
         }
 
@@ -25,5 +25,4 @@ class PlayerRightVoter implements VoterInterface
 
         return self::ACCESS_DENIED;
     }
-
 }

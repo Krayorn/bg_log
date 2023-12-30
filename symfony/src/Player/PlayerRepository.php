@@ -2,9 +2,7 @@
 
 namespace App\Player;
 
-use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -54,7 +52,9 @@ class PlayerRepository extends ServiceEntityRepository
             ;';
 
         $conn->prepare($sql);
-        $result = $conn->executeQuery($sql, ['playerId' => $player->getId()]);
+        $result = $conn->executeQuery($sql, [
+            'playerId' => $player->getId(),
+        ]);
 
         return $result->fetchAllAssociative()[0];
     }
@@ -81,7 +81,9 @@ class PlayerRepository extends ServiceEntityRepository
             ;';
 
         $conn->prepare($sql);
-        $result = $conn->executeQuery($sql, ['playerId' => $player->getId()]);
+        $result = $conn->executeQuery($sql, [
+            'playerId' => $player->getId(),
+        ]);
 
         return $result->fetchAllAssociative();
     }
@@ -99,5 +101,4 @@ class PlayerRepository extends ServiceEntityRepository
 
         return $result->fetchOne() + 1;
     }
-
 }

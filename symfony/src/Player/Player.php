@@ -4,7 +4,6 @@ namespace App\Player;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use JetBrains\PhpStorm\ArrayShape;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -21,16 +20,15 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
     private ?DateTimeImmutable $registeredOn;
 
-    #[ORM\Column(type: "string", nullable: true)]
+    #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password;
 
     public function __construct(
-        #[ORM\Column(type: "string", unique: true)]
+        #[ORM\Column(type: 'string', unique: true)]
         private readonly string $name,
         #[ORM\Column(type: 'integer', unique: true)]
         private readonly int $number,
-    )
-    {
+    ) {
         $this->id = Uuid::uuid4();
         $this->registeredOn = null;
     }
