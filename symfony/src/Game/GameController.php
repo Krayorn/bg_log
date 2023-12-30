@@ -33,10 +33,10 @@ class GameController extends AbstractController
             if (! is_numeric($price)) {
                 $errors[] = 'Price must be a correct int or must not be provided';
             }
-            $price = intval($price);
+            $price = (int) $price;
         }
 
-        if (count($errors) > 0) {
+        if ($errors !== []) {
             return new JsonResponse([
                 'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);
@@ -71,7 +71,7 @@ class GameController extends AbstractController
             $errors[] = 'Already a game with the same name';
         }
 
-        if (count($errors) > 0) {
+        if ($errors !== []) {
             return new JsonResponse([
                 'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);

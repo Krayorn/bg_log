@@ -12,6 +12,8 @@ down:
 symfony:
 	docker exec -it bglog-symfony-1 bash
 
-.PHONY: phpstan
-phpstan:
+.PHONY: pre-commit
+pre-commit:
+	docker exec -it bglog-symfony-1 vendor/bin/rector
+	docker exec -it bglog-symfony-1 vendor/bin/ecs --fix
 	docker exec -it bglog-symfony-1 vendor/bin/phpstan analyse

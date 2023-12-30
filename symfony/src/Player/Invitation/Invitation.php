@@ -16,7 +16,7 @@ class Invitation
     private UuidInterface $id;
 
     #[ORM\Column(type: 'boolean', nullable: false)]
-    private bool $used;
+    private bool $used = false;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Player::class, )]
@@ -24,7 +24,6 @@ class Invitation
         private readonly Player $player
     ) {
         $this->id = Uuid::uuid4();
-        $this->used = false;
     }
 
     public function getId(): UuidInterface

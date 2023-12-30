@@ -117,7 +117,7 @@ class PlayerController extends AbstractController
             $errors[] = 'Already a player with the same name';
         }
 
-        if (count($errors) > 0) {
+        if ($errors !== []) {
             return new JsonResponse([
                 'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);

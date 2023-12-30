@@ -18,10 +18,10 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     private UuidInterface $id;
 
     #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
-    private ?DateTimeImmutable $registeredOn;
+    private ?DateTimeImmutable $registeredOn = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $password;
+    private ?string $password = null;
 
     public function __construct(
         #[ORM\Column(type: 'string', unique: true)]
@@ -30,7 +30,6 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         private readonly int $number,
     ) {
         $this->id = Uuid::uuid4();
-        $this->registeredOn = null;
     }
 
     public function getId(): UuidInterface
