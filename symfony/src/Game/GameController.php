@@ -90,7 +90,13 @@ class GameController extends AbstractController
     {
         $games = $gameRepository->findAll();
 
-        return new JsonResponse(array_map(fn ($game): array => $game->view(), $games), Response::HTTP_CREATED);
+        return new JsonResponse(array_map(fn ($game): array => $game->view(), $games), Response::HTTP_OK);
+    }
+
+    #[Route('api/games/{game}', methods: 'GET')]
+    public function getGame(Game $game): Response
+    {
+        return new JsonResponse($game->view(), Response::HTTP_OK);
     }
 
     #[Route('api/games/{game}/owners', methods: 'GET')]

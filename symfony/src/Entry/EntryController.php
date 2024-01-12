@@ -21,8 +21,18 @@ class EntryController extends AbstractController
     #[Route('api/entries', name: 'list_entries', methods: 'GET')]
     public function list(
         EntryRepository $entryRepository,
+        Request $request,
+        GameRepository $gameRepository,
+        PlayerRepository $playerRepository,
     ): Response {
-        $entries = $entryRepository->findAll();
+
+        $gameId = $request->query->get('game');
+        $game = $gameRepository->find($gameId);
+
+        $playerId = $request->query->get('player');
+        $player = $playerRepository->find($playerId);
+
+        $entries = $entryRepository->list($game, $player);
 
         return new JsonResponse(array_map(fn ($entry) => $entry->view(), $entries), Response::HTTP_OK);
     }

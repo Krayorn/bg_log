@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import Home from './home/home.tsx'
+import Game from './game/game.tsx'
 import Confirm from './invitation/confirm.tsx'
 import Login from './login.tsx'
 import './index.css'
@@ -32,6 +33,17 @@ const router = createBrowserRouter([
       {
         path: "/players/:playerId",
         element: <Home />,
+      }   
+    ]
+  },
+  {
+    path: "/games",
+    element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        path: "/games/:gameId",
+        element: <Game />,
       }   
     ]
   },
