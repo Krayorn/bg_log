@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom"
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useRequest } from '../hooks/useRequest'
 import NewEntryModal from "../entry/newEntryModal"
 import NewGameModal from "../game/newGameModal"
 
@@ -97,25 +98,8 @@ interface Player {
 
 function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
-    const [token, _] = useLocalStorage('jwt', null)
-    useEffect(() => {
-        async function getPlayer() {
-            const res = await fetch(`${host}/players/${playerId}`, { headers: { "Authorization": `Bearer ${token}`}})
-            const data = await res.json()
     
-            if (!ignore) {
-                setPlayerInfos(data)
-            }
-        }
-            
-
-        let ignore = false
-        getPlayer()
-
-        return () => {
-            ignore = true;
-        }
-    }, [playerId])
+    useRequest(`/players/${playerId}`, [playerId], setPlayerInfos)
     
     return (
         <>
@@ -161,26 +145,8 @@ interface GeneralStatistics {
 
 function GeneralStatistics({ playerId }: {playerId: string}) {
     const [generalStats, setGeneralStats] = useState<GeneralStatistics|null>(null)
-    const [token, _] = useLocalStorage('jwt', null)
-        useEffect(() => {
-            async function getGeneralStats() {
-                const res = await fetch(`${host}/players/${playerId}/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
-                const data = await res.json()
-        
-                if (!ignore) {
-                    setGeneralStats(data)
-                }
-            }
-              
     
-            let ignore = false
-            getGeneralStats()
-    
-            return () => {
-                ignore = true;
-            }
-        }, [playerId])
-    
+    useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
 
     const dateNow = new Date()
     const lastGameDate = new Date(generalStats?.lastGameDate ?? '')
@@ -216,26 +182,8 @@ interface GameStats {
 
 function GameStatistics({ playerId }: {playerId: string}) {
     const [gameStats, setGameStats] = useState<GameStats[]>([])
-    const [token, _] = useLocalStorage('jwt', null)
-        useEffect(() => {
-            async function getGameStats() {
-                const res = await fetch(`${host}/players/${playerId}/games/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
-                const data = await res.json()
-        
-                if (!ignore) {
-                    setGameStats(data)
-                }
-            }
-              
     
-            let ignore = false
-            getGameStats()
-    
-            return () => {
-                ignore = true;
-            }
-        }, [playerId])
-    
+    useRequest(`/players/${playerId}/games/stats`, [playerId], setGameStats)
 
     return (
         <div className="flex justify-between w-full" >
@@ -280,32 +228,16 @@ interface PlayerStats {
 
 function PlayerStatistics({ playerId }: {playerId: string}) {
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([])
-    const [token, _] = useLocalStorage('jwt', null)
-        useEffect(() => {
-            async function getPlayerStats() {
-                const res = await fetch(`${host}/players/${playerId}/friends/stats`, { headers: { "Authorization": `Bearer ${token}`}})        
-                const data = await res.json()
-        
-                if (!ignore) {
-                    setPlayerStats(data)
-                }
-            }
-              
-    
-            let ignore = false
-            getPlayerStats()
-    
-            return () => {
-                ignore = true;
-            }
-        }, [playerId])
-    
-        let wins = []
-        let losses = []
-        if (playerStats.length > 0) {
-            wins = playerStats.sort((a, b) => b.wins - a.wins)
-            losses = playerStats.sort((a, b) => b.losses - a.losses)
-        }
+
+    useRequest(`/players/${playerId}/friends/stats`, [playerId], setPlayerStats)
+
+
+    let wins = []
+    let losses = []
+    if (playerStats.length > 0) {
+        wins = playerStats.sort((a, b) => b.wins - a.wins)
+        losses = playerStats.sort((a, b) => b.losses - a.losses)
+    }
 
     return (
         <div className="flex justify-between w-full" >
