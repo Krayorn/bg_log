@@ -86,9 +86,11 @@ class GameController extends AbstractController
     }
 
     #[Route('api/games', methods: 'GET')]
-    public function getGames(GameRepository $gameRepository, PlayerRepository $playerRepository): Response
+    public function getGames(Request $request, GameRepository $gameRepository, PlayerRepository $playerRepository): Response
     {
-        $games = $gameRepository->findAll();
+        $query = $request->query->get('query');
+
+        $games = $gameRepository->search($query);
 
         return new JsonResponse(array_map(fn ($game): array => $game->view(), $games), Response::HTTP_OK);
     }
@@ -97,6 +99,19 @@ class GameController extends AbstractController
     public function getGame(Game $game): Response
     {
         return new JsonResponse($game->view(), Response::HTTP_OK);
+    }
+
+    #[Route('api/games/{game}/stats', methods: 'GET')]
+    public function getGameStats(Request $request, Game $game, GameRepository $gameRepository): Response
+    {
+        $playerId = $request->query->get('player');
+        $stats = $gameRepository->getGameStats($game->getId(), $playerId);
+
+        return new JsonResponse([
+            'owned' => $stats['in_library'],
+            'winrate' => $stats['winrate'],
+            'entriesCount' => $stats['number_of_games'],
+        ], Response::HTTP_OK);
     }
 
     #[Route('api/games/{game}/owners', methods: 'GET')]

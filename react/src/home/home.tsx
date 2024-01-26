@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useRequest } from '../hooks/useRequest'
 import NewEntryModal from "../entry/newEntryModal"
 import NewGameModal from "../game/newGameModal"
-
-const host = import.meta.env.VITE_API_HOST
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
     const [addEntryModalOpen, setAddEntryModalOpen] = useState(false)
     const [addGameModalOpen, setAddGameModalOpen] = useState(false)
+    const [searchModalOpen, setSearchModalOpen] = useState(false)
 
     return (
     <>
         {addEntryModalOpen && <NewEntryModal playerId={playerId} close={() => setAddEntryModalOpen(false)} />}
         {addGameModalOpen && <NewGameModal playerId={playerId} close={() => setAddGameModalOpen(false)} />}
+        {searchModalOpen && <SearchModal playerId={playerId} close={() => setSearchModalOpen(false)} />}
+        
         <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6 flex flex-col'> 
             <header className="border-b-2 border-white pb-2 flex justify-between">
                 <div className="flex" >
@@ -34,8 +34,8 @@ function Home() {
                     </div>
                 </div>
                 <div className="text-gray-600 flex flex-col">
-                    <span>version 0.1.3</span>
-                    <span>released 2023-11-09</span>
+                    <span>version 0.2.0</span>
+                    <span>released 2024-01-26</span>
                 </div>
             </header>
 
@@ -62,9 +62,14 @@ function Home() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" />
                         </svg>
                     </button>
-                    <button onClick={() => setAddEntryModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl" >
+                    <button onClick={() => setAddEntryModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl mr-10" >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </button>
+                    <button onClick={() => setSearchModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl mr-10" >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                         </svg>
                     </button>
                 </section>
@@ -272,5 +277,40 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
                 )
             }
         </div>
+    )
+}
+
+
+interface Game {
+    name: string
+    id: string
+}
+
+function SearchModal({ close, playerId }: {close: Function, playerId: string}) {
+    const [results, setResults] = useState<Game[]>([])
+    const [query, setQuery] = useState<string>("")
+
+    useRequest(`/games?query=${query}`, [query], setResults)    
+
+    return (
+        <main className="absolute w-full h-full backdrop-blur-sm text-white flex justify-center items-center"> 
+           <section className="bg-slate-900 rounded-md">
+                <div className="flex align-center" >
+                    <input  className="bg-slate-900 text-gray" type="text" name="query" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search Game"></input>
+                    <button className="" onClick={() => close()}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                    </button>
+                </div>
+                <div className="flex flex-col mt-2" >
+                    {results.map(result => {
+                        return <Link to={`/games/${result.id}`} key={result.id}>
+                            {result.name}
+                        </Link>
+                    })}
+                </div>
+           </section>
+        </main>
     )
 }

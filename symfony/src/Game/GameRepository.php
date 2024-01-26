@@ -39,4 +39,47 @@ class GameRepository extends ServiceEntityRepository
 
         return $result->fetchAllAssociative();
     }
+
+    public function getGameStats(string $gameId, string $playerId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = '
+            SELECT 
+                count(e) number_of_games, 
+                (ROUND (100.0 * (SUM(CASE WHEN pr.won = true THEN 1 ELSE 0 END)) / COUNT(*), 1)) winrate, 
+                (CASE WHEN go.player_id IS NOT NULL THEN TRUE ELSE FALSE END) in_library 
+            FROM entry e 
+            JOIN player_result pr ON pr.entry_id = e.id
+            LEFT JOIN game_owned go ON go.game_id = :gameId AND go.player_id = :playerId
+            WHERE pr.player_id = :playerId AND e.game_id = :gameId
+            GROUP BY go.player_id;';
+
+
+        $conn->prepare($sql);
+        $result = $conn->executeQuery($sql, [
+            'playerId' => $playerId,
+            'gameId' => $gameId,
+        ]);
+
+        return $result->fetchAssociative();
+    }
+
+    /**
+     * @return array<Game>
+     */
+    public function search(?string $query): array
+    {
+        $qb = $this->createQueryBuilder('g');
+
+        if ($query !== null) {
+            $qb
+                ->andWhere('Lower(g.name) like Lower(:query)')
+                ->setParameter('query', '%' . $query . '%');
+        }
+
+        $qb->orderBy('g.name', 'DESC');
+        return $qb->getQuery()
+            ->getResult();
+    }
 }

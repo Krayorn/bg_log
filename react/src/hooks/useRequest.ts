@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 
 const host = import.meta.env.VITE_API_HOST
 
-export const useRequest = (uri, deps, setFunc) => {
+export const useRequest = (uri: string, deps: Array<any>, setFunc: Function) => {
     const [token, _] = useLocalStorage('jwt', null)
     
     useEffect(() => {
@@ -25,6 +25,4 @@ export const useRequest = (uri, deps, setFunc) => {
             ignore = true;
         }
     }, deps)
-
 }
-  
