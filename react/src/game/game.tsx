@@ -1,7 +1,6 @@
 
-import { useParams } from "react-router-dom"
+import { useParams, useLocation, useSearchParams } from "react-router-dom"
 import { useState } from "react";
-import { useLocalStorage , parseJwt } from '../hooks/useLocalStorage'
 import { useRequest } from '../hooks/useRequest'
 
 interface Game {
@@ -41,9 +40,10 @@ export default function Game() {
     const [entries, setEntries] = useState<Entry[]|[]>([])
     const [selectedEntry, setSelectedEntry] = useState<Entry|null>(null)
 
-    const [token, _] = useLocalStorage('jwt', null)
-    const playerId = parseJwt(token).id
-    
+    const [searchParams] = useSearchParams();
+
+    const playerId = searchParams.get('playerId')
+
     useRequest(`/games/${gameId}`, [gameId], setGame)
     useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
     useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
