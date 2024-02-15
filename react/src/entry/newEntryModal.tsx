@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useLocalStorage } from '../hooks/useLocalStorage'
 // replace by crypto.UUID() when site migrated to https
 import { v4 as uuidv4 } from 'uuid'
+import { useRequest } from '../hooks/useRequest'
 
 const host = import.meta.env.VITE_API_HOST
 
@@ -14,7 +15,8 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
     const [selectedGame, setSelectedGame] = useState('');
 
     const handleSelectChange = (event) => {
-      setSelectedGame(event.target.value);
+        setPlayersOwningGame([])
+        setSelectedGame(event.target.value);
     };
 
     const [token, _] = useLocalStorage('jwt', null)
@@ -27,53 +29,11 @@ export default function NewEntryModal({ close, playerId }: {close: Function, pla
         setPlayers([...players, {genId: uuidv4(), id: "", note: "", won: false}])
     }
 
-    useEffect(() => {
-        async function getPlayerGames() {
-            const res = await fetch(`${host}/games`, { headers: { "Authorization": `Bearer ${token}`}})
-            const data = await res.json()
+    useRequest(`/games`, [playerId], setPlayerGames)
+    useRequest(`/players`, [playerId], setPlayersList)
     
-            if (!ignore) {
-                setPlayerGames(data)
-            }
-        }
-         
-        async function getPlayersList() {
-            const res = await fetch(`${host}/players`, { headers: { "Authorization": `Bearer ${token}`}})
-            const data = await res.json()
-    
-            if (!ignore) {
-                setPlayersList(data)
-            }
-        }
+    useRequest(`/games/${selectedGame}/owners`, [selectedGame], setPlayersOwningGame, selectedGame !== "")
 
-
-        let ignore = false
-        getPlayerGames()
-        getPlayersList()
-
-        return () => {
-            ignore = true;
-        }
-    }, [playerId])
-
-    useEffect(() => {
-        async function getPlayersOwningGame() {
-            const res = await fetch(`${host}/games/${selectedGame}/owners`, { headers: { "Authorization": `Bearer ${token}`}})
-            const data = await res.json()
-    
-            if (!ignore) {
-                setPlayersOwningGame(data)
-            }
-        }
-
-        let ignore = false
-
-        if (selectedGame !== "") {
-            setPlayersOwningGame([])
-            getPlayersOwningGame()
-        }
-    }, [selectedGame])
-    
     const handleFieldChange = (e, genId) => {
         setPlayers(players.map(player => {
             if (player.genId === genId) {

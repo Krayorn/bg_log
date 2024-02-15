@@ -57,12 +57,23 @@ class GameRepository extends ServiceEntityRepository
 
 
         $conn->prepare($sql);
-        $result = $conn->executeQuery($sql, [
+        $query = $conn->executeQuery($sql, [
             'playerId' => $playerId,
             'gameId' => $gameId,
         ]);
 
-        return $result->fetchAssociative();
+        $result = $query->fetchAssociative();
+
+        if ($result === false) {
+            return 
+                [
+                    'in_library' => false,
+                    'winrate' => "NA",
+                    'number_of_games' => 0
+                ];
+        }
+
+        return $result;
     }
 
     /**

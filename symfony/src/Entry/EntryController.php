@@ -2,6 +2,7 @@
 
 namespace App\Entry;
 
+use App\Entry\PlayerResult\PlayerEvent;
 use App\Game\Game;
 use App\Game\GameOwnedRepository;
 use App\Game\GameRepository;
@@ -10,7 +11,9 @@ use App\Player\PlayerRepository;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,10 +30,26 @@ class EntryController extends AbstractController
     ): Response {
 
         $gameId = $request->query->get('game');
+        if  (!Uuid::isValid($gameId)) {
+            throw new BadRequestException('game id not valid');
+        }
+
         $game = $gameRepository->find($gameId);
 
+        if ($game === null) {
+            throw new BadRequestException('Missing game');
+        }
+
         $playerId = $request->query->get('player');
+        if  (!Uuid::isValid($playerId)) {
+            throw new BadRequestException('player id not valid');
+        }
+
         $player = $playerRepository->find($playerId);
+
+        if ($player === null) {
+            throw new BadRequestException('Missing player');
+        }
 
         $entries = $entryRepository->list($game, $player);
 
@@ -103,6 +122,29 @@ class EntryController extends AbstractController
 
         $entityManager->persist($entry);
         $entityManager->flush();
+
+        return new JsonResponse($entry->view(), Response::HTTP_CREATED);
+    }
+
+    #[Route('api/entries/{entry}', name: 'edit_entry', methods: 'PATCH')]
+    public function edit(
+        Entry $entry,
+        Request                $request,
+        UpdateEntry $updateEntry,
+    ): Response {
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+
+        $customFields = $body['customFields'] ?? [];
+        $note = $body['note'] ?? null;
+        $players = $body['players'];
+        $gameUsed = $body['gameUsed'] ?? null;
+        $playedAt = $body['playedDate'] ?? null;
+
+        $customFieldsEvents = array_map(fn($customField) => new CustomFieldEvent($customField), $customFields);
+        $playersEvents = array_map(fn($player) => new PlayerEvent($player), $players);
+
+        $entry = $updateEntry->__invoke($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents);
 
         return new JsonResponse($entry->view(), Response::HTTP_CREATED);
     }

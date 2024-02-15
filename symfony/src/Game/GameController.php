@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Game\CustomField\CustomField;
 use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,7 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class GameController extends AbstractController
 {
     #[Route('api/players/{player}/games', methods: 'POST')]
-    public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+    public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository, GameOwnedRepository $gameOwnedRepository): Response
     {
         $content = $request->getContent();
         $body = json_decode($content, true);
@@ -30,10 +31,15 @@ class GameController extends AbstractController
         }
 
         if ($price !== null) {
-            if (! is_numeric($price)) {
+            if (!is_numeric($price)) {
                 $errors[] = 'Price must be a correct int or must not be provided';
             }
             $price = (int) $price;
+        }
+
+        $gameOwned = $gameOwnedRepository->findOneBy(['player' => $player, 'game' => $game]);
+        if ($gameOwned !== null) {
+            $errors[] = 'Game is already in your library';
         }
 
         if ($errors !== []) {
@@ -41,6 +47,7 @@ class GameController extends AbstractController
                 'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);
         }
+
         /** @var Game $game */
         $gameOwned = new GameOwned($player, $game, $price);
 
@@ -129,5 +136,23 @@ class GameController extends AbstractController
     public function gamesStats(Player $player, GameRepository $gameRepository): Response
     {
         return new JsonResponse($gameRepository->getStats($player), Response::HTTP_OK);
+    }
+
+    #[Route('api/game/{game}/customFields', methods: 'POST')]
+    public function addCustomField(Request $request, Game $game, EntityManagerInterface $entityManager): Response
+    {
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+
+        $name = $body['name'];
+        $kind = $body['kind'];
+        $global = $body['global'];
+
+        $customField = new CustomField($game, $name, $kind, $global);
+
+        $entityManager->persist($customField);
+        $entityManager->flush();
+
+        return new JsonResponse($game->view(), Response::HTTP_OK);
     }
 }

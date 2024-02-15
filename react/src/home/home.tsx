@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import NewEntryModal from "../entry/newEntryModal"
 import NewGameModal from "../game/newGameModal"
@@ -289,14 +289,63 @@ interface Game {
 function SearchModal({ close, playerId }: {close: Function, playerId: string}) {
     const [results, setResults] = useState<Game[]>([])
     const [query, setQuery] = useState<string>("")
+    const [selected, setSelected] = useState<Game|null>(null)
+    const navigate = useNavigate();
+    
+    const setResultsResetSelected = (results: Game[]) => {
+        setResults(results)
+        setSelected(null)
+    }
 
-    useRequest(`/games?query=${query}`, [query], setResults)    
+    useRequest(`/games?query=${query}`, [query], setResultsResetSelected, query !== "")    
+
+    if (query === "" && results.length > 0) {
+        setResultsResetSelected([])
+    }
+
+    useEffect(() => {
+        const handleKeyDown = (event: any) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                if (selected === null) {
+                    setSelected(results[0])
+                } else {
+                    const idxCurrentlySelected = results.findIndex(r => r.id === selected.id)
+                    if (results.length > idxCurrentlySelected + 1) {
+                        setSelected(results[idxCurrentlySelected + 1])
+                    }
+                }
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                if (selected !== null) {
+                    const idxCurrentlySelected = results.findIndex(r => r.id === selected.id)
+                    if (idxCurrentlySelected - 1 >= 0) {
+                        setSelected(results[idxCurrentlySelected - 1])
+                    }
+                }
+            }
+
+            if (event.key === 'Enter') {
+                if (selected !== null) {
+                    navigate('/games/' + selected.id + "?playerId=" + playerId)
+                }
+            }
+        };
+    
+        document.addEventListener('keydown', handleKeyDown);
+    
+        return () => {
+          document.removeEventListener('keydown', handleKeyDown);
+        };
+      }, [selected, results]); 
 
     return (
         <main className="absolute w-full h-full backdrop-blur-sm text-white flex justify-center items-center"> 
            <section className="bg-slate-900 rounded-md p-4">
                 <div className="flex align-center justify-between mb-2 border-b-2 border-slate-500" >
-                    <input  className="bg-slate-900 text-gray" autoFocus type="text" name="query" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search Game"></input>
+                    <input onClick={() => setSelected(null)} className="bg-slate-900 text-gray focus:outline-none" autoFocus type="text" name="query" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search Game"></input>
                     <button className="" onClick={() => close()}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -305,7 +354,7 @@ function SearchModal({ close, playerId }: {close: Function, playerId: string}) {
                 </div>
                 <div className="flex flex-col mt-2">
                     {results.map(result => {
-                        return <Link to={`/games/${result.id}?playerId=${playerId}`} key={result.id}>
+                        return <Link className={`p-2 rounded-md ${selected && selected.id === result.id && 'border-white border-2' } `} to={`/games/${result.id}?playerId=${playerId}`} key={result.id}>
                             {result.name}
                         </Link>
                     })}
