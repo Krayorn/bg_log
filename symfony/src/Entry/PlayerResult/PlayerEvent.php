@@ -7,22 +7,24 @@ use App\Event;
 
 class PlayerEvent extends Event
 {
-    private ?string $note;
-    private ?bool $won;
-    private array $customFields;
+    private readonly ?string $note;
+
+    private readonly ?bool $won;
+
+    private readonly array $customFields;
 
     public function __construct(array $playerEvent)
     {
         parent::__construct($playerEvent);
 
-        if (!in_array($this->getKind(), [self::ADD, self::UPDATE])) {
+        if (! in_array($this->getKind(), [self::ADD, self::UPDATE])) {
             return;
         }
 
         $this->note = $playerEvent['payload']['note'] ?? null;
         $this->won = $playerEvent['payload']['won'] ?? null;
 
-        $this->customFields = array_map(fn($customField) => new CustomFieldEvent($customField),  $playerEvent['payload']['customFields'] ?? []);
+        $this->customFields = array_map(fn ($customField) => new CustomFieldEvent($customField), $playerEvent['payload']['customFields'] ?? []);
     }
 
     public function getNote(): ?string

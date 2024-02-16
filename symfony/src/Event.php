@@ -4,11 +4,15 @@ namespace App;
 
 class Event
 {
-    const ADD = 'add';
-    const REMOVE = 'remove';
-    const UPDATE = 'update';
-    private string $kind;
-    private ?string $id;
+    public const ADD = 'add';
+
+    public const REMOVE = 'remove';
+
+    public const UPDATE = 'update';
+
+    private readonly string $kind;
+
+    private readonly ?string $id;
 
     public function __construct(array $rawEvent)
     {

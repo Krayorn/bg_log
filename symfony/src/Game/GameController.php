@@ -32,13 +32,16 @@ class GameController extends AbstractController
         }
 
         if ($price !== null) {
-            if (!is_numeric($price)) {
+            if (! is_numeric($price)) {
                 $errors[] = 'Price must be a correct int or must not be provided';
             }
             $price = (int) $price;
         }
 
-        $gameOwned = $gameOwnedRepository->findOneBy(['player' => $player, 'game' => $game]);
+        $gameOwned = $gameOwnedRepository->findOneBy([
+            'player' => $player,
+            'game' => $game,
+        ]);
         if ($gameOwned !== null) {
             $errors[] = 'Game is already in your library';
         }
@@ -149,12 +152,14 @@ class GameController extends AbstractController
         $kind = $body['kind'];
         $global = $body['global'];
 
-        $alreadyExist = $customFieldRepository->findOneBy(['game' => $game, 'name' => $name]);
+        $alreadyExist = $customFieldRepository->findOneBy([
+            'game' => $game,
+            'name' => $name,
+        ]);
 
         if ($alreadyExist !== null) {
             throw new \Exception('custom field with this name already exist on this game');
         }
-
 
         $customField = new CustomField($game, $name, $kind, $global);
 

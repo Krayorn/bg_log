@@ -26,6 +26,7 @@ class PlayerResult
      */
     #[ORM\OneToMany(mappedBy: 'playerResult', indexBy: 'id', targetEntity: CustomFieldValue::class, cascade: ['persist'])]
     private Collection   $customFields;
+
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Entry::class)]
         #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id')]
@@ -56,8 +57,8 @@ class PlayerResult
 
         if ($customField->getKind() === CustomFieldKind::STRING) {
             $valueString = $value;
-        } else if ($customField->getKind() === CustomFieldKind::NUMBER) {
-            $valueNumber = intval($value);
+        } elseif ($customField->getKind() === CustomFieldKind::NUMBER) {
+            $valueNumber = (int) $value;
         }
 
         $customFieldValue = new CustomFieldValue(null, $this, $customField, $valueString, $valueNumber);
@@ -71,8 +72,8 @@ class PlayerResult
 
         if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
             $customFieldValue->updateStringValue($value);
-        } else if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
-            $customFieldValue->updateNumberValue(intval($value));
+        } elseif ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
+            $customFieldValue->updateNumberValue((int) $value);
         }
     }
 

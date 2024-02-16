@@ -6,15 +6,15 @@ use App\Event;
 
 class CustomFieldEvent extends Event
 {
-    private ?string $customFieldId;
+    private readonly ?string $customFieldId;
 
-    private string $customFieldValue;
+    private readonly string $customFieldValue;
 
     public function __construct(array $customFieldEvent)
     {
         parent::__construct($customFieldEvent);
 
-        if (!in_array($this->getKind(), [self::ADD, self::UPDATE])) {
+        if (! in_array($this->getKind(), [self::ADD, self::UPDATE])) {
             return;
         }
 

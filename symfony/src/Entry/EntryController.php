@@ -28,9 +28,8 @@ class EntryController extends AbstractController
         GameRepository $gameRepository,
         PlayerRepository $playerRepository,
     ): Response {
-
         $gameId = $request->query->get('game');
-        if  (!Uuid::isValid($gameId)) {
+        if (! Uuid::isValid($gameId)) {
             throw new BadRequestException('game id not valid');
         }
 
@@ -41,7 +40,7 @@ class EntryController extends AbstractController
         }
 
         $playerId = $request->query->get('player');
-        if  (!Uuid::isValid($playerId)) {
+        if (! Uuid::isValid($playerId)) {
             throw new BadRequestException('player id not valid');
         }
 
@@ -85,7 +84,7 @@ class EntryController extends AbstractController
 
         $players = [];
 
-        foreach ($playersData as $key => $playerData) {
+        foreach ($playersData as $playerData) {
             $playerId = $playerData['id'];
             $playerNote = $playerData['note'] ?? '';
             $playerWon = $playerData['won'] ?? null;
@@ -141,8 +140,8 @@ class EntryController extends AbstractController
         $gameUsed = $body['gameUsed'] ?? null;
         $playedAt = $body['playedDate'] ?? null;
 
-        $customFieldsEvents = array_map(fn($customField) => new CustomFieldEvent($customField), $customFields);
-        $playersEvents = array_map(fn($player) => new PlayerEvent($player), $players);
+        $customFieldsEvents = array_map(fn ($customField) => new CustomFieldEvent($customField), $customFields);
+        $playersEvents = array_map(fn ($player) => new PlayerEvent($player), $players);
 
         $entry = $updateEntry->__invoke($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents);
 

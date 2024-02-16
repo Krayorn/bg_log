@@ -33,7 +33,7 @@ class CustomFieldValue
         #[ORM\Column(type: 'integer', nullable: true)]
         private ?int $valueNumber,
     ) {
-        if ($this->entry === null && $this->playerResult === null) {
+        if (! $this->entry instanceof \App\Entry\Entry && ! $this->playerResult instanceof \App\Entry\PlayerResult\PlayerResult) {
             throw new Exception('wtf');
         }
 
@@ -42,18 +42,6 @@ class CustomFieldValue
         }
 
         $this->id = Uuid::uuid4();
-    }
-
-    private function getValue(): int|string
-    {
-        if ($this->customField->getKind() === CustomFieldKind::STRING) {
-            return $this->valueString;
-        }
-        if ($this->customField->getKind() === CustomFieldKind::NUMBER) {
-            return $this->valueNumber;
-        }
-
-        throw new Exception("broke");
     }
 
     public function updateStringValue(string $value): void
@@ -70,6 +58,7 @@ class CustomFieldValue
     {
         return $this->customField;
     }
+
     public function view(): array
     {
         return [
@@ -77,5 +66,13 @@ class CustomFieldValue
             'value' => $this->getValue(),
             'customField' => $this->customField->view(),
         ];
+    }
+
+    private function getValue(): int|string
+    {
+        if ($this->customField->getKind() === CustomFieldKind::STRING) {
+            return $this->valueString;
+        }
+        return $this->valueNumber;
     }
 }

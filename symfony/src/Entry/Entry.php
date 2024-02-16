@@ -4,6 +4,7 @@ namespace App\Entry;
 
 use App\Entry\PlayerResult\PlayerResult;
 use App\Event;
+use App\Game\CustomField\CustomFieldKind;
 use App\Game\Game;
 use App\Game\GameOwned;
 use App\Player\Player;
@@ -117,7 +118,24 @@ class Entry
 
     public function addCustomFieldValue(string $customFieldId, string $value): void
     {
-        $customFieldValue = new CustomFieldValue($this, null, $this->game->getCustomField($customFieldId), $value, null );
+        $customField = $this->game->getCustomField($customFieldId);
+
+        foreach ($this->customFields as $existingCustomFieldValue) {
+            if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
+                throw new \Exception('There is already a value for this customField on this player result');
+            }
+        }
+
+        $valueString = null;
+        $valueNumber = null;
+
+        if ($customField->getKind() === CustomFieldKind::STRING) {
+            $valueString = $value;
+        } elseif ($customField->getKind() === CustomFieldKind::NUMBER) {
+            $valueNumber = (int) $value;
+        }
+
+        $customFieldValue = new CustomFieldValue($this, null, $customField, $valueString, $valueNumber);
 
         $this->customFields->add($customFieldValue);
     }
@@ -126,6 +144,10 @@ class Entry
     {
         $customFieldValue = $this->customFields->get($id);
 
-        $customFieldValue->updateStringValue($value);
+        if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
+            $customFieldValue->updateStringValue($value);
+        } elseif ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
+            $customFieldValue->updateNumberValue((int) $value);
+        }
     }
 }

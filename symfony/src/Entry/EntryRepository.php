@@ -21,12 +21,12 @@ class EntryRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('e');
 
-        if ($game !== null) {
+        if ($game instanceof \App\Game\Game) {
             $qb->where('e.game = :game')
                 ->setParameter('game', $game);
         }
 
-        if ($player !== null) {
+        if ($player instanceof \App\Player\Player) {
             $qb->innerJoin('e.playerResults', 'pr')
                 ->andWhere('pr.player = :player')
                 ->setParameter('player', $player);

@@ -255,7 +255,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                     : <span onClick={() => setEditField('playedAt')} >{playedAt.toLocaleDateString('fr-FR')}</span>
                 }
             </header>
-            <section className="flex flex-col" >
+            <section className="flex flex-col">
             {
                     editField === "note"
                     ? <textarea onChange={(e) => setNote(e.target.value)} className="mb-2 text-black" name="note" value={note} placeholder="Any note on the general game..." ></textarea>
@@ -269,7 +269,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                     <div key={entry.id + customField.id}>
                     {
                         editField === 'c' + customField.id
-                        ? <input className="text-black" onChange={(e) => updateCustomField(customField, customFieldValue !== undefined, e.target.value)} value={customFieldValue ? customFieldValue.value : ''} type="text" placeholder={`value of custom field ${customField.name}`} ></input>
+                        ? <input className="text-black" onChange={(e) => updateCustomField(customField, customFieldValue !== undefined, e.target.value)} value={customFieldValue ? customFieldValue.value : ''} type={`${customField.kind === "string" ? 'text' : 'number'}`} placeholder={`value of custom field ${customField.name}`} ></input>
                             : customFieldValue === undefined
                             ? <div onClick={() => setEditField('c' + customField.id)} >{customField.name}</div>
                             : <div onClick={() => setEditField('c' + customField.id)} >{customFieldValue.customField.name}: {customFieldValue.value}</div>
@@ -293,7 +293,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                                 </span>
                                 { editField === 'p' + playerResult.id + 'note'
                                     ? <textarea onChange={(e) => updatePlayerResult(playerResult.id, null, false, null, e.target.value)} className="mb-2 text-black" name="note" value={playerResult.note} placeholder="Any note on the general game..." ></textarea>
-                                    : <div onClick={() => setEditField('p' + playerResult.id + 'note')} >{playerResult.note.split(';').map((e, i) => <span key={i} className="mb-2" >{e}</span>)}</div>
+                                    : <div onClick={() => setEditField('p' + playerResult.id + 'note')} >{note === '' && 'no notes...'}{playerResult.note.split(';').map((e, i) => <span key={i} className="mb-2" >{e}</span>)}</div>
                                 }
                                 {
                                     game.customFields.filter(c => !c.global).map(customField => {

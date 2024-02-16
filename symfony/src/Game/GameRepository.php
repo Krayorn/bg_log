@@ -55,7 +55,6 @@ class GameRepository extends ServiceEntityRepository
             WHERE pr.player_id = :playerId AND e.game_id = :gameId
             GROUP BY go.player_id;';
 
-
         $conn->prepare($sql);
         $query = $conn->executeQuery($sql, [
             'playerId' => $playerId,
@@ -65,12 +64,11 @@ class GameRepository extends ServiceEntityRepository
         $result = $query->fetchAssociative();
 
         if ($result === false) {
-            return 
-                [
-                    'in_library' => false,
-                    'winrate' => "NA",
-                    'number_of_games' => 0
-                ];
+            return [
+                'in_library' => false,
+                'winrate' => 'NA',
+                'number_of_games' => 0,
+            ];
         }
 
         return $result;

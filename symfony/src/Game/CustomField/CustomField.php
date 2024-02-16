@@ -17,6 +17,7 @@ class CustomField
 
     #[ORM\Column(enumType: CustomFieldKind::class)]
     private readonly CustomFieldKind $kind;
+
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id')]
