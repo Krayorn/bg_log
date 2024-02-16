@@ -34,8 +34,8 @@ function Home() {
                     </div>
                 </div>
                 <div className="text-gray-600 flex flex-col">
-                    <span>version 0.2.0</span>
-                    <span>released 2024-01-26</span>
+                    <span>version 0.3.1</span>
+                    <span>released 2024-02-16</span>
                 </div>
             </header>
 

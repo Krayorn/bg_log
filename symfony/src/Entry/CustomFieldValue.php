@@ -4,6 +4,7 @@ namespace App\Entry;
 
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\CustomField\CustomField;
+use App\Game\CustomField\CustomFieldKind;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use Ramsey\Uuid\Uuid;
@@ -45,22 +46,30 @@ class CustomFieldValue
 
     private function getValue(): int|string
     {
-        if ($this->valueString !== null) {
+        if ($this->customField->getKind() === CustomFieldKind::STRING) {
             return $this->valueString;
         }
-
-        if ($this->valueNumber !== null) {
+        if ($this->customField->getKind() === CustomFieldKind::NUMBER) {
             return $this->valueNumber;
         }
 
         throw new Exception("broke");
     }
 
-    public function updateStringValue(string $value)
+    public function updateStringValue(string $value): void
     {
         $this->valueString = $value;
     }
 
+    public function updateNumberValue(int $value): void
+    {
+        $this->valueNumber = $value;
+    }
+
+    public function getCustomField(): CustomField
+    {
+        return $this->customField;
+    }
     public function view(): array
     {
         return [

@@ -3,6 +3,7 @@
 namespace App\Game;
 
 use App\Game\CustomField\CustomField;
+use App\Game\CustomField\CustomFieldRepository;
 use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -139,7 +140,7 @@ class GameController extends AbstractController
     }
 
     #[Route('api/game/{game}/customFields', methods: 'POST')]
-    public function addCustomField(Request $request, Game $game, EntityManagerInterface $entityManager): Response
+    public function addCustomField(Request $request, Game $game, EntityManagerInterface $entityManager, CustomFieldRepository $customFieldRepository): Response
     {
         $content = $request->getContent();
         $body = json_decode($content, true);
@@ -147,6 +148,13 @@ class GameController extends AbstractController
         $name = $body['name'];
         $kind = $body['kind'];
         $global = $body['global'];
+
+        $alreadyExist = $customFieldRepository->findOneBy(['game' => $game, 'name' => $name]);
+
+        if ($alreadyExist !== null) {
+            throw new \Exception('custom field with this name already exist on this game');
+        }
+
 
         $customField = new CustomField($game, $name, $kind, $global);
 

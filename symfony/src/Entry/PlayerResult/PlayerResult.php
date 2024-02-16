@@ -5,6 +5,7 @@ namespace App\Entry\PlayerResult;
 use App\Entry\CustomFieldValue;
 use App\Entry\Entry;
 use App\Game\CustomField\CustomField;
+use App\Game\CustomField\CustomFieldKind;
 use App\Player\Player;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -44,7 +45,22 @@ class PlayerResult
 
     public function addCustomFieldValue(CustomField $customField, string $value): void
     {
-        $customFieldValue = new CustomFieldValue(null, $this, $customField, $value, null );
+        foreach ($this->customFields as $existingCustomFieldValue) {
+            if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
+                throw new \Exception('There is already a value for this customField on this player result');
+            }
+        }
+
+        $valueString = null;
+        $valueNumber = null;
+
+        if ($customField->getKind() === CustomFieldKind::STRING) {
+            $valueString = $value;
+        } else if ($customField->getKind() === CustomFieldKind::NUMBER) {
+            $valueNumber = intval($value);
+        }
+
+        $customFieldValue = new CustomFieldValue(null, $this, $customField, $valueString, $valueNumber);
 
         $this->customFields->add($customFieldValue);
     }
@@ -53,7 +69,11 @@ class PlayerResult
     {
         $customFieldValue = $this->customFields->get($id);
 
-        $customFieldValue->updateStringValue($value);
+        if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
+            $customFieldValue->updateStringValue($value);
+        } else if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
+            $customFieldValue->updateNumberValue(intval($value));
+        }
     }
 
     public function updateNote(string $note): void

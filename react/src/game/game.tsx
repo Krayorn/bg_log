@@ -259,7 +259,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
             {
                     editField === "note"
                     ? <textarea onChange={(e) => setNote(e.target.value)} className="mb-2 text-black" name="note" value={note} placeholder="Any note on the general game..." ></textarea>
-                    : <div onClick={() => setEditField('note')}>{note.split(';').map((e, i) => <span key={i} className="mb-4" >{e}</span>)}</div>
+                    : <div onClick={() => setEditField('note')}>{note === '' && 'no notes...'} {note.split(';').map((e, i) => <span key={i} className="mb-4" >{e}</span>)}</div>
             }
 
             {
@@ -302,7 +302,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                                             <div key={playerResult.id + customField.id}>
                                             {
                                                 editField === 'p' + playerResult.id + 'c' + customField.id
-                                                ? <input className="text-black" onChange={(e) => updatePlayerResult(playerResult.id, customField, customFieldValue !== undefined, e.target.value, null)} value={customFieldValue ? customFieldValue.value : ''} type="text" placeholder={`value of custom field ${customField.name}`} ></input>
+                                                ? <input className="text-black" onChange={(e) => updatePlayerResult(playerResult.id, customField, customFieldValue !== undefined, e.target.value, null)} value={customFieldValue ? customFieldValue.value : ''} type={`${customField.kind === "string" ? 'text' : 'number'}`} placeholder={`value of custom field ${customField.name}`} ></input>
                                                     : customFieldValue === undefined
                                                     ? <div onClick={() => setEditField('p' + playerResult.id + 'c' + customField.id)} >{customField.name}</div>
                                                     : <div onClick={() => setEditField('p' + playerResult.id + 'c' + customField.id)} >{customFieldValue.customField.name}: {customFieldValue.value}</div>
@@ -325,8 +325,8 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
 enum CustomFieldType {
     string = "string",
     number = 'number',
-    arrayString = 'arrayString',
-    arrayNumber = 'arrayNumber',
+    //arrayString = 'arrayString',
+    //arrayNumber = 'arrayNumber',
   }
 
 const host = import.meta.env.VITE_API_HOST
@@ -359,6 +359,11 @@ function GameDetail({ game, gameStats }: {game: Game, gameStats: GameStats|null}
         const data = await response.json()
         if (response.status === 400) {
             console.log(data.errors)
+            setErrors(data.errors);
+        } else {
+            setCustomFieldName("")
+            setCustomFieldType("")
+            game.customFields.push(data.customFields.pop())
         }
     }
 

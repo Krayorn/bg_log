@@ -31,6 +31,16 @@ class CustomField
         $this->kind = CustomFieldKind::tryFrom($kind);
     }
 
+    public function getId(): UuidInterface
+    {
+        return $this->id;
+    }
+
+    public function getKind(): CustomFieldKind
+    {
+        return $this->kind;
+    }
+
     public function view(): array
     {
         return [
