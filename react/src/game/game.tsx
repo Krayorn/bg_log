@@ -293,7 +293,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                                 </span>
                                 { editField === 'p' + playerResult.id + 'note'
                                     ? <textarea onChange={(e) => updatePlayerResult(playerResult.id, null, false, null, e.target.value)} className="mb-2 text-black" name="note" value={playerResult.note} placeholder="Any note on the general game..." ></textarea>
-                                    : <div onClick={() => setEditField('p' + playerResult.id + 'note')} >{note === '' && 'no notes...'}{playerResult.note.split(';').map((e, i) => <span key={i} className="mb-2" >{e}</span>)}</div>
+                                    : <div onClick={() => setEditField('p' + playerResult.id + 'note')} >{playerResult.note === '' && 'no notes...'}{playerResult.note.split(';').map((e, i) => <span key={i} className="mb-2" >{e}</span>)}</div>
                                 }
                                 {
                                     game.customFields.filter(c => !c.global).map(customField => {
