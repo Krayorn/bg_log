@@ -20,7 +20,7 @@ services:
     volumes:
       - ./react/dist/:/usr/share/nginx/html
     ports:
-      - "80:80"
+      - "82:80"
     environment:
       HOSTNAME_INTERNAL_PHP: symfony:9000
       HOSTNAME_PUBLIC_BACKEND: localhost:9000
