@@ -84,7 +84,7 @@ class PlayerController extends AbstractController
         );
     }
 
-    #[Route('api/players/', name: 'get_players', methods: 'GET')]
+    #[Route('api/players', name: 'get_players', methods: 'GET')]
     public function players(PlayerRepository $playerRepository): Response
     {
         $players = $playerRepository->findAll();
