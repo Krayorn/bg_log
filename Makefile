@@ -1,4 +1,4 @@
-.PHONY: build up down symfony
+.PHONY: build up down symfony deploy
 
 build:
 	docker-compose up -d --build
@@ -17,3 +17,8 @@ pre-commit:
 	docker exec -it bglog-symfony-1 vendor/bin/rector
 	docker exec -it bglog-symfony-1 vendor/bin/ecs --fix
 	docker exec -it bglog-symfony-1 vendor/bin/phpstan analyse
+
+deploy:
+	docker-compose down
+	cd react && npm run build
+	docker-compose up -d --build
