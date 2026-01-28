@@ -5,7 +5,6 @@ import Game from './game/game.tsx'
 import Confirm from './invitation/confirm.tsx'
 import Login from './login.tsx'
 import './index.css'
-import '../dist/output.css'
 import {
   createBrowserRouter,
   RouterProvider,

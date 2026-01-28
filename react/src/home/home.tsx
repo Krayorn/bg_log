@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import NewEntryModal from "../entry/newEntryModal"
 import NewGameModal from "../game/newGameModal"
+import Layout from '../Layout'
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
@@ -16,7 +17,7 @@ function Home() {
         {addGameModalOpen && <NewGameModal playerId={playerId} close={() => setAddGameModalOpen(false)} />}
         {searchModalOpen && <SearchModal playerId={playerId} close={() => setSearchModalOpen(false)} />}
         
-        <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6 flex flex-col'> 
+        <Layout> 
             <header className="border-b-2 border-white pb-2 flex justify-between">
                 <div className="flex" >
                     <div className="border-b-2 border-gray-600" >
@@ -74,7 +75,7 @@ function Home() {
                     </button>
                 </section>
             </footer>
-        </div>
+        </Layout>
     </>
   )
 }

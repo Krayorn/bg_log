@@ -1,6 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Custom colors */
+  --color-ambiance: #001233;
+  --color-highlight: #90E0EF;
+  --color-inter: #0096C7;
+  
+  /* Custom shadow */
+  --shadow-highlight: 0 0px 9px -2px #90E0EF;
+}
 
 .switch input {
 opacity: 0;

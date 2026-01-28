@@ -1,4 +1,4 @@
-FROM php:8.1.18-fpm-buster
+FROM php:8.1-fpm-bookworm
 
 WORKDIR /var/www/html/symfony
 

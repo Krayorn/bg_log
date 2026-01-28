@@ -13,6 +13,8 @@ services:
       - "9000:9000"
     environment:
       APP_ENV: dev
+    depends_on:
+      - postgres
 
   nginx:
     build:

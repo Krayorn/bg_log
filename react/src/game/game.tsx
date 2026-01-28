@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom"
 import { useState } from "react";
 import { useRequest } from '../hooks/useRequest'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import Layout from '../Layout'
 
 type Game = {
     name: string
@@ -72,7 +73,8 @@ export default function Game() {
     }
 
     return (
-        <div className='bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)] h-full min-h-screen p-6 flex flex-col text-white'> 
+        <Layout>
+            <div className='flex flex-col text-white h-full'>
             <section className="border-2 border-white flex h-[95vh] ">
                 <section className="border-r-2 border-white w-2/6">
                     <div onClick={() => setSelectedEntry(null)} className="border-b-2 h-[15vh] flex items-center justify-center">
@@ -92,7 +94,8 @@ export default function Game() {
                     }
                 </section>
             </section>
-        </div>
+            </div>
+        </Layout>
     )
 }
 

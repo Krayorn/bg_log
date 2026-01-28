@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
+import Layout from './Layout'
 
 export default function Login() {
     const [error, setError] = useState('')
@@ -27,7 +28,7 @@ export default function Login() {
     }
 
   return (
-    <main className='h-full min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)]'>
+    <Layout>
         <form className='flex flex-col items-center' method="post" onSubmit={login}>
             {
                 error !== '' &&
@@ -41,6 +42,6 @@ export default function Login() {
             <input className='h-12 w-48 mb-6 rounded-lg bg-[#365e8b] placeholder:text-center placeholder-white text-center text-white' placeholder="password" name="password" type="password"></input>
             <button className='h-8 w-36 mb-6 rounded-3xl bg-[#cad5ff] text-center text-[#365e8b]'>Login</button>
         </form>
-    </main>
+    </Layout>
   )
 }

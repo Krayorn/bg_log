@@ -60,7 +60,7 @@ export default function Confirm() {
     }
 
   return (
-    <main className='h-full min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(40,69,102,1)] to-[rgba(14,21,32,1)]'>
+    <main className='h-full min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(40,69,102,1),rgba(14,21,32,1))]'>
         { invitation
             && <>
                 <h2 className="text-white mb-12 text-xl">Welcome {invitation.player.name}</h2>
