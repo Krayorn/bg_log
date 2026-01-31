@@ -36,6 +36,10 @@ server {
     fastcgi_pass  php-upstream;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     fastcgi_read_timeout 900s;
+
+    fastcgi_request_buffering off;
+    fastcgi_param PHP_VALUE "auto_prepend_file=\n allow_url_include=Off";
+    
     internal;
   }
 
