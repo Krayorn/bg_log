@@ -71,6 +71,7 @@ class EntryController extends AbstractController
         $note = $body['note'];
         $playedAt = $body['playedAt'];
         $playersData = $body['players'] ?? [];
+        $customFieldsData = $body['customFields'] ?? [];
 
         /** @var ?Game $game */
         $game = $gameRepository->find($gameId);
@@ -88,6 +89,7 @@ class EntryController extends AbstractController
             $playerId = $playerData['id'];
             $playerNote = $playerData['note'] ?? '';
             $playerWon = $playerData['won'] ?? null;
+            $playerCustomFields = $playerData['customFields'] ?? [];
 
             /** @var ?Player $player */
             $player = $playerRepository->find($playerId);
@@ -101,6 +103,7 @@ class EntryController extends AbstractController
                 'player' => $player,
                 'note' => $playerNote,
                 'won' => $playerWon,
+                'customFields' => $playerCustomFields,
             ];
         }
 
@@ -118,6 +121,10 @@ class EntryController extends AbstractController
             $players,
             $gameUsed
         );
+
+        foreach ($customFieldsData as $customFieldData) {
+            $entry->addCustomFieldValue($customFieldData['id'], $customFieldData['value']);
+        }
 
         $entityManager->persist($entry);
         $entityManager->flush();

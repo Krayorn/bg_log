@@ -168,4 +168,13 @@ class GameController extends AbstractController
 
         return new JsonResponse($game->view(), Response::HTTP_OK);
     }
+
+    #[Route('api/customFields/{customField}', methods: 'DELETE')]
+    public function deleteCustomField(CustomField $customField, EntityManagerInterface $entityManager): Response
+    {
+        $entityManager->remove($customField);
+        $entityManager->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }

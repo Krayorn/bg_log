@@ -37,7 +37,7 @@ class Entry
     private Collection   $customFields;
 
     /**
-     * @param array<array{player: Player, note: string, won: boolean}> $players
+     * @param array<array{player: Player, note: string, won: boolean, customFields?: array}> $players
      */
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
@@ -57,7 +57,15 @@ class Entry
         $this->customFields = new ArrayCollection();
         $this->playerResults = new ArrayCollection();
         foreach ($players as $player) {
-            $this->playerResults->add(new PlayerResult($this, $player['player'], $player['note'], $player['won']));
+            $playerResult = new PlayerResult($this, $player['player'], $player['note'], $player['won']);
+            
+            $playerCustomFields = $player['customFields'] ?? [];
+            foreach ($playerCustomFields as $customFieldData) {
+                $customField = $this->game->getCustomField($customFieldData['id']);
+                $playerResult->addCustomFieldValue($customField, $customFieldData['value']);
+            }
+            
+            $this->playerResults->add($playerResult);
         }
     }
 

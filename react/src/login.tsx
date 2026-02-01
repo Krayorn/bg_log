@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
 import Layout from './Layout'
@@ -6,8 +6,18 @@ import Layout from './Layout'
 export default function Login() {
     const [error, setError] = useState('')
     const navigate = useNavigate();
-    const [_, setToken] = useLocalStorage('jwt', null)
+    const [token, setToken] = useLocalStorage('jwt', null)
 
+    useEffect(() => {
+        if (token !== null) {
+            try {
+                const obj = parseJwt(token)
+                navigate('/players/' + obj.id)
+            } catch (e) {
+                // Invalid token, stay on login page
+            }
+        }
+    }, [token, navigate])
 
     const login = async (e) => {
         e.preventDefault();
