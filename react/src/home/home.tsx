@@ -1,85 +1,63 @@
-import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
-import NewGameModal from "../game/newGameModal"
 import Layout from '../Layout'
 
 function Home() {
     let { playerId } = useParams() as { playerId: string }
-    const [addGameModalOpen, setAddGameModalOpen] = useState(false)
-    const [searchModalOpen, setSearchModalOpen] = useState(false)
 
     return (
-    <>
-        {addGameModalOpen && <NewGameModal playerId={playerId} close={() => setAddGameModalOpen(false)} />}
-        {searchModalOpen && <SearchModal playerId={playerId} close={() => setSearchModalOpen(false)} />}
-        
         <Layout> 
-            <header className="border-b-2 border-white pb-2 flex justify-between">
-                <div className="flex" >
-                    <div className="border-b-2 border-gray-600" >
-                        <div className="rounded-full border-white border-2 p-1" >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" className="w-8 h-8">
+            <header className="border-b border-slate-500/50 pb-4 flex justify-between mb-8">
+                <div className="flex">
+                    <div className="border-b border-slate-600">
+                        <div className="rounded-full border-cyan-400/50 border-2 p-2 bg-cyan-500/10 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-cyan-400">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
                             </svg>
                         </div>
                     </div>
-                    <div className="ml-4 text-white flex-col border-b-2 border-gray-600">
-                        <h1 className="text-lg" >Game log</h1>
-                        <h2 className="text-base" >
+                    <div className="ml-4 text-white flex-col border-b border-slate-600">
+                        <h1 className="text-xl font-semibold">Game Log</h1>
+                        <h2 className="text-sm text-slate-400">
                             Welcome to your personalized game log network
                         </h2>
                     </div>
                 </div>
-                <div className="text-gray-600 flex flex-col">
-                    <span>version 0.3.1</span>
-                    <span>released 2024-02-16</span>
+                <div className="text-slate-600 flex flex-col text-right text-sm">
+                    <span>version {import.meta.env.VITE_APP_VERSION}</span>
+                    <span>released {import.meta.env.VITE_RELEASE_DATE}</span>
                 </div>
             </header>
 
-            <main className="flex flex-wrap mt-12">
+            <div className="grid grid-cols-2 gap-4">
                 <Box title="Personal details">
                     <PlayerBox playerId={playerId} />
                 </Box>
-                <Box title="User General Statistics">
+                <Box title="General Statistics">
                     <GeneralStatistics playerId={playerId}/>
                 </Box>
                 <Box title="Games Statistics">
                     <GameStatistics playerId={playerId}/>
                 </Box>
-                <Box title="Players statistics">
+                <Box title="Players Statistics">
                     <PlayerStatistics playerId={playerId}/>
                 </Box>
-            </main>
-
-            <footer className="w-full mb-6 mt-auto" >
-                <div className="mt-12 border-t-2 border-white w-full" ></div>
-                <section className="flex mt-6 justify-center ">
-                    <button onClick={() => setAddGameModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl mr-10" >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" />
-                        </svg>
-                    </button>
-                    <button onClick={() => setSearchModalOpen(true)} className="rounded-full p-1 bg-neutral-950 shadow-2xl mr-10" >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </button>
-                </section>
-            </footer>
+            </div>
         </Layout>
-    </>
   )
 }
 
 export default Home
 
 
-function Box({ title, children }: {title :string, children: JSX.Element | JSX.Element[]}) {
+function Box({ title, children }: {title: string, children: JSX.Element | JSX.Element[]}) {
     return (
-        <section className="w-2/6 h-52 my-1">
-            <div className="border-2 border-gray-600 rounded mx-1 h-full flex-col text-white px-4 py-1">
-                <header className="border-white border-b-2 uppercase text-sm mb-4" >{title}</header>
+        <section className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden">
+            <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70">
+                <span className="uppercase text-xs font-medium text-slate-300 tracking-wider">{title}</span>
+            </header>
+            <div className="p-4 text-white min-h-[180px]">
                 {children}
             </div>
         </section>
@@ -99,37 +77,30 @@ function PlayerBox({ playerId }: {playerId: string}) {
     
     useRequest(`/players/${playerId}`, [playerId], setPlayerInfos)
     
+    if (playerInfos === null) {
+        return <div className="text-slate-500">Loading...</div>
+    }
+
     return (
-        <>
-        {
-            playerInfos === null
-            ? <div>Loading</div>
-            : (
-                <>
-                    <div className="flex items-center pb-4 border-b-2 border-gray-600">    
-                        <div className="border-white border-2 rounded mr-2 p-1" >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="w-8 h-8">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                            </svg>
-                        </div>
-                        <span className="h-fit">
-                            {playerInfos.name}
-                        </span>
-                    </div>
-                    <div className="flex flex-col mt-4" >
-                        <span>User #{playerInfos.number.toString().padStart(4, '0')}</span>
-                        {
-                            playerInfos.registeredOn === null 
-                            ? <span>guest user</span>
-                            : <span>registered on the {(new Date(playerInfos.registeredOn.date)).toLocaleDateString('fr-FR')}</span>
-                        }
-                        
-                    </div>
-                </>
-            )
-            
-        }
-        </>
+        <div className="flex flex-col h-full">
+            <div className="flex items-center pb-4 border-b border-slate-600/30">    
+                <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                </div>
+                <div>
+                    <div className="text-lg font-semibold">{playerInfos.name}</div>
+                    <div className="text-sm text-slate-500">User #{playerInfos.number.toString().padStart(4, '0')}</div>
+                </div>
+            </div>
+            <div className="flex flex-col mt-4 text-sm text-slate-300">
+                {playerInfos.registeredOn === null 
+                    ? <span className="text-slate-500">Guest user</span>
+                    : <span>Registered on {(new Date(playerInfos.registeredOn.date)).toLocaleDateString('fr-FR')}</span>
+                }
+            </div>
+        </div>
     )
 }
 
@@ -146,27 +117,30 @@ function GeneralStatistics({ playerId }: {playerId: string}) {
     
     useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
 
+    if (generalStats === null) {
+        return <div className="text-slate-500">Loading...</div>
+    }
+
     const dateNow = new Date()
-    const lastGameDate = new Date(generalStats?.lastGameDate ?? '')
+    const lastGameDate = new Date(generalStats.lastGameDate)
+    const daysSinceLastGame = Math.ceil(Math.abs(dateNow.getTime() - lastGameDate.getTime()) / (1000 * 60 * 60 * 24))
 
     return (
-        <div className="flex justify-between w-full">
-            {
-                generalStats === null 
-                ? <div>Loading</div>
-                : ( <>
-                     <div className="flex flex-col" >
-                            <span>Number of games in libray: {generalStats.gamesOwned}</span>
-                            <span>Number of plays: {generalStats.entriesPlayed}</span>
-                            <span>Number of different players: {generalStats.gamePartners}</span>
-                            <span>Global Winrate: {generalStats.globalWinrate}%</span>
-                        </div>
-                        <div className="flex flex-col" >
-                            <span>Days since last game: {Math.ceil(Math.abs(dateNow.getTime() - lastGameDate.getTime()) / (1000 * 60 * 60 * 24))}</span>
-                        </div>
-                    </>
-                )
-            }
+        <div className="grid grid-cols-2 gap-4">
+            <StatItem value={generalStats.gamesOwned} label="Games owned" />
+            <StatItem value={generalStats.entriesPlayed} label="Total plays" />
+            <StatItem value={generalStats.gamePartners} label="Play partners" />
+            <StatItem value={`${generalStats.globalWinrate}%`} label="Win rate" highlight />
+            <StatItem value={daysSinceLastGame} label="Days since last game" className="col-span-2" />
+        </div>
+    )
+}
+
+function StatItem({ value, label, highlight, className }: { value: string | number, label: string, highlight?: boolean, className?: string }) {
+    return (
+        <div className={`flex flex-col ${className || ''}`}>
+            <span className={`text-2xl font-bold ${highlight ? 'text-cyan-400' : 'text-white'}`}>{value}</span>
+            <span className="text-xs text-slate-500">{label}</span>
         </div>
     )
 }
@@ -183,35 +157,37 @@ function GameStatistics({ playerId }: {playerId: string}) {
     
     useRequest(`/players/${playerId}/games/stats`, [playerId], setGameStats)
 
+    if (gameStats.length === 0) {
+        return <div className="text-slate-500">Loading...</div>
+    }
+
+    const mostPlayed = [...gameStats].sort((a, b) => b.count - a.count).slice(0, 4)
+    const leastPlayed = [...gameStats].sort((a, b) => a.count - b.count).filter(a => a.in_library).slice(0, 4)
+
     return (
-        <div className="flex justify-between w-full" >
-            {
-                gameStats.length === 0 
-                ? <div>Loading</div>
-                : ( <>
-                        <div className="flex flex-col w-1/2" >
-                            <h3>Most played Games:</h3>
-                            {
-                                gameStats.sort((a, b) => b.count - a.count).slice(0, 5).map(game => {
-                                    return (
-                                        <span key={game.id} className="truncate" >{game.count} - {game.name}</span>
-                                    )
-                                })
-                            }
+        <div className="flex gap-6">
+            <div className="flex-1">
+                <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Most played</h3>
+                <div className="space-y-1">
+                    {mostPlayed.map(game => (
+                        <div key={game.id} className="flex justify-between text-sm">
+                            <span className="truncate text-slate-300">{game.name}</span>
+                            <span className="text-cyan-400 font-medium ml-2">{game.count}</span>
                         </div>
-                        <div className="flex flex-col w-1/2" >
-                            <h3>Least played Games (in library):</h3>
-                            {
-                                gameStats.sort((a, b) => a.count - b.count).filter(a => a.in_library).slice(0, 5).map(game => {
-                                    return (
-                                        <span key={game.id} className="truncate" >{game.count} - {game.name}</span>
-                                    )
-                                })
-                            }
+                    ))}
+                </div>
+            </div>
+            <div className="flex-1">
+                <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Least played</h3>
+                <div className="space-y-1">
+                    {leastPlayed.map(game => (
+                        <div key={game.id} className="flex justify-between text-sm">
+                            <span className="truncate text-slate-300">{game.name}</span>
+                            <span className="text-slate-500 font-medium ml-2">{game.count}</span>
                         </div>
-                    </>
-                )
-            }
+                    ))}
+                </div>
+            </div>
         </div>
     )
 }
@@ -229,130 +205,50 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
 
     useRequest(`/players/${playerId}/friends/stats`, [playerId], setPlayerStats)
 
-
-    let wins = []
-    let losses = []
-    if (playerStats.length > 0) {
-        wins = playerStats.sort((a, b) => b.wins - a.wins)
-        losses = playerStats.sort((a, b) => b.losses - a.losses)
+    if (playerStats.length === 0) {
+        return <div className="text-slate-500">Loading...</div>
     }
 
+    const sortedByCount = [...playerStats].sort((a, b) => b.count - a.count)
+    const wins = [...playerStats].sort((a, b) => b.wins - a.wins)
+    const losses = [...playerStats].sort((a, b) => b.losses - a.losses)
+
     return (
-        <div className="flex justify-between w-full" >
-            {
-                playerStats.length === 0
-                ? <div>Loading</div>
-                : ( <>
-                        <div className="flex flex-col w-1/2" >
-                            <h3>Played most with:</h3>
-                            <div className="overflow-scroll h-32" >
-                            {
-                                playerStats.sort((a, b) => b.count - a.count).map(player => {
-                                    return (
-                                        <div key={player.id} className="flex justify-between mr-8" >
-                                            <span className="truncate" >{player.count} - {player.name}</span>
-                                            <Link to={`/players/${player.id}`} >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                                </svg>
-                                            </Link>
-                                        </div>
-                                    )
-                                })
-                            }
+        <div className="flex gap-6">
+            <div className="flex-1">
+                <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Most played with</h3>
+                <div className="space-y-1 max-h-28 overflow-y-auto">
+                    {sortedByCount.slice(0, 5).map(player => (
+                        <div key={player.id} className="flex justify-between items-center text-sm group">
+                            <span className="truncate text-slate-300">{player.name}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-cyan-400 font-medium">{player.count}</span>
+                                <Link to={`/players/${player.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-500 hover:text-cyan-400">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                    </svg>
+                                </Link>
                             </div>
                         </div>
-                        <div className="flex flex-col w-1/2" >
-                            <span>Most victories against: {wins.filter(player => player.wins === wins[0].wins).map(p => p.name).join(', ')} ({wins[0].wins})</span>
-                            <span>Most losses against: {losses.filter(player => player.losses === losses[0].losses).map(p => p.name).join(', ')} ({losses[0].losses})</span>
-                        </div>
-                    </>
-                )
-            }
+                    ))}
+                </div>
+            </div>
+            <div className="flex-1 flex flex-col gap-3">
+                <div>
+                    <h3 className="text-xs uppercase text-slate-500 mb-1 font-medium">Best record against</h3>
+                    <div className="text-sm">
+                        <span className="text-emerald-400">{wins[0]?.name}</span>
+                        <span className="text-slate-500 ml-2">({wins[0]?.wins} wins)</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-xs uppercase text-slate-500 mb-1 font-medium">Worst record against</h3>
+                    <div className="text-sm">
+                        <span className="text-red-400">{losses[0]?.name}</span>
+                        <span className="text-slate-500 ml-2">({losses[0]?.losses} losses)</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    )
-}
-
-
-interface Game {
-    name: string
-    id: string
-}
-
-function SearchModal({ close, playerId }: {close: Function, playerId: string}) {
-    const [results, setResults] = useState<Game[]>([])
-    const [query, setQuery] = useState<string>("")
-    const [selected, setSelected] = useState<Game|null>(null)
-    const navigate = useNavigate();
-    
-    const setResultsResetSelected = (results: Game[]) => {
-        setResults(results)
-        setSelected(null)
-    }
-
-    useRequest(`/games?query=${query}`, [query], setResultsResetSelected, query !== "")    
-
-    if (query === "" && results.length > 0) {
-        setResultsResetSelected([])
-    }
-
-    useEffect(() => {
-        const handleKeyDown = (event: any) => {
-            if (event.key === 'ArrowDown') {
-                event.preventDefault()
-                if (selected === null) {
-                    setSelected(results[0])
-                } else {
-                    const idxCurrentlySelected = results.findIndex(r => r.id === selected.id)
-                    if (results.length > idxCurrentlySelected + 1) {
-                        setSelected(results[idxCurrentlySelected + 1])
-                    }
-                }
-            }
-
-            if (event.key === 'ArrowUp') {
-                event.preventDefault()
-                if (selected !== null) {
-                    const idxCurrentlySelected = results.findIndex(r => r.id === selected.id)
-                    if (idxCurrentlySelected - 1 >= 0) {
-                        setSelected(results[idxCurrentlySelected - 1])
-                    }
-                }
-            }
-
-            if (event.key === 'Enter') {
-                if (selected !== null) {
-                    navigate('/games/' + selected.id + "?playerId=" + playerId)
-                }
-            }
-        };
-    
-        document.addEventListener('keydown', handleKeyDown);
-    
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-        };
-      }, [selected, results]); 
-
-    return (
-        <main className="absolute w-full h-full backdrop-blur-sm text-white flex justify-center items-center"> 
-           <section className="bg-slate-900 rounded-md p-4">
-                <div className="flex align-center justify-between mb-2 border-b-2 border-slate-500" >
-                    <input onClick={() => setSelected(null)} className="bg-slate-900 text-gray focus:outline-none" autoFocus type="text" name="query" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search Game"></input>
-                    <button className="" onClick={() => close()}>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                    </button>
-                </div>
-                <div className="flex flex-col mt-2">
-                    {results.map(result => {
-                        return <Link className={`p-2 rounded-md ${selected && selected.id === result.id && 'border-white border-2' } `} to={`/games/${result.id}?playerId=${playerId}`} key={result.id}>
-                            {result.name}
-                        </Link>
-                    })}
-                </div>
-           </section>
-        </main>
     )
 }

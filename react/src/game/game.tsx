@@ -1,5 +1,5 @@
 
-import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom"
+import { useParams, useSearchParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react";
 import { useRequest } from '../hooks/useRequest'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -78,6 +78,13 @@ export default function Game() {
     }
 
     useEffect(() => {
+        setSelectedEntry(null)
+        setEntries([])
+        setGame(null)
+        setGameStats(null)
+    }, [gameId])
+
+    useEffect(() => {
         if (entryIdFromUrl && entries.length > 0 && !selectedEntry) {
             const entry = entries.find(e => e.id === entryIdFromUrl)
             if (entry) {
@@ -102,35 +109,46 @@ export default function Game() {
 
     return (
         <Layout>
-            <div className='flex flex-col text-white h-full'>
-            <section className="border-2 border-white flex h-[95vh] ">
-                <section className="border-r-2 border-white w-2/6">
-                    <div onClick={() => selectEntry(null)} className="border-b-2 h-[15vh] flex flex-col items-center justify-center relative cursor-pointer">
-                        <Link 
-                            to={`/players/${playerId}`} 
-                            className="absolute top-2 left-2 p-1 hover:bg-white/10 rounded"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                            </svg>
-                        </Link>
-                        {game.name}
+            <div className='flex text-white h-full gap-4'>
+                <section className="w-80 shrink-0 flex flex-col bg-slate-900/30 backdrop-blur-sm rounded-lg border border-slate-600/30 overflow-hidden">
+                    <div 
+                        onClick={() => selectEntry(null)} 
+                        className={`p-4 flex items-center justify-center cursor-pointer shrink-0 border-b border-slate-600/30 transition-all ${
+                            !selectedEntry 
+                                ? 'bg-cyan-500/20 text-cyan-400' 
+                                : 'hover:bg-slate-800/50'
+                        }`}
+                    >
+                        <h1 className="text-lg font-semibold">{game.name}</h1>
                     </div>
-                    <div className="overflow-y-scroll h-[80vh]" >
-                        {
-                            entries.map(entry => <Entry key={entry.id} isCurrent={selectedEntry?.id === entry.id} func={() => selectEntry(entry)} entry={entry} playerId={playerId} />)
-                        }
+                    <div className="overflow-y-auto flex-1">
+                        {entries.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 text-slate-600 mb-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                </svg>
+                                <span className="text-slate-500 text-sm">No entries yet</span>
+                                <span className="text-slate-600 text-xs mt-1">Add your first game session</span>
+                            </div>
+                        ) : (
+                            entries.map(entry => (
+                                <Entry 
+                                    key={entry.id} 
+                                    isCurrent={selectedEntry?.id === entry.id} 
+                                    func={() => selectEntry(entry)} 
+                                    entry={entry} 
+                                    playerId={playerId} 
+                                />
+                            ))
+                        )}
                     </div>
                 </section>
-                <section className="w-4/6" >
-                    {
-                        selectedEntry
+                <section className="flex-1 overflow-y-auto">
+                    {selectedEntry
                         ? <EntryDetail key={selectedEntry.id} game={game} entry={selectedEntry} />
                         : <GameDetail game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} />
                     }
                 </section>
-            </section>
             </div>
         </Layout>
     )
@@ -138,16 +156,40 @@ export default function Game() {
 
 function Entry({ entry, func, isCurrent, playerId }: {entry: Entry, func: () => void, isCurrent: boolean, playerId: string}) {
     const playedAt = new Date(entry.playedAt.date)
+    const playerResult = entry.players.find(p => p.player.id === playerId)
+    const won = playerResult?.won
+    
     return (
-        <div onClick={func} className={`flex justify-between border-b-2 h-[15vh] ${entry.players.find(p => p.player.id === playerId)?.won ? "bg-lime-500/[.2]" : "bg-red-900/50" }`}>
-            <div className="flex items-center text-gray-500 mx-4">
-                {playedAt.toLocaleDateString('fr-FR')}
+        <div 
+            onClick={func} 
+            className={`p-3 cursor-pointer transition-all border-b border-slate-600/30 ${
+                isCurrent 
+                    ? 'bg-cyan-500/20 border-l-2 border-l-cyan-400' 
+                    : 'hover:bg-slate-800/50'
+            }`}
+        >
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-400 text-sm">
+                    {playedAt.toLocaleDateString('fr-FR')}
+                </span>
+                {won !== null && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        won 
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                        {won ? 'Win' : 'Loss'}
+                    </span>
+                )}
             </div>
-            <div className="flex flex-col overflow-y-scroll">
-                {entry.note.split(';').map((e, i) => <span key={i} >{e}</span>)}
-                <span>Players: {entry.players.map(p => p.player.name).join(', ')}</span>
+            <div className="text-sm text-slate-300 truncate">
+                {entry.players.map(p => p.player.name).join(', ')}
             </div>
-            <div className={`h-[15vh] w-2 ${isCurrent ? 'bg-white' : 'bg-transparent'}`} />
+            {entry.note && (
+                <div className="text-xs text-slate-500 mt-1 truncate">
+                    {entry.note.split(';')[0]}
+                </div>
+            )}
         </div>
     )
 }
@@ -629,15 +671,24 @@ function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, 
     const playerCustomFields = customFieldsList.filter(c => !c.global)
 
     return (
-        <div className="flex flex-col m-4 overflow-y-scroll h-[90vh]" >
-            <section className="flex flex-col mb-2" >
-                <span>Games played: {gameStats.entriesCount}</span>
-                {gameStats.owned && <span>Game is in Library</span> }
-                <span>Your winrate on this game is: {gameStats.winrate}%</span>
+        <div className="flex flex-col">
+            <section className="flex gap-6 mb-6 p-4 bg-slate-900/30 backdrop-blur-sm rounded-lg border border-slate-600/30">
+                <div className="flex flex-col items-center">
+                    <span className="text-2xl font-bold text-cyan-400">{gameStats.entriesCount}</span>
+                    <span className="text-xs text-slate-400">Games played</span>
+                </div>
+                <div className="flex flex-col items-center">
+                    <span className="text-2xl font-bold text-cyan-400">{gameStats.winrate}%</span>
+                    <span className="text-xs text-slate-400">Winrate</span>
+                </div>
+                {gameStats.owned && (
+                    <div className="flex items-center">
+                        <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">In Library</span>
+                    </div>
+                )}
             </section>
-            <hr />
 
-            <section className="flex flex-col mt-4 border border-slate-600 rounded-lg p-4" >
+            <section className="flex flex-col border border-slate-600/30 rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm">
                 <h1 className="text-center text-xl font-semibold mb-6 text-white" >Add New Entry</h1>
                 <form className="flex flex-col" onSubmit={submitEntry} >
                     <div className="flex flex-col gap-4 mb-6">

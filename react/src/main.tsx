@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import Home from './home/home.tsx'
 import Game from './game/game.tsx'
+import Games from './game/games.tsx'
 import Confirm from './invitation/confirm.tsx'
 import Login from './login.tsx'
 import './index.css'
@@ -32,7 +33,11 @@ const router = createBrowserRouter([
       {
         path: "/players/:playerId",
         element: <Home />,
-      }   
+      },
+      {
+        path: "/players/:playerId/games",
+        element: <Games />,
+      }
     ]
   },
   {

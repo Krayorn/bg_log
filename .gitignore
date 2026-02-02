@@ -1,1 +1,10 @@
 .idea
+
+# Environment files (use .env.example as template)
+.env
+.env.local
+docker-compose.override.yml
+
+# Keep examples tracked
+!.env.example
+!docker-compose.override.yml.example

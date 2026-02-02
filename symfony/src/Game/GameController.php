@@ -15,6 +15,14 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class GameController extends AbstractController
 {
+    #[Route('api/players/{player}/games', methods: 'GET')]
+    public function getPlayerGames(Player $player, GameOwnedRepository $gameOwnedRepository): Response
+    {
+        $games = $gameOwnedRepository->findBy(['player' => $player]);
+
+        return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_OK);
+    }
+
     #[Route('api/players/{player}/games', methods: 'POST')]
     public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository, GameOwnedRepository $gameOwnedRepository): Response
     {

@@ -38,7 +38,7 @@ export default function Login() {
     }
 
   return (
-    <Layout>
+    <Layout noNav>
         <form className='flex flex-col items-center' method="post" onSubmit={login}>
             {
                 error !== '' &&
