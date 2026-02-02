@@ -8,3 +8,6 @@ docker-compose.override.yml
 # Keep examples tracked
 !.env.example
 !docker-compose.override.yml.example
+
+# database backup
+bg_log_backup_2025.gz
