@@ -632,7 +632,7 @@ function EntryDetail({ entry, game, onEntryUpdated, allPlayers }: {entry: Entry,
                                                         onClick={() => setEditField(fieldKey)}
                                                         className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm"
                                                     >
-                                                        {cfValue?.value || <span className="text-slate-500">Not set</span>}
+                                                        {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
                                                     </div>
                                                 )}
                                             </div>
