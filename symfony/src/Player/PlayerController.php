@@ -2,8 +2,6 @@
 
 namespace App\Player;
 
-use App\Player\Invitation\Invitation;
-use App\Player\Invitation\InvitationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,74 +12,49 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PlayerController extends AbstractController
 {
-    #[Route('api/players/{player}/invitations', name: 'create_invitation', methods: 'POST')]
-    public function createInvitation(Player $player, EntityManagerInterface $entityManager): Response
-    {
-        $invitation = new Invitation($player);
-        $entityManager->persist($invitation);
-        $entityManager->flush();
-
-        return new JsonResponse($invitation->view(), Response::HTTP_OK);
-    }
-
-    #[Route('api/invitations/{invitationId}', methods: 'GET')]
-    public function getInvitation(
-        string $invitationId,
-        InvitationRepository $invitationRepository
-    ): Response {
-        /** @var ?Invitation $invitation */
-        $invitation = $invitationRepository->find($invitationId);
-
-        if ($invitation === null) {
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        }
-
-        return new JsonResponse(
-            $invitation->view(),
-            Response::HTTP_OK
-        );
-    }
-
-    #[Route('api/invitations/{invitationId}/validate', methods: 'POST')]
-    public function validateInvitation(
-        string $invitationId,
-        InvitationRepository $invitationRepository,
-        Request                     $request,
+    #[Route('api/register', name: 'register', methods: 'POST')]
+    public function register(
+        Request $request,
+        PlayerRepository $playerRepository,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher
     ): Response {
-        /** @var ?Invitation $invitation */
-        $invitation = $invitationRepository->findOneBy([
-            'id' => $invitationId,
-            'used' => false,
-        ]);
-
-        if ($invitation === null) {
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        }
-
         $content = $request->getContent();
         $body = json_decode($content, true);
 
-        $pwd = $body['password'];
-        $player = $invitation->getPlayer();
+        $name = $body['username'] ?? '';
+        $password = $body['password'] ?? '';
 
-        $hashedPassword = $passwordHasher->hashPassword(
-            $player,
-            $pwd
-        );
+        if ($name === '') {
+            return new JsonResponse([
+                'error' => 'Username cannot be empty',
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
+        if ($password === '') {
+            return new JsonResponse([
+                'error' => 'Password cannot be empty',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $existingPlayer = $playerRepository->findOneBy([
+            'name' => $name,
+        ]);
+        if ($existingPlayer !== null) {
+            return new JsonResponse([
+                'error' => 'Username already taken',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $player = new Player($name, $playerRepository->findNextNumber());
+
+        $hashedPassword = $passwordHasher->hashPassword($player, $password);
         $player->register($hashedPassword);
-        $invitation->useInvitation();
 
         $entityManager->persist($player);
-
         $entityManager->flush();
 
-        return new JsonResponse(
-            $player->view(),
-            Response::HTTP_OK
-        );
+        return new JsonResponse($player->view(), Response::HTTP_CREATED);
     }
 
     #[Route('api/players', name: 'get_players', methods: 'GET')]

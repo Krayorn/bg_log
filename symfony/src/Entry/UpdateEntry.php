@@ -4,12 +4,16 @@ namespace App\Entry;
 
 use App\Entry\PlayerResult\PlayerEvent;
 use App\Event;
+use App\Game\GameOwnedRepository;
+use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class UpdateEntry
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
+        private readonly GameOwnedRepository $gameOwnedRepository,
+        private readonly PlayerRepository $playerRepository,
     ) {
     }
 
@@ -24,7 +28,8 @@ class UpdateEntry
         }
 
         if ($gameUsed !== null) {
-            $entry->updateGameUsed($gameUsed);
+            $gameOwned = $this->gameOwnedRepository->find($gameUsed);
+            $entry->updateGameUsed($gameOwned);
         }
 
         if ($playedAt !== null) {
@@ -32,29 +37,51 @@ class UpdateEntry
         }
 
         foreach ($customFieldEvents as $customFieldEvent) {
+            $customFieldId = $customFieldEvent->getCustomFieldId();
+            $customFieldValue = $customFieldEvent->getCustomFieldValue();
+            $eventId = $customFieldEvent->getId();
+
             switch ($customFieldEvent->getKind()) {
                 case Event::ADD:
-                    $entry->addCustomFieldValue($customFieldEvent->getCustomFieldId(), $customFieldEvent->getCustomFieldValue());
+                    if ($customFieldId !== null && $customFieldValue !== null) {
+                        $entry->addCustomFieldValue($customFieldId, $customFieldValue);
+                    }
                     break;
                 case Event::UPDATE:
-                    $entry->updateCustomFieldValue($customFieldEvent->getId(), $customFieldEvent->getCustomFieldValue());
+                    if ($eventId !== null && $customFieldValue !== null) {
+                        $entry->updateCustomFieldValue($eventId, $customFieldValue);
+                    }
                     break;
                 case Event::REMOVE:
-                    $entry->removeCustomField($customFieldEvent->getId());
+                    if ($eventId !== null) {
+                        $entry->removeCustomFieldValue($eventId);
+                    }
                     break;
             }
         }
 
         foreach ($playerEvents as $playerEvent) {
+            $eventId = $playerEvent->getId();
+            $playerId = $playerEvent->getPlayerId();
+
             switch ($playerEvent->getKind()) {
                 case Event::ADD:
-                    $entry->addPlayer($playerEvent->getPlayerId(), $playerEvent->getNote(), $playerEvent->getWon(), $playerEvent->getCustomFields());
-                    break;
-                case Event::UPDATE:
-                    $entry->updatePlayerResult($playerEvent->getId(), $playerEvent->getNote(), $playerEvent->getWon(), $playerEvent->getCustomFields());
+                    if ($playerId !== null) {
+                        $player = $this->playerRepository->find($playerId);
+                        if ($player !== null) {
+                            $entry->addPlayer($player, $playerEvent->getNote() ?? '', $playerEvent->getWon(), $playerEvent->getCustomFields());
+                        }
+                    }
                     break;
                 case Event::REMOVE:
-                    $entry->removePlayer($playerEvent->getId());
+                    if ($eventId !== null) {
+                        $entry->removePlayer($eventId);
+                    }
+                    break;
+                case Event::UPDATE:
+                    if ($eventId !== null) {
+                        $entry->updatePlayerResult($eventId, $playerEvent->getNote(), $playerEvent->getWon(), $playerEvent->isWonKeyPresent(), $this->mapCustomFieldEvents($playerEvent->getCustomFields()));
+                    }
                     break;
             }
         }
@@ -62,5 +89,14 @@ class UpdateEntry
         $this->entityManager->flush();
 
         return $entry;
+    }
+
+    /**
+     * @param array<array{id: string, value: string}> $customFields
+     * @return array<CustomFieldEvent>
+     */
+    private function mapCustomFieldEvents(array $customFields): array
+    {
+        return array_map(fn ($cf) => new CustomFieldEvent($cf), $customFields);
     }
 }

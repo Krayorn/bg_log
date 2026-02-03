@@ -21,6 +21,8 @@ services:
       - ./react/dist/:/usr/share/nginx/html
     ports:
       - "82:80"
+    depends_on:
+      - symfony
     environment:
       HOSTNAME_INTERNAL_PHP: symfony:9000
       HOSTNAME_PUBLIC_BACKEND: localhost:9000

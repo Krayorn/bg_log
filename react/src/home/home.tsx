@@ -121,16 +121,19 @@ function GeneralStatistics({ playerId }: {playerId: string}) {
         return <div className="text-slate-500">Loading...</div>
     }
 
-    const dateNow = new Date()
-    const lastGameDate = new Date(generalStats.lastGameDate)
-    const daysSinceLastGame = Math.ceil(Math.abs(dateNow.getTime() - lastGameDate.getTime()) / (1000 * 60 * 60 * 24))
+    let daysSinceLastGame: number | string = '—'
+    if (generalStats.lastGameDate) {
+        const dateNow = new Date()
+        const lastGameDate = new Date(generalStats.lastGameDate)
+        daysSinceLastGame = Math.ceil(Math.abs(dateNow.getTime() - lastGameDate.getTime()) / (1000 * 60 * 60 * 24))
+    }
 
     return (
         <div className="grid grid-cols-2 gap-4">
             <StatItem value={generalStats.gamesOwned} label="Games owned" />
             <StatItem value={generalStats.entriesPlayed} label="Total plays" />
             <StatItem value={generalStats.gamePartners} label="Play partners" />
-            <StatItem value={`${generalStats.globalWinrate}%`} label="Win rate" highlight />
+            <StatItem value={`${generalStats.globalWinrate ?? 0}%`} label="Win rate" highlight />
             <StatItem value={daysSinceLastGame} label="Days since last game" className="col-span-2" />
         </div>
     )
@@ -153,12 +156,16 @@ interface GameStats {
 }
 
 function GameStatistics({ playerId }: {playerId: string}) {
-    const [gameStats, setGameStats] = useState<GameStats[]>([])
+    const [gameStats, setGameStats] = useState<GameStats[]|null>(null)
     
     useRequest(`/players/${playerId}/games/stats`, [playerId], setGameStats)
 
-    if (gameStats.length === 0) {
+    if (gameStats === null) {
         return <div className="text-slate-500">Loading...</div>
+    }
+
+    if (gameStats.length === 0) {
+        return <div className="text-slate-500">No games played yet</div>
     }
 
     const mostPlayed = [...gameStats].sort((a, b) => b.count - a.count).slice(0, 4)
@@ -201,12 +208,16 @@ interface PlayerStats {
 }
 
 function PlayerStatistics({ playerId }: {playerId: string}) {
-    const [playerStats, setPlayerStats] = useState<PlayerStats[]>([])
+    const [playerStats, setPlayerStats] = useState<PlayerStats[]|null>(null)
 
     useRequest(`/players/${playerId}/friends/stats`, [playerId], setPlayerStats)
 
-    if (playerStats.length === 0) {
+    if (playerStats === null) {
         return <div className="text-slate-500">Loading...</div>
+    }
+
+    if (playerStats.length === 0) {
+        return <div className="text-slate-500">No games with other players yet</div>
     }
 
     const sortedByCount = [...playerStats].sort((a, b) => b.count - a.count)

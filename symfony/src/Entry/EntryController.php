@@ -29,7 +29,7 @@ class EntryController extends AbstractController
         PlayerRepository $playerRepository,
     ): Response {
         $gameId = $request->query->get('game');
-        if (! Uuid::isValid($gameId)) {
+        if ($gameId === null || ! Uuid::isValid($gameId)) {
             throw new BadRequestException('game id not valid');
         }
 
@@ -40,7 +40,7 @@ class EntryController extends AbstractController
         }
 
         $playerId = $request->query->get('player');
-        if (! Uuid::isValid($playerId)) {
+        if ($playerId === null || ! Uuid::isValid($playerId)) {
             throw new BadRequestException('player id not valid');
         }
 

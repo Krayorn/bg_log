@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import Home from './home/home.tsx'
 import Game from './game/game.tsx'
 import Games from './game/games.tsx'
-import Confirm from './invitation/confirm.tsx'
 import Login from './login.tsx'
 import './index.css'
 import {
@@ -18,11 +17,6 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Login />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: "/join/:inviteCode",
-    element: <Confirm />,
     errorElement: <ErrorPage />,
   },
   {

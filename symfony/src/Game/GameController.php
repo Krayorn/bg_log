@@ -8,6 +8,7 @@ use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,9 @@ class GameController extends AbstractController
     #[Route('api/players/{player}/games', methods: 'GET')]
     public function getPlayerGames(Player $player, GameOwnedRepository $gameOwnedRepository): Response
     {
-        $games = $gameOwnedRepository->findBy(['player' => $player]);
+        $games = $gameOwnedRepository->findBy([
+            'player' => $player,
+        ]);
 
         return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_OK);
     }
@@ -124,7 +127,10 @@ class GameController extends AbstractController
     public function getGameStats(Request $request, Game $game, GameRepository $gameRepository): Response
     {
         $playerId = $request->query->get('player');
-        $stats = $gameRepository->getGameStats($game->getId(), $playerId);
+        if ($playerId === null) {
+            throw new BadRequestException('player id is required');
+        }
+        $stats = $gameRepository->getGameStats((string) $game->getId(), $playerId);
 
         return new JsonResponse([
             'owned' => $stats['in_library'],

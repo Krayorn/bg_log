@@ -2,29 +2,50 @@
 
 namespace App\Entry\PlayerResult;
 
-use App\Entry\CustomFieldEvent;
 use App\Event;
 
 class PlayerEvent extends Event
 {
+    private readonly ?string $playerId;
+
     private readonly ?string $note;
 
     private readonly ?bool $won;
 
+    private readonly bool $wonKeyPresent;
+
+    /**
+     * @var array<array{id: string, value: string}>
+     */
     private readonly array $customFields;
 
+    /**
+     * @param array<string, mixed> $playerEvent
+     */
     public function __construct(array $playerEvent)
     {
         parent::__construct($playerEvent);
 
-        if (! in_array($this->getKind(), [self::ADD, self::UPDATE])) {
+        if (! in_array($this->getKind(), [self::ADD, self::UPDATE], true)) {
+            $this->playerId = null;
+            $this->note = null;
+            $this->won = null;
+            $this->wonKeyPresent = false;
+            $this->customFields = [];
             return;
         }
 
+        $this->playerId = $playerEvent['payload']['playerId'] ?? null;
         $this->note = $playerEvent['payload']['note'] ?? null;
         $this->won = $playerEvent['payload']['won'] ?? null;
+        $this->wonKeyPresent = array_key_exists('won', $playerEvent['payload'] ?? []);
 
-        $this->customFields = array_map(fn ($customField) => new CustomFieldEvent($customField), $playerEvent['payload']['customFields'] ?? []);
+        $this->customFields = $playerEvent['payload']['customFields'] ?? [];
+    }
+
+    public function getPlayerId(): ?string
+    {
+        return $this->playerId;
     }
 
     public function getNote(): ?string
@@ -37,8 +58,13 @@ class PlayerEvent extends Event
         return $this->won;
     }
 
+    public function isWonKeyPresent(): bool
+    {
+        return $this->wonKeyPresent;
+    }
+
     /**
-     * @return array<CustomFieldEvent>
+     * @return array<array{id: string, value: string}>
      */
     public function getCustomFields(): array
     {

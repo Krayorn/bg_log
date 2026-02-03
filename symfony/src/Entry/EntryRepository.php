@@ -17,7 +17,10 @@ class EntryRepository extends ServiceEntityRepository
         parent::__construct($registry, Entry::class);
     }
 
-    public function list(?Game $game, ?Player $player)
+    /**
+     * @return array<Entry>
+     */
+    public function list(?Game $game, ?Player $player): array
     {
         $qb = $this->createQueryBuilder('e');
 

@@ -59,6 +59,9 @@ class CustomFieldValue
         return $this->customField;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function view(): array
     {
         return [
@@ -68,7 +71,7 @@ class CustomFieldValue
         ];
     }
 
-    private function getValue(): int|string
+    private function getValue(): int|string|null
     {
         if ($this->customField->getKind() === CustomFieldKind::STRING) {
             return $this->valueString;

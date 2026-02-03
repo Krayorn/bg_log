@@ -27,17 +27,17 @@ class Entry
     /**
      * @var Collection<int, PlayerResult>
      */
-    #[ORM\OneToMany(mappedBy: 'entry', targetEntity: PlayerResult::class, cascade: ['persist'], indexBy: 'id')]
+    #[ORM\OneToMany(mappedBy: 'entry', targetEntity: PlayerResult::class, cascade: ['persist', 'remove'], orphanRemoval: true, indexBy: 'id')]
     private Collection   $playerResults;
 
     /**
      * @var Collection<int, CustomFieldValue>
      */
-    #[ORM\OneToMany(mappedBy: 'entry', targetEntity: CustomFieldValue::class, cascade: ['persist'], indexBy: 'id')]
+    #[ORM\OneToMany(mappedBy: 'entry', targetEntity: CustomFieldValue::class, cascade: ['persist', 'remove'], orphanRemoval: true, indexBy: 'id')]
     private Collection   $customFields;
 
     /**
-     * @param array<array{player: Player, note: string, won: boolean, customFields?: array}> $players
+     * @param array<array{player: Player, note: string, won: bool|null, customFields?: array<array{id: string, value: string}>}> $players
      */
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
@@ -50,7 +50,7 @@ class Entry
         array                              $players,
         #[ORM\ManyToOne(targetEntity: GameOwned::class)]
         #[ORM\JoinColumn(name: 'game_owned_id', referencedColumnName: 'id', nullable: true)]
-        private readonly ?GameOwned        $gameUsed,
+        private ?GameOwned        $gameUsed,
     ) {
         $this->id = Uuid::uuid4();
 
@@ -58,13 +58,13 @@ class Entry
         $this->playerResults = new ArrayCollection();
         foreach ($players as $player) {
             $playerResult = new PlayerResult($this, $player['player'], $player['note'], $player['won']);
-            
+
             $playerCustomFields = $player['customFields'] ?? [];
             foreach ($playerCustomFields as $customFieldData) {
                 $customField = $this->game->getCustomField($customFieldData['id']);
                 $playerResult->addCustomFieldValue($customField, $customFieldData['value']);
             }
-            
+
             $this->playerResults->add($playerResult);
         }
     }
@@ -98,9 +98,15 @@ class Entry
     /**
      * @param array<CustomFieldEvent> $customFields
      */
-    public function updatePlayerResult(string $playerResultId, ?string $note, ?bool $won, array $customFields): void
+    public function updatePlayerResult(string $playerResultId, ?string $note, ?bool $won, bool $updateWon, array $customFields): void
     {
-        $playerResult = $this->playerResults->get($playerResultId);
+        $playerResult = null;
+        foreach ($this->playerResults as $pr) {
+            if ((string) $pr->id === $playerResultId) {
+                $playerResult = $pr;
+                break;
+            }
+        }
 
         if ($playerResult === null) {
             throw new BadRequestException();
@@ -110,15 +116,28 @@ class Entry
             $playerResult->updateNote($note);
         }
 
+        if ($updateWon) {
+            $playerResult->updateWon($won);
+        }
+
         foreach ($customFields as $event) {
+            $customFieldId = $event->getCustomFieldId();
+            $eventId = $event->getId();
             switch ($event->getKind()) {
                 case Event::ADD:
-                    $playerResult->addCustomFieldValue($this->game->getCustomField($event->getCustomFieldId()), $event->getCustomFieldValue());
+                    if ($customFieldId !== null) {
+                        $playerResult->addCustomFieldValue($this->game->getCustomField($customFieldId), $event->getCustomFieldValue() ?? '');
+                    }
                     break;
                 case Event::UPDATE:
-                    $playerResult->updateCustomFieldValue($event->getId(), $event->getCustomFieldValue());
+                    if ($eventId !== null) {
+                        $playerResult->updateCustomFieldValue($eventId, $event->getCustomFieldValue() ?? '');
+                    }
                     break;
                 case Event::REMOVE:
+                    if ($eventId !== null) {
+                        $playerResult->removeCustomFieldValue($eventId);
+                    }
                     break;
             }
         }
@@ -150,12 +169,71 @@ class Entry
 
     public function updateCustomFieldValue(string $id, string $value): void
     {
-        $customFieldValue = $this->customFields->get($id);
+        $customFieldValue = null;
+        foreach ($this->customFields as $cfv) {
+            if ((string) $cfv->id === $id) {
+                $customFieldValue = $cfv;
+                break;
+            }
+        }
+
+        if ($customFieldValue === null) {
+            throw new BadRequestException("Custom field value not found: {$id}");
+        }
 
         if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
             $customFieldValue->updateStringValue($value);
         } elseif ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
             $customFieldValue->updateNumberValue((int) $value);
         }
+    }
+
+    public function removeCustomFieldValue(string $id): void
+    {
+        foreach ($this->customFields as $key => $cfv) {
+            if ((string) $cfv->id === $id) {
+                $this->customFields->remove($key);
+                return;
+            }
+        }
+
+        throw new BadRequestException("Custom field value not found: {$id}");
+    }
+
+    public function updateGameUsed(?GameOwned $gameUsed): void
+    {
+        $this->gameUsed = $gameUsed;
+    }
+
+    public function getGame(): Game
+    {
+        return $this->game;
+    }
+
+    /**
+     * @param array<array{id: string, value: string}> $customFields
+     */
+    public function addPlayer(Player $player, string $note, ?bool $won, array $customFields): void
+    {
+        $playerResult = new PlayerResult($this, $player, $note, $won);
+
+        foreach ($customFields as $customFieldData) {
+            $customField = $this->game->getCustomField($customFieldData['id']);
+            $playerResult->addCustomFieldValue($customField, $customFieldData['value']);
+        }
+
+        $this->playerResults->add($playerResult);
+    }
+
+    public function removePlayer(string $playerResultId): void
+    {
+        foreach ($this->playerResults as $key => $pr) {
+            if ((string) $pr->id === $playerResultId) {
+                $this->playerResults->remove($key);
+                return;
+            }
+        }
+
+        throw new BadRequestException("Player result not found: {$playerResultId}");
     }
 }

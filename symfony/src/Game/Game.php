@@ -51,12 +51,12 @@ class Game
 
     public function getCustomField(string $customFieldId): CustomField
     {
-        $customField = $this->customFields->get($customFieldId);
-
-        if ($customField === null) {
-            throw new BadRequestException();
+        foreach ($this->customFields as $cf) {
+            if ((string) $cf->id === $customFieldId) {
+                return $cf;
+            }
         }
 
-        return $customField;
+        throw new BadRequestException("Custom field not found: {$customFieldId}");
     }
 }

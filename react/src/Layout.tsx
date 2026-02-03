@@ -15,7 +15,8 @@ interface Game {
 
 export default function Layout({ children, noNav = false }: LayoutProps) {
   const { playerId: playerIdFromParams } = useParams() as { playerId?: string };
-  const [token] = useLocalStorage('jwt', null);
+  const [token, setToken] = useLocalStorage('jwt', null);
+  const navigate = useNavigate();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const location = useLocation();
 
@@ -81,6 +82,12 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
               </svg>
             </button>
           </div>
+          <button 
+            onClick={() => { setToken(null); navigate('/'); }} 
+            className="absolute bottom-2 right-3 text-slate-500 text-xs hover:text-slate-300 transition-colors"
+          >
+            logout
+          </button>
         </nav>
       )}
     </div>

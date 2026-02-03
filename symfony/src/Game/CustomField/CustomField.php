@@ -29,7 +29,11 @@ class CustomField
         private readonly bool $global,
     ) {
         $this->id = Uuid::uuid4();
-        $this->kind = CustomFieldKind::tryFrom($kind);
+        $kindEnum = CustomFieldKind::tryFrom($kind);
+        if (! $kindEnum instanceof \App\Game\CustomField\CustomFieldKind) {
+            throw new \InvalidArgumentException("Invalid custom field kind: {$kind}");
+        }
+        $this->kind = $kindEnum;
     }
 
     public function getId(): UuidInterface
@@ -42,6 +46,9 @@ class CustomField
         return $this->kind;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function view(): array
     {
         return [

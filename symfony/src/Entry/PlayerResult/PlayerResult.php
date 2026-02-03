@@ -24,7 +24,7 @@ class PlayerResult
     /**
      * @var Collection<int, CustomFieldValue>
      */
-    #[ORM\OneToMany(mappedBy: 'playerResult', indexBy: 'id', targetEntity: CustomFieldValue::class, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'playerResult', indexBy: 'id', targetEntity: CustomFieldValue::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection   $customFields;
 
     public function __construct(
@@ -68,7 +68,17 @@ class PlayerResult
 
     public function updateCustomFieldValue(string $id, string $value): void
     {
-        $customFieldValue = $this->customFields->get($id);
+        $customFieldValue = null;
+        foreach ($this->customFields as $cfv) {
+            if ((string) $cfv->id === $id) {
+                $customFieldValue = $cfv;
+                break;
+            }
+        }
+
+        if ($customFieldValue === null) {
+            throw new \Exception("Custom field value not found: {$id}");
+        }
 
         if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
             $customFieldValue->updateStringValue($value);
@@ -77,9 +87,26 @@ class PlayerResult
         }
     }
 
+    public function removeCustomFieldValue(string $id): void
+    {
+        foreach ($this->customFields as $key => $cfv) {
+            if ((string) $cfv->id === $id) {
+                $this->customFields->remove($key);
+                return;
+            }
+        }
+
+        throw new \Exception("Custom field value not found: {$id}");
+    }
+
     public function updateNote(string $note): void
     {
         $this->note = $note;
+    }
+
+    public function updateWon(?bool $won): void
+    {
+        $this->won = $won;
     }
 
     /**

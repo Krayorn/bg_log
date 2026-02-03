@@ -14,6 +14,9 @@ class Event
 
     private readonly ?string $id;
 
+    /**
+     * @param array<string, mixed> $rawEvent
+     */
     public function __construct(array $rawEvent)
     {
         $this->kind = $rawEvent['kind'];

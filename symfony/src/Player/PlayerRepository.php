@@ -56,7 +56,18 @@ class PlayerRepository extends ServiceEntityRepository
             'playerId' => $player->getId(),
         ]);
 
-        return $result->fetchAllAssociative()[0];
+        $rows = $result->fetchAllAssociative();
+        if ($rows === []) {
+            return [
+                'games_owned' => 0,
+                'entries_played' => 0,
+                'global_winrate' => 0,
+                'game_partners' => 0,
+                'last_game_date' => null,
+            ];
+        }
+
+        return $rows[0];
     }
 
     /**

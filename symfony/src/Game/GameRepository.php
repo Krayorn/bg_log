@@ -40,6 +40,9 @@ class GameRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getGameStats(string $gameId, string $playerId): array
     {
         $conn = $this->getEntityManager()->getConnection();

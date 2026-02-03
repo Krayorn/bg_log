@@ -58,16 +58,18 @@ export default function Game() {
     const [game, setGame] = useState<Game|null>(null)
     const [gameStats, setGameStats] = useState<GameStats|null>(null)
     const [entries, setEntries] = useState<Entry[]|[]>([])
-    const [selectedEntry, setSelectedEntry] = useState<Entry|null>(null)
-    const [refreshKey, setRefreshKey] = useState(0)
+    const [selectedEntryId, setSelectedEntryId] = useState<string|null>(null)
+    const [playersList, setPlayersList] = useState<{id: string, name: string}[]>([])
 
     const [searchParams] = useSearchParams();
 
     const playerId = searchParams.get('playerId')
     const entryIdFromUrl = searchParams.get('entryId')
 
+    const selectedEntry = selectedEntryId ? entries.find(e => e.id === selectedEntryId) ?? null : null
+
     const selectEntry = (entry: Entry | null) => {
-        setSelectedEntry(entry)
+        setSelectedEntryId(entry?.id ?? null)
         const params = new URLSearchParams(searchParams)
         if (entry) {
             params.set('entryId', entry.id)
@@ -78,28 +80,30 @@ export default function Game() {
     }
 
     useEffect(() => {
-        setSelectedEntry(null)
+        setSelectedEntryId(null)
         setEntries([])
         setGame(null)
         setGameStats(null)
     }, [gameId])
 
     useEffect(() => {
-        if (entryIdFromUrl && entries.length > 0 && !selectedEntry) {
-            const entry = entries.find(e => e.id === entryIdFromUrl)
-            if (entry) {
-                setSelectedEntry(entry)
-            }
+        if (entryIdFromUrl && entries.length > 0 && !selectedEntryId) {
+            setSelectedEntryId(entryIdFromUrl)
         }
     }, [entryIdFromUrl, entries])
 
-    const onEntryCreated = () => {
-        setRefreshKey(k => k + 1)
+    const onEntryCreated = (newEntry: Entry) => {
+        setEntries([...entries, newEntry])
+    }
+
+    const onEntryUpdated = (id: string, newEntry: Entry) => {
+        setEntries(entries.map(e => e.id === id ? newEntry : e))
     }
 
     useRequest(`/games/${gameId}`, [gameId], setGame)
-    useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId, refreshKey], setEntries)
-    useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId, refreshKey], setGameStats)
+    useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
+    useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
+    useRequest(`/players`, [], setPlayersList)
 
     if (game === null) {
         return (
@@ -145,7 +149,7 @@ export default function Game() {
                 </section>
                 <section className="flex-1 overflow-y-auto">
                     {selectedEntry
-                        ? <EntryDetail key={selectedEntry.id} game={game} entry={selectedEntry} />
+                        ? <EntryDetail key={selectedEntry.id} game={game} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
                         : <GameDetail game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} />
                     }
                 </section>
@@ -198,77 +202,88 @@ function formatDateForInput(date: Date) {
     return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`
 }
 
-function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
+function EntryDetail({ entry, game, onEntryUpdated, allPlayers }: {entry: Entry, game: Game, onEntryUpdated: (id: string, newEntry: Entry) => void, allPlayers: {id: string, name: string}[]}) {
     const [editField, setEditField] = useState<string | null>(null)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
     const [players, setPlayers] = useState(entry.players.map(p => ({...p})))
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({...c})))
+    const [showAddPlayer, setShowAddPlayer] = useState(false)
+    const [newPlayerId, setNewPlayerId] = useState('')
 
     const [token, _] = useLocalStorage('jwt', null)
 
+    // Sync local state when entry prop changes (from parent after API updates)
+    useEffect(() => {
+        setNote(entry.note)
+        setPlayedAt(new Date(entry.playedAt.date))
+        setPlayers(entry.players.map(p => ({...p})))
+        setCustomFields(entry.customFields.map(c => ({...c})))
+    }, [entry])
+    
+    const availablePlayers = allPlayers.filter(p => !players.some(ep => ep.player.id === p.id))
+
     const patchEntry = async (payload: any) => {
-        await fetch(`${host}/entries/${entry.id}`, { 
+        const response = await fetch(`${host}/entries/${entry.id}`, { 
             method: "PATCH", 
             headers: { "Authorization": `Bearer ${token}`},
             body: JSON.stringify(payload)
         })
+        const updatedEntry = await response.json()
+        onEntryUpdated(entry.id, updatedEntry)
     }
 
-    const handleNoteBlur = () => {
+    const handleNoteBlur = async () => {
         if (note !== entry.note) {
-            patchEntry({ note, customFields: [], players: [] })
-            entry.note = note
+            await patchEntry({ note, customFields: [], players: [] })
         }
         setEditField(null)
     }
 
-    const handleDateBlur = () => {
+    const handleDateBlur = async () => {
         const originalDate = new Date(entry.playedAt.date).toDateString()
         if (playedAt.toDateString() !== originalDate) {
-            patchEntry({ playedAt: playedAt.toDateString(), customFields: [], players: [] })
+            await patchEntry({ playedAt: playedAt.toDateString(), customFields: [], players: [] })
         }
         setEditField(null)
     }
 
-    const handleEntryCustomFieldBlur = (customField: CustomField, value: string, existingValueId?: string) => {
+    const handleEntryCustomFieldBlur = async (customField: CustomField, value: string, existingValueId?: string) => {
         const originalValue = entry.customFields.find(c => c.customField.id === customField.id)
         
         if (originalValue === undefined && value !== '') {
-            patchEntry({ 
+            await patchEntry({ 
                 customFields: [{ kind: "add", payload: { id: customField.id, value } }], 
                 players: [] 
             })
         } else if (originalValue && originalValue.value !== value) {
-            patchEntry({ 
+            await patchEntry({ 
                 customFields: [{ kind: "update", id: existingValueId, payload: { value } }], 
                 players: [] 
             })
-            originalValue.value = value
         }
         setEditField(null)
     }
 
-    const handlePlayerNoteBlur = (playerResultId: string, newNote: string) => {
+    const handlePlayerNoteBlur = async (playerResultId: string, newNote: string) => {
         const originalPlayer = entry.players.find(p => p.id === playerResultId)
         if (originalPlayer && originalPlayer.note !== newNote) {
-            patchEntry({ 
+            await patchEntry({ 
                 customFields: [], 
                 players: [{ kind: "update", id: playerResultId, payload: { note: newNote, customFields: [] } }] 
             })
-            originalPlayer.note = newNote
         }
         setEditField(null)
     }
 
-    const handlePlayerCustomFieldBlur = (playerResultId: string, customField: CustomField, value: string, existingValueId?: string) => {
+    const handlePlayerCustomFieldBlur = async (playerResultId: string, customField: CustomField, value: string, existingValueId?: string) => {
         const originalPlayer = entry.players.find(p => p.id === playerResultId)
         if (!originalPlayer) return
 
         const originalValue = originalPlayer.customFields.find(c => c.customField.id === customField.id)
         
         if (originalValue === undefined && value !== '') {
-            patchEntry({ 
+            await patchEntry({ 
                 customFields: [], 
                 players: [{ 
                     kind: "update", 
@@ -279,7 +294,7 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                 }] 
             })
         } else if (originalValue && originalValue.value !== value) {
-            patchEntry({ 
+            await patchEntry({ 
                 customFields: [], 
                 players: [{ 
                     kind: "update", 
@@ -289,9 +304,28 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                     } 
                 }] 
             })
-            originalValue.value = value
         }
         setEditField(null)
+    }
+
+    const handleRemoveEntryCustomField = async (customFieldValueId: string) => {
+        await patchEntry({
+            customFields: [{ kind: "remove", id: customFieldValueId }],
+            players: []
+        })
+    }
+
+    const handleRemovePlayerCustomField = async (playerResultId: string, customFieldValueId: string) => {
+        await patchEntry({
+            customFields: [],
+            players: [{
+                kind: "update",
+                id: playerResultId,
+                payload: {
+                    customFields: [{ kind: "remove", id: customFieldValueId }]
+                }
+            }]
+        })
     }
 
     const updateLocalCustomField = (customField: CustomField, value: string) => {
@@ -323,6 +357,46 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                 return { ...p, customFields: [...p.customFields, { value, customField, id: '' }] }
             }
         }))
+    }
+
+    const handleAddPlayer = async () => {
+        if (!newPlayerId) return
+        
+        await patchEntry({ 
+            customFields: [], 
+            players: [{ 
+                kind: "add", 
+                payload: { 
+                    playerId: newPlayerId, 
+                    note: '', 
+                    won: null, 
+                    customFields: [] 
+                } 
+            }] 
+        })
+        
+        setNewPlayerId('')
+        setShowAddPlayer(false)
+    }
+
+    const handleRemovePlayer = async (playerResultId: string) => {
+        await patchEntry({ 
+            customFields: [], 
+            players: [{ kind: "remove", id: playerResultId }] 
+        })
+    }
+
+    const handleToggleWon = async (playerResultId: string, currentWon: boolean | null) => {
+        const newWon = currentWon === true ? false : currentWon === false ? null : true
+        
+        await patchEntry({ 
+            customFields: [], 
+            players: [{ 
+                kind: "update", 
+                id: playerResultId, 
+                payload: { won: newWon, customFields: [] } 
+            }] 
+        })
     }
 
     const globalCustomFields = game.customFields.filter(c => c.global)
@@ -386,7 +460,18 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                                     const fieldKey = `cf-${cf.id}`
                                     return (
                                         <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
-                                            <label className="text-slate-300 text-xs">{cf.name}</label>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-slate-300 text-xs">{cf.name}</label>
+                                                {cfValue?.id && (
+                                                    <button
+                                                        onClick={() => handleRemoveEntryCustomField(cfValue.id)}
+                                                        className="text-slate-500 hover:text-red-400 text-xs"
+                                                        title="Remove value"
+                                                    >
+                                                        unset
+                                                    </button>
+                                                )}
+                                            </div>
                                             {editField === fieldKey ? (
                                                 <input
                                                     autoFocus
@@ -415,17 +500,79 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
             </section>
 
             <section className="border border-slate-600 rounded-lg p-4">
-                <h2 className="text-white font-semibold text-lg mb-4">Players</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-white font-semibold text-lg">Players</h2>
+                    {availablePlayers.length > 0 && (
+                        <button 
+                            onClick={() => setShowAddPlayer(!showAddPlayer)}
+                            className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Player
+                        </button>
+                    )}
+                </div>
+                
+                {showAddPlayer && (
+                    <div className="mb-4 p-3 border border-slate-500 rounded-lg bg-slate-800/50 flex gap-2 items-end">
+                        <div className="flex-1">
+                            <label className="text-slate-300 text-xs block mb-1">Select Player</label>
+                            <select 
+                                value={newPlayerId} 
+                                onChange={(e) => setNewPlayerId(e.target.value)}
+                                className="w-full p-2 rounded bg-slate-700 text-white border border-slate-500"
+                            >
+                                <option value="">Choose a player...</option>
+                                {availablePlayers.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button 
+                            onClick={handleAddPlayer}
+                            disabled={!newPlayerId}
+                            className="px-3 py-2 rounded bg-cyan-500/20 border border-cyan-400/50 text-cyan-400 hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Add
+                        </button>
+                        <button 
+                            onClick={() => { setShowAddPlayer(false); setNewPlayerId(''); }}
+                            className="px-3 py-2 rounded bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+                
                 <div className="flex flex-wrap gap-3">
                     {players.sort((a, b) => a.won && !b.won ? -1 : 1).map((playerResult) => (
                         <div key={playerResult.id} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
-                            <div className="flex items-center gap-2">
-                                <span className="text-white font-medium">{playerResult.player.name}</span>
-                                {playerResult.won && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-yellow-400">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-white font-medium flex-1 truncate">{playerResult.player.name}</span>
+                                <button 
+                                    onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
+                                    className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${
+                                        playerResult.won === true 
+                                            ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400' 
+                                            : playerResult.won === false 
+                                                ? 'bg-red-500/20 border-red-400/50 text-red-400' 
+                                                : 'bg-slate-700 border-slate-500 text-slate-400'
+                                    }`}
+                                    title="Click to toggle: Win → Loss → Not set"
+                                >
+                                    {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
+                                </button>
+                                <button 
+                                    onClick={() => handleRemovePlayer(playerResult.id)}
+                                    className="text-red-400 hover:text-red-300 shrink-0"
+                                    title="Remove player"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                )}
+                                </button>
                             </div>
                             
                             <div className="flex flex-col gap-1">
@@ -458,7 +605,18 @@ function EntryDetail({ entry, game }: {entry: Entry, game: Game}) {
                                         const fieldKey = `player-${playerResult.id}-cf-${cf.id}`
                                         return (
                                             <div key={cf.id} className="flex flex-col gap-1 mt-2">
-                                                <label className="text-slate-300 text-xs">{cf.name}</label>
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-slate-300 text-xs">{cf.name}</label>
+                                                    {cfValue?.id && (
+                                                        <button
+                                                            onClick={() => handleRemovePlayerCustomField(playerResult.id, cfValue.id)}
+                                                            className="text-slate-500 hover:text-red-400 text-xs"
+                                                            title="Remove value"
+                                                        >
+                                                            unset
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 {editField === fieldKey ? (
                                                     <input
                                                         autoFocus
@@ -515,7 +673,7 @@ type PlayerEntry = {
     customFields: { [key: string]: string }
 }
 
-function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, gameStats: GameStats|null, playerId: string|null, onEntryCreated: () => void}) {
+function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, gameStats: GameStats|null, playerId: string|null, onEntryCreated: (newEntry: Entry) => void}) {
     const [token, _] = useLocalStorage('jwt', null)
 
     const [customFieldName, setCustomFieldName] = useState<string>("")
@@ -659,7 +817,7 @@ function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, 
             setEntryGameUsed("")
             setEntryCustomFields({})
             setEntryPlayers([])
-            onEntryCreated()
+            onEntryCreated(data)
         }
     }
 
