@@ -19,12 +19,14 @@ type CustomField = {
 }
 
 type StatsResult = 
-    | { type: 'sum'; total: number }
+    | { type: 'sum' | 'avg' | 'min' | 'max'; total: number }
     | { type: 'breakdown'; data: { value: string; count: number }[] }
     | { type: 'grouped'; data: { label: string; total: number }[] }
-    | { type: 'stacked'; data: { player: string; values: Record<string, number> }[]; keys: string[] }
+    | { type: 'stacked'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
+    | { type: 'crosstab'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
 
 type ChartType = 'bar' | 'pie'
+type AggregationType = 'sum' | 'avg' | 'min' | 'max'
 
 const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#f97316']
 
@@ -38,6 +40,7 @@ export default function Statistics() {
     const [groupByFieldId, setGroupByFieldId] = useState<string>('')
     const [groupByPlayer, setGroupByPlayer] = useState(false)
     const [chartType, setChartType] = useState<ChartType>('bar')
+    const [aggregation, setAggregation] = useState<AggregationType>('sum')
     const [statsResult, setStatsResult] = useState<StatsResult | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -47,9 +50,8 @@ export default function Statistics() {
     const selectedField = customFields.find(cf => cf.id === selectedFieldId)
     const groupByField = customFields.find(cf => cf.id === groupByFieldId)
     const isNumberField = selectedField?.kind === 'number'
-    const isStringField = selectedField?.kind === 'string'
     const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
-    const isStackedChart = statsResult?.type === 'stacked'
+    const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
     const fetchStats = async () => {
         if (!selectedFieldId) return
@@ -67,6 +69,9 @@ export default function Statistics() {
         if (groupByPlayer) {
             params.set('groupByPlayer', 'true')
         }
+        if (isNumberField) {
+            params.set('aggregation', aggregation)
+        }
         
         const { data, ok } = await apiGet<StatsResult>(`/games/${gameId}/customFields/stats?${params.toString()}`)
         
@@ -76,11 +81,11 @@ export default function Statistics() {
         setLoading(false)
     }
 
-    // Transform stacked data for recharts (flatten values into the object)
+    // Transform stacked/crosstab data for recharts (flatten values into the object)
     const getStackedChartData = () => {
-        if (statsResult?.type !== 'stacked') return []
+        if (statsResult?.type !== 'stacked' && statsResult?.type !== 'crosstab') return []
         return statsResult.data.map(item => ({
-            player: item.player,
+            group: item.group,
             ...item.values
         }))
     }
@@ -150,6 +155,25 @@ export default function Statistics() {
                                 </div>
                                 
                                 {isNumberField && (
+                                    <div className="flex flex-col gap-1 min-w-[120px]">
+                                        <label className="text-white text-sm font-medium">Aggregation</label>
+                                        <select 
+                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500"
+                                            value={aggregation}
+                                            onChange={e => {
+                                                setAggregation(e.target.value as AggregationType)
+                                                setStatsResult(null)
+                                            }}
+                                        >
+                                            <option value="sum">Sum</option>
+                                            <option value="avg">Average</option>
+                                            <option value="min">Minimum</option>
+                                            <option value="max">Maximum</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {selectedFieldId && (
                                     <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
                                         <label className="text-white text-sm font-medium">Group By (optional)</label>
                                         <select 
@@ -157,10 +181,11 @@ export default function Statistics() {
                                             value={groupByFieldId}
                                             onChange={e => {
                                                 setGroupByFieldId(e.target.value)
+                                                setGroupByPlayer(false)
                                                 setStatsResult(null)
                                             }}
                                         >
-                                            <option value="">No grouping (total sum)</option>
+                                            <option value="">{isNumberField ? `No grouping (total ${aggregation})` : 'No grouping'}</option>
                                             <optgroup label="Entry Fields">
                                                 {customFields.filter(cf => cf.global && cf.id !== selectedFieldId).map(cf => (
                                                     <option key={cf.id} value={cf.id}>
@@ -179,7 +204,7 @@ export default function Statistics() {
                                     </div>
                                 )}
 
-                                {(isStringField || (isNumberField && !groupByFieldId)) && (
+                                {!groupByFieldId && (
                                     <label className="flex items-center gap-2 text-white cursor-pointer">
                                         <input 
                                             type="checkbox"
@@ -230,10 +255,17 @@ export default function Statistics() {
                                     </div>
                                 )}
                                 
-                                {statsResult.type === 'sum' && (
+                                {['sum', 'avg', 'min', 'max'].includes(statsResult.type) && 'total' in statsResult && (
                                     <div className="text-center">
-                                        <p className="text-slate-400 text-sm mb-2">Total sum for "{selectedField?.name}"</p>
-                                        <p className="text-5xl font-bold text-cyan-400">{statsResult.total}</p>
+                                        <p className="text-slate-400 text-sm mb-2">
+                                            {statsResult.type === 'sum' && `Total sum for "${selectedField?.name}"`}
+                                            {statsResult.type === 'avg' && `Average for "${selectedField?.name}"`}
+                                            {statsResult.type === 'min' && `Minimum for "${selectedField?.name}"`}
+                                            {statsResult.type === 'max' && `Maximum for "${selectedField?.name}"`}
+                                        </p>
+                                        <p className="text-5xl font-bold text-cyan-400">
+                                            {statsResult.type === 'avg' ? statsResult.total.toFixed(2) : statsResult.total}
+                                        </p>
                                     </div>
                                 )}
                                 
@@ -377,10 +409,10 @@ export default function Statistics() {
                                     </div>
                                 )}
 
-                                {isStackedChart && statsResult.type === 'stacked' && (
+                                {isStackedChart && (statsResult.type === 'stacked' || statsResult.type === 'crosstab') && (
                                     <div>
                                         <p className="text-slate-400 text-sm mb-4 text-center">
-                                            "{selectedField?.name}" by player
+                                            "{selectedField?.name}" by {statsResult.type === 'stacked' ? 'player' : `"${groupByField?.name}"`}
                                         </p>
                                         {statsResult.data.length === 0 ? (
                                             <p className="text-slate-500 text-center">No data available</p>
@@ -391,7 +423,7 @@ export default function Statistics() {
                                                         <XAxis type="number" stroke="#94a3b8" />
                                                         <YAxis 
                                                             type="category" 
-                                                            dataKey="player" 
+                                                            dataKey="group" 
                                                             stroke="#94a3b8" 
                                                             width={120}
                                                             tick={{ fill: '#e2e8f0', fontSize: 12 }}

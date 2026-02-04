@@ -205,6 +205,7 @@ class GameController extends AbstractController
         $playerId = $request->query->get('playerId');
         $groupByFieldId = $request->query->get('groupByFieldId');
         $groupByPlayer = $request->query->getBoolean('groupByPlayer', false);
+        $aggregation = $request->query->get('aggregation', 'sum');
 
         if ($customFieldId === null) {
             return new JsonResponse([
@@ -235,7 +236,7 @@ class GameController extends AbstractController
             $groupByField = $customFieldRepository->find($groupByFieldId);
         }
 
-        $stats = $statisticsRepository->getCustomFieldStats($customField, $player, $groupByField, $groupByPlayer);
+        $stats = $statisticsRepository->getCustomFieldStats($customField, $player, $groupByField, $groupByPlayer, $aggregation);
 
         return new JsonResponse($stats, Response::HTTP_OK);
     }
