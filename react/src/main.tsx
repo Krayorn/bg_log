@@ -54,24 +54,22 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-function ProtectedRoute() {
+export function ProtectedRoute() {
   const navigate = useNavigate()
-  const [token, _] = useLocalStorage('jwt', null)
-  
+  const [token] = useLocalStorage('jwt', null)
 
   useEffect(() => {
     if (token === null) {
       navigate('/')
     }
-    return () => {}
-  }, [token])
+  }, [token, navigate])
 
   return (<div>
     {token !== null && <Outlet />}
   </div>)
 }
 
-function ErrorPage(e) {
+export function ErrorPage() {
   return (
     <main>
       This page does not exist.

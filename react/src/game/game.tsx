@@ -2,7 +2,7 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react";
 import { useRequest } from '../hooks/useRequest'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { apiPatch, apiPost, apiDelete } from '../hooks/useApi'
 import Layout from '../Layout'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -31,7 +31,7 @@ type Entry = {
 
 type CustomFieldValue = {
     id: string
-    value: any
+    value: string | number | boolean
     customField: CustomField
 }
 
@@ -53,7 +53,7 @@ type GameStats = {
 }
 
 export default function Game() {
-    let { gameId } = useParams() as { gameId: string }
+    const { gameId } = useParams() as { gameId: string }
     const navigate = useNavigate()
     const [game, setGame] = useState<Game|null>(null)
     const [gameStats, setGameStats] = useState<GameStats|null>(null)
@@ -90,7 +90,7 @@ export default function Game() {
         if (entryIdFromUrl && entries.length > 0 && !selectedEntryId) {
             setSelectedEntryId(entryIdFromUrl)
         }
-    }, [entryIdFromUrl, entries])
+    }, [entryIdFromUrl, entries, selectedEntryId])
 
     const onEntryCreated = (newEntry: Entry) => {
         setEntries([...entries, newEntry])
@@ -150,7 +150,7 @@ export default function Game() {
                 <section className="flex-1 overflow-y-auto">
                     {selectedEntry
                         ? <EntryDetail key={selectedEntry.id} game={game} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
-                        : <GameDetail game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} />
+                        : <GameDetail game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} onGameUpdated={setGame} />
                     }
                 </section>
             </div>
@@ -211,8 +211,6 @@ function EntryDetail({ entry, game, onEntryUpdated, allPlayers }: {entry: Entry,
     const [showAddPlayer, setShowAddPlayer] = useState(false)
     const [newPlayerId, setNewPlayerId] = useState('')
 
-    const [token, _] = useLocalStorage('jwt', null)
-
     // Sync local state when entry prop changes (from parent after API updates)
     useEffect(() => {
         setNote(entry.note)
@@ -223,14 +221,11 @@ function EntryDetail({ entry, game, onEntryUpdated, allPlayers }: {entry: Entry,
     
     const availablePlayers = allPlayers.filter(p => !players.some(ep => ep.player.id === p.id))
 
-    const patchEntry = async (payload: any) => {
-        const response = await fetch(`${host}/entries/${entry.id}`, { 
-            method: "PATCH", 
-            headers: { "Authorization": `Bearer ${token}`},
-            body: JSON.stringify(payload)
-        })
-        const updatedEntry = await response.json()
-        onEntryUpdated(entry.id, updatedEntry)
+    const patchEntry = async (payload: Record<string, unknown>) => {
+        const { data: updatedEntry, ok } = await apiPatch<Entry>(`/entries/${entry.id}`, payload)
+        if (ok && updatedEntry) {
+            onEntryUpdated(entry.id, updatedEntry)
+        }
     }
 
     const handleNoteBlur = async () => {
@@ -655,8 +650,6 @@ enum CustomFieldType {
     //arrayNumber = 'arrayNumber',
   }
 
-const host = import.meta.env.VITE_API_HOST
-
 type GameOwner = {
     id: string
     player: {
@@ -673,9 +666,7 @@ type PlayerEntry = {
     customFields: { [key: string]: string }
 }
 
-function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, gameStats: GameStats|null, playerId: string|null, onEntryCreated: (newEntry: Entry) => void}) {
-    const [token, _] = useLocalStorage('jwt', null)
-
+function GameDetail({ game, gameStats, playerId, onEntryCreated, onGameUpdated }: {game: Game, gameStats: GameStats|null, playerId: string|null, onEntryCreated: (newEntry: Entry) => void, onGameUpdated: (game: Game) => void}) {
     const [customFieldName, setCustomFieldName] = useState<string>("")
     const [customFieldType, setCustomFieldType] = useState<CustomFieldType|string>("")
     const [entrySpecific, setEntrySpecific] = useState<boolean>(false)
@@ -706,33 +697,28 @@ function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, 
             return
         }
 
-        const response = await fetch(`${host}/game/${game.id}/customFields`, 
-        { 
-            method: "POST", 
-            headers: { "Authorization": `Bearer ${token}`},
-            body: JSON.stringify({"name": customFieldName, "kind": customFieldType, "global": entrySpecific}),
+        const { data, error, ok } = await apiPost<Game>(`/game/${game.id}/customFields`, {
+            name: customFieldName,
+            kind: customFieldType,
+            global: entrySpecific
         })
 
-        const data = await response.json()
-        if (response.status === 400) {
-            console.log(data.errors)
-            setErrors(data.errors);
+        if (!ok || !data) {
+            setErrors([error ?? 'Failed to add custom field']);
         } else {
             setCustomFieldName("")
             setCustomFieldType("")
-            const newCustomField = data.customFields.pop()
-            setCustomFieldsList([...customFieldsList, newCustomField])
+            onGameUpdated(data)
+            setCustomFieldsList(data.customFields)
         }
     }
 
     const deleteCustomField = async (customFieldId: string) => {
-        const response = await fetch(`${host}/customFields/${customFieldId}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` },
-        })
-
-        if (response.status === 204) {
-            setCustomFieldsList(customFieldsList.filter(cf => cf.id !== customFieldId))
+        const { ok } = await apiDelete(`/customFields/${customFieldId}`)
+        if (ok) {
+            const updatedCustomFields = customFieldsList.filter(cf => cf.id !== customFieldId)
+            setCustomFieldsList(updatedCustomFields)
+            onGameUpdated({ ...game, customFields: updatedCustomFields })
         }
     }
 
@@ -790,27 +776,22 @@ function GameDetail({ game, gameStats, playerId, onEntryCreated }: {game: Game, 
             playedAt: entryPlayedAt + 'T12:00:00+02:00',
             gameUsed: entryGameUsed || defaultGameUsed || null,
             customFields: Object.entries(entryCustomFields)
-                .filter(([_, value]) => value !== '')
+                .filter(([, value]) => value !== '')
                 .map(([id, value]) => ({ id, value })),
             players: entryPlayers.map(p => ({
                 id: p.id,
                 note: p.note,
                 won: p.won,
                 customFields: Object.entries(p.customFields)
-                    .filter(([_, value]) => value !== '')
+                    .filter(([, value]) => value !== '')
                     .map(([id, value]) => ({ id, value }))
             }))
         }
 
-        const response = await fetch(`${host}/entries`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}` },
-            body: JSON.stringify(payload)
-        })
+        const { data, error, ok } = await apiPost<Entry>('/entries', payload)
 
-        const data = await response.json()
-        if (response.status === 400) {
-            setEntryErrors(data.errors || ['Failed to create entry.'])
+        if (!ok || !data) {
+            setEntryErrors([error ?? 'Failed to create entry.'])
         } else {
             setEntryNote("")
             setEntryPlayedAt("")

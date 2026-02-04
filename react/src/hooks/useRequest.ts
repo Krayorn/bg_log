@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom"
 
 const host = import.meta.env.VITE_API_HOST
 
-export const useRequest = (uri: string, deps: Array<any>, setFunc: Function, condition: boolean = true) => {
-    const [token, _] = useLocalStorage('jwt', null)
+export const useRequest = (uri: string, deps: unknown[], setFunc: (data: unknown) => void, condition: boolean = true) => {
+    const [token] = useLocalStorage('jwt', null)
     const navigate = useNavigate()
     
     useEffect(() => {
@@ -31,5 +31,6 @@ export const useRequest = (uri: string, deps: Array<any>, setFunc: Function, con
         return () => {
             ignore = true;
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, deps)
 }

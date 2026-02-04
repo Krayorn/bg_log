@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
+import { apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 
 function Home() {
-    let { playerId } = useParams() as { playerId: string }
+    const { playerId } = useParams() as { playerId: string }
 
     return (
         <Layout> 
@@ -70,15 +71,41 @@ interface Player {
     registeredOn: {
         date: string
     }|null
+    email?: string|null
 }
 
 function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
+    const [isEditingEmail, setIsEditingEmail] = useState(false)
+    const [emailInput, setEmailInput] = useState('')
+    const [emailError, setEmailError] = useState<string|null>(null)
     
     useRequest(`/players/${playerId}`, [playerId], setPlayerInfos)
     
     if (playerInfos === null) {
         return <div className="text-slate-500">Loading...</div>
+    }
+
+    const handleEditEmail = () => {
+        setEmailInput(playerInfos.email ?? '')
+        setEmailError(null)
+        setIsEditingEmail(true)
+    }
+
+    const handleSaveEmail = async () => {
+        const { data, error, ok } = await apiPatch<Player>(`/players/${playerId}`, { email: emailInput })
+        if (!ok) {
+            setEmailError(error ?? 'Failed to update email')
+            return
+        }
+        setPlayerInfos(data)
+        setIsEditingEmail(false)
+        setEmailError(null)
+    }
+
+    const handleCancelEmail = () => {
+        setIsEditingEmail(false)
+        setEmailError(null)
     }
 
     return (
@@ -94,11 +121,50 @@ function PlayerBox({ playerId }: {playerId: string}) {
                     <div className="text-sm text-slate-500">User #{playerInfos.number.toString().padStart(4, '0')}</div>
                 </div>
             </div>
-            <div className="flex flex-col mt-4 text-sm text-slate-300">
+            <div className="flex flex-col mt-4 text-sm text-slate-300 gap-2">
                 {playerInfos.registeredOn === null 
                     ? <span className="text-slate-500">Guest user</span>
                     : <span>Registered on {(new Date(playerInfos.registeredOn.date)).toLocaleDateString('fr-FR')}</span>
                 }
+                {'email' in playerInfos && (
+                    <div className="flex items-center gap-2">
+                        {isEditingEmail ? (
+                            <div className="flex flex-col gap-1 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="email"
+                                        value={emailInput}
+                                        onChange={(e) => setEmailInput(e.target.value)}
+                                        placeholder="Enter email"
+                                        className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm flex-1"
+                                    />
+                                    <button onClick={handleSaveEmail} className="text-cyan-400 hover:text-cyan-300">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                        </svg>
+                                    </button>
+                                    <button onClick={handleCancelEmail} className="text-slate-400 hover:text-slate-300">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                {emailError && <span className="text-red-400 text-xs">{emailError}</span>}
+                            </div>
+                        ) : (
+                            <>
+                                <span className={playerInfos.email ? '' : 'text-slate-500'}>
+                                    {playerInfos.email ?? 'No email set'}
+                                </span>
+                                <button onClick={handleEditEmail} className="text-slate-400 hover:text-cyan-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )

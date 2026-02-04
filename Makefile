@@ -17,6 +17,7 @@ pre-commit:
 	docker exec -it bg_log-symfony-1 vendor/bin/rector
 	docker exec -it bg_log-symfony-1 vendor/bin/ecs --fix
 	docker exec -it bg_log-symfony-1 vendor/bin/phpstan analyse
+	cd react && npm run lint
 
 deploy:
 	@echo "Select version bump type:"

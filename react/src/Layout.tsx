@@ -152,7 +152,7 @@ function SearchModal({ close, playerId }: { close: () => void, playerId: string 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selected, results]);
+  }, [selected, results, close, navigate, playerId]);
 
   return (
     <div className="absolute inset-0 z-50 backdrop-blur-sm text-white flex justify-center items-center" onClick={close}>

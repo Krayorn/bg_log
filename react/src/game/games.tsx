@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useRequest } from '../hooks/useRequest'
+import { apiPost } from '../hooks/useApi'
 import Layout from '../Layout'
-
-const host = import.meta.env.VITE_API_HOST
 
 interface PlayerGame {
     id: string
@@ -22,7 +20,6 @@ interface Game {
 
 export default function Games() {
     const { playerId } = useParams() as { playerId: string }
-    const [token] = useLocalStorage('jwt', null)
     const [playerGames, setPlayerGames] = useState<PlayerGame[]>([])
     const [query, setQuery] = useState("")
     const [searchResults, setSearchResults] = useState<Game[]>([])
@@ -43,7 +40,7 @@ export default function Games() {
         if (query === "" && searchResults.length > 0) {
             setResultsResetSelected([])
         }
-    }, [query])
+    }, [query, searchResults.length])
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -80,22 +77,16 @@ export default function Games() {
             body.price = parseInt(price)
         }
 
-        const response = await fetch(`${host}/players/${playerId}/games`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}` },
-            body: JSON.stringify(body)
-        })
+        const { data, error, ok } = await apiPost<PlayerGame>(`/players/${playerId}/games`, body)
 
-        if (response.status === 201) {
-            const newGame = await response.json()
-            setPlayerGames([...playerGames, newGame])
+        if (ok && data) {
+            setPlayerGames([...playerGames, data])
             setMessage("Game added to your collection")
             setQuery("")
             setPrice("")
             setSelected(null)
         } else {
-            const data = await response.json()
-            setMessage(data.errors?.join(", ") || "Error adding game")
+            setMessage(error || "Error adding game")
         }
     }
 
@@ -105,18 +96,12 @@ export default function Games() {
         if (selected) {
             await addGameToLibrary(selected.id)
         } else if (query.trim() !== "") {
-            const createResponse = await fetch(`${host}/games`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ name: query.trim() })
-            })
+            const { data: newGame, error, ok } = await apiPost<Game>('/games', { name: query.trim() })
 
-            if (createResponse.status === 201) {
-                const newGame = await createResponse.json()
+            if (ok && newGame) {
                 await addGameToLibrary(newGame.id)
             } else {
-                const data = await createResponse.json()
-                setMessage(data.errors?.join(", ") || "Error creating game")
+                setMessage(error || "Error creating game")
             }
         }
     }

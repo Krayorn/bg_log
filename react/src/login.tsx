@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
+import { apiPost } from './hooks/useApi'
 import Layout from './Layout'
 
 export default function Login() {
@@ -24,13 +25,10 @@ export default function Login() {
         e.preventDefault();
         const formData = new FormData(e.target);
         
-        const response = await fetch(`${import.meta.env.VITE_API_HOST}/login_check`, { method: "POST",    headers: {
-            "Content-Type": "application/json",
-          }, body: JSON.stringify(Object.fromEntries(formData))})
+        const { data, error: apiError, ok } = await apiPost<{ token: string }>('/login_check', Object.fromEntries(formData))
         
-        const data = await response.json()
-        if (response.status >= 400) {
-            setError(data.error)
+        if (!ok || !data) {
+            setError(apiError ?? 'Login failed')
         } else {
             const obj = parseJwt(data.token)
             setToken(data.token)
@@ -41,27 +39,20 @@ export default function Login() {
     const register = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
+        const formDataObj = Object.fromEntries(formData);
 
-        if (data.password !== data.confirmPassword) {
+        if (formDataObj.password !== formDataObj.confirmPassword) {
             setError('Passwords do not match')
             return
         }
         
-        const response = await fetch(`${import.meta.env.VITE_API_HOST}/register`, { 
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }, 
-            body: JSON.stringify({
-                username: data.username,
-                password: data.password
-            })
+        const { error: apiError, ok } = await apiPost('/register', {
+            username: formDataObj.username,
+            password: formDataObj.password
         })
         
-        const responseData = await response.json()
-        if (response.status >= 400) {
-            setError(responseData.error)
+        if (!ok) {
+            setError(apiError ?? 'Registration failed')
         } else {
             setError('')
             setIsRegisterMode(false)

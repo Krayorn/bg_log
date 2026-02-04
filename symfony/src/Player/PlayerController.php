@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PlayerController extends AbstractController
 {
-    #[Route('api/register', name: 'register', methods: 'POST')]
+    #[Route('api/register', methods: 'POST')]
     public function register(
         Request $request,
         PlayerRepository $playerRepository,
@@ -24,6 +24,7 @@ class PlayerController extends AbstractController
 
         $name = $body['username'] ?? '';
         $password = $body['password'] ?? '';
+        $email = $body['email'] ?? null;
 
         if ($name === '') {
             return new JsonResponse([
@@ -37,6 +38,12 @@ class PlayerController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
+        if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return new JsonResponse([
+                'error' => 'Invalid email format',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         $existingPlayer = $playerRepository->findOneBy([
             'name' => $name,
         ]);
@@ -46,7 +53,7 @@ class PlayerController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $player = new Player($name, $playerRepository->findNextNumber());
+        $player = new Player($name, $playerRepository->findNextNumber(), $email);
 
         $hashedPassword = $passwordHasher->hashPassword($player, $password);
         $player->register($hashedPassword);
@@ -57,7 +64,7 @@ class PlayerController extends AbstractController
         return new JsonResponse($player->view(), Response::HTTP_CREATED);
     }
 
-    #[Route('api/players', name: 'get_players', methods: 'GET')]
+    #[Route('api/players', methods: 'GET')]
     public function players(PlayerRepository $playerRepository): Response
     {
         $players = $playerRepository->findAll();
@@ -104,16 +111,50 @@ class PlayerController extends AbstractController
         return new JsonResponse($player->view(), Response::HTTP_OK);
     }
 
-    #[Route('api/players/{player}', name: 'get_player', methods: 'GET')]
+    #[Route('api/players/{player}', methods: 'GET')]
     public function player(Player $player): Response
     {
+        $currentUser = $this->getUser();
+        $isOwner = $currentUser instanceof Player && $currentUser->getId()->equals($player->getId());
+
         return new JsonResponse(
-            $player->view(),
+            $player->view($isOwner),
             Response::HTTP_OK
         );
     }
 
-    #[Route('api/players/{player}/stats', name: 'stats_player', methods: 'GET')]
+    #[Route('api/players/{player}', methods: 'PATCH')]
+    public function updatePlayer(
+        Player $player,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof Player || !$currentUser->getId()->equals($player->getId())) {
+            return new JsonResponse([
+                'error' => 'You can only update your own profile',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+        $email = $body['email'] ?? null;
+        
+        if ($email !== null) {
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                return new JsonResponse([
+                    'error' => 'Invalid email format',
+                    ], Response::HTTP_BAD_REQUEST);
+            }
+            $player->setEmail($email);
+        }
+
+        $entityManager->flush();
+
+        return new JsonResponse($player->view(true), Response::HTTP_OK);
+    }
+
+    #[Route('api/players/{player}/stats', methods: 'GET')]
     public function playerStats(Player $player, PlayerRepository $playerRepository): Response
     {
         $stats = $playerRepository->getGeneralStats($player);

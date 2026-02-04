@@ -28,6 +28,8 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         private readonly string $name,
         #[ORM\Column(type: 'integer', unique: true)]
         private readonly int $number,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $email = null,
     ) {
         $this->id = Uuid::uuid4();
     }
@@ -48,16 +50,32 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null}
+     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null, email?: string|null}
      */
-    public function view(): array
+    public function view(bool $includeSensitive = false): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'name' => $this->name,
             'number' => $this->number,
             'registeredOn' => $this->registeredOn,
         ];
+
+        if ($includeSensitive) {
+            $data['email'] = $this->email;
+        }
+
+        return $data;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): void
+    {
+        $this->email = $email;
     }
 
     public function getRoles(): array
