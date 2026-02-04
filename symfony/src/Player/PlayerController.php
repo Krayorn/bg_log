@@ -130,7 +130,7 @@ class PlayerController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         $currentUser = $this->getUser();
-        if (!$currentUser instanceof Player || !$currentUser->getId()->equals($player->getId())) {
+        if (! $currentUser instanceof Player || ! $currentUser->getId()->equals($player->getId())) {
             return new JsonResponse([
                 'error' => 'You can only update your own profile',
             ], Response::HTTP_FORBIDDEN);
@@ -139,12 +139,12 @@ class PlayerController extends AbstractController
         $content = $request->getContent();
         $body = json_decode($content, true);
         $email = $body['email'] ?? null;
-        
+
         if ($email !== null) {
             if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
                 return new JsonResponse([
                     'error' => 'Invalid email format',
-                    ], Response::HTTP_BAD_REQUEST);
+                ], Response::HTTP_BAD_REQUEST);
             }
             $player->setEmail($email);
         }

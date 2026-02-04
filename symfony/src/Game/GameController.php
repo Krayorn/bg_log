@@ -4,6 +4,7 @@ namespace App\Game;
 
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldRepository;
+use App\Game\CustomField\StatisticsRepository;
 use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -190,5 +191,52 @@ class GameController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('api/games/{game}/customFields/stats', methods: 'GET')]
+    public function getCustomFieldStats(
+        Request $request,
+        Game $game,
+        CustomFieldRepository $customFieldRepository,
+        PlayerRepository $playerRepository,
+        StatisticsRepository $statisticsRepository,
+    ): Response {
+        $customFieldId = $request->query->get('customFieldId');
+        $playerId = $request->query->get('playerId');
+        $groupByFieldId = $request->query->get('groupByFieldId');
+        $groupByPlayer = $request->query->getBoolean('groupByPlayer', false);
+
+        if ($customFieldId === null) {
+            return new JsonResponse([
+                'error' => 'customFieldId is required',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $customField = $customFieldRepository->find($customFieldId);
+        if ($customField === null) {
+            return new JsonResponse([
+                'error' => 'Custom field not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $player = null;
+        if ($playerId !== null) {
+            $player = $playerRepository->find($playerId);
+        }
+
+        if ($player === null) {
+            return new JsonResponse([
+                'error' => 'Player not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $groupByField = null;
+        if ($groupByFieldId !== null) {
+            $groupByField = $customFieldRepository->find($groupByFieldId);
+        }
+
+        $stats = $statisticsRepository->getCustomFieldStats($customField, $player, $groupByField, $groupByPlayer);
+
+        return new JsonResponse($stats, Response::HTTP_OK);
     }
 }

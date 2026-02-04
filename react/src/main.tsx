@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import Home from './home/home.tsx'
 import Game from './game/game.tsx'
 import Games from './game/games.tsx'
+import Statistics from './game/statistics.tsx'
 import Login from './login.tsx'
 import './index.css'
 import {
@@ -42,7 +43,11 @@ const router = createBrowserRouter([
       {
         path: "/games/:gameId",
         element: <Game />,
-      }   
+      },
+      {
+        path: "/games/:gameId/statistics",
+        element: <Statistics />,
+      }
     ]
   },
 ])

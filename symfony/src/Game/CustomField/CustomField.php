@@ -46,6 +46,11 @@ class CustomField
         return $this->kind;
     }
 
+    public function isGlobal(): bool
+    {
+        return $this->global;
+    }
+
     /**
      * @return array<string, mixed>
      */
