@@ -10,7 +10,10 @@ use Doctrine\ORM\QueryBuilder;
 
 class StatisticsRepository
 {
-    private const AGG_SQL = [
+    /**
+     * @var array<string, string>
+     */
+    private array $AGG_SQL = [
         'sum' => 'SUM(%s)',
         'avg' => 'AVG(%s)',
         'min' => 'MIN(%s)',
@@ -32,7 +35,6 @@ class StatisticsRepository
         bool $groupByPlayer = false,
         string $aggregation = 'sum',
     ): array {
-        
         $qb = $this->entityManager->createQueryBuilder();
         $qb->from(CustomFieldValue::class, 'cfv')
             ->where('cfv.customField = :customField')
@@ -55,7 +57,7 @@ class StatisticsRepository
                     ->getDQL()
             )
         )
-        ->setParameter('filterPlayer', $player);
+            ->setParameter('filterPlayer', $player);
 
         if ($groupByPlayer) {
             $this->applyGroupByPlayer($qb, $customField);
@@ -163,7 +165,7 @@ class StatisticsRepository
 
     private function applyAggregation(QueryBuilder $qb, string $aggregation, string $valueExpr, string $as): void
     {
-        $template = self::AGG_SQL[$aggregation] ?? self::AGG_SQL['sum'];
+        $template = $this->AGG_SQL[$aggregation] ?? $this->AGG_SQL['sum'];
         $qb->addSelect(sprintf($template, $valueExpr) . " AS {$as}");
     }
 
