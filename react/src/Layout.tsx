@@ -82,12 +82,20 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
               </svg>
             </button>
           </div>
-          <button 
-            onClick={() => { setToken(null); navigate('/'); }} 
-            className="absolute bottom-2 right-3 text-slate-500 text-xs hover:text-slate-300 transition-colors"
-          >
-            logout
-          </button>
+          <div className="absolute bottom-2 right-3 flex gap-3">
+            <Link
+              to="/about"
+              className="text-slate-500 text-xs hover:text-slate-300 transition-colors"
+            >
+              about
+            </Link>
+            <button 
+              onClick={() => { setToken(null); navigate('/'); }} 
+              className="text-slate-500 text-xs hover:text-slate-300 transition-colors"
+            >
+              logout
+            </button>
+          </div>
         </nav>
       )}
     </div>

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
+import About from './about.tsx'
 import Home from './home/home.tsx'
 import Game from './game/game.tsx'
 import Games from './game/games.tsx'
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <Login />,
     errorElement: <ErrorPage />,
+  },
+  {
+    path: "/about",
+    element: <About />,
   },
   {
     path: "/players",
