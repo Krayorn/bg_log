@@ -71,35 +71,6 @@ class PlayerRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<array<string, mixed>>
-     */
-    public function getFriendsStats(Player $player): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
-
-        $sql = '
-            SELECT 
-            p.id,
-            p.name, 
-            count(p), 
-            SUM(CASE WHEN opr.won = true and pr.won = false THEN 1 ELSE 0 END) losses, 
-            SUM(CASE WHEN opr.won = false and pr.won = true THEN 1 ELSE 0 END) wins 
-            from player_result pr
-            JOIN player_result opr on opr.entry_id = pr.entry_id
-            JOIN player p on opr.player_id = p.id
-            WHERE pr.player_id = :playerId and opr.player_id != :playerId
-            group by p.id, p.name  
-            ;';
-
-        $conn->prepare($sql);
-        $result = $conn->executeQuery($sql, [
-            'playerId' => $player->getId(),
-        ]);
-
-        return $result->fetchAllAssociative();
-    }
-
-    /**
      * @return Player[]
      */
     public function findVisibleFor(?Player $forPlayer): array

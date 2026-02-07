@@ -206,16 +206,17 @@ function StatItem({ value, label, highlight, className }: { value: string | numb
 }
 
 interface GameStats {
-    id: string
-    count: number
-    name: string
-    in_library: boolean
+    game_id: string
+    game_name: string
+    game_owned_id: string | null
+    price: number | null
+    play_count: number
 }
 
 function GameStatistics({ playerId }: {playerId: string}) {
     const [gameStats, setGameStats] = useState<GameStats[]|null>(null)
     
-    useRequest(`/players/${playerId}/games/stats`, [playerId], setGameStats)
+    useRequest(`/players/${playerId}/games`, [playerId], setGameStats)
 
     if (gameStats === null) {
         return <div className="text-slate-500">Loading...</div>
@@ -225,8 +226,8 @@ function GameStatistics({ playerId }: {playerId: string}) {
         return <div className="text-slate-500">No games played yet</div>
     }
 
-    const mostPlayed = [...gameStats].sort((a, b) => b.count - a.count).slice(0, 4)
-    const leastPlayed = [...gameStats].sort((a, b) => a.count - b.count).filter(a => a.in_library).slice(0, 4)
+    const mostPlayed = [...gameStats].sort((a, b) => b.play_count - a.play_count).slice(0, 4)
+    const leastPlayed = [...gameStats].sort((a, b) => a.play_count - b.play_count).filter(a => a.game_owned_id !== null).slice(0, 4)
 
     return (
         <div className="flex gap-6">
@@ -234,9 +235,9 @@ function GameStatistics({ playerId }: {playerId: string}) {
                 <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Most played</h3>
                 <div className="space-y-1">
                     {mostPlayed.map(game => (
-                        <div key={game.id} className="flex justify-between text-sm">
-                            <span className="truncate text-slate-300">{game.name}</span>
-                            <span className="text-cyan-400 font-medium ml-2">{game.count}</span>
+                        <div key={game.game_id} className="flex justify-between text-sm">
+                            <span className="truncate text-slate-300">{game.game_name}</span>
+                            <span className="text-cyan-400 font-medium ml-2">{game.play_count}</span>
                         </div>
                     ))}
                 </div>
@@ -245,9 +246,9 @@ function GameStatistics({ playerId }: {playerId: string}) {
                 <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Least played</h3>
                 <div className="space-y-1">
                     {leastPlayed.map(game => (
-                        <div key={game.id} className="flex justify-between text-sm">
-                            <span className="truncate text-slate-300">{game.name}</span>
-                            <span className="text-slate-500 font-medium ml-2">{game.count}</span>
+                        <div key={game.game_id} className="flex justify-between text-sm">
+                            <span className="truncate text-slate-300">{game.game_name}</span>
+                            <span className="text-slate-500 font-medium ml-2">{game.play_count}</span>
                         </div>
                     ))}
                 </div>

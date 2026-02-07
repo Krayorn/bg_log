@@ -30,14 +30,13 @@ export default function Circle() {
     const [circlePlayers, setCirclePlayers] = useState<CirclePlayer[]>([])
     const [allPlayers, setAllPlayers] = useState<Player[]>([])
     const [syncingGuestId, setSyncingGuestId] = useState<string | null>(null)
-    const [refreshKey, setRefreshKey] = useState(0)
     const [error, setError] = useState<string | null>(null)
     const [newGuestName, setNewGuestName] = useState("")
     const [showCreateGuest, setShowCreateGuest] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
 
-    useRequest(`/players/${playerId}/circle`, [playerId, refreshKey], setCirclePlayers)
-    useRequest(`/players?forPlayer=${playerId}`, [playerId, refreshKey], setAllPlayers)
+    useRequest(`/players/${playerId}/circle`, [playerId], setCirclePlayers)
+    useRequest(`/players?forPlayer=${playerId}`, [playerId], setAllPlayers)
 
     const registeredPlayers = allPlayers.filter(p => !p.isGuest)
 
@@ -46,12 +45,12 @@ export default function Circle() {
         if (!newGuestName.trim()) return
         setCreateError(null)
 
-        const { ok, error: apiError } = await apiPost('/players', { name: newGuestName.trim() })
+        const { data, ok, error: apiError } = await apiPost<Player>('/players', { name: newGuestName.trim() })
 
-        if (ok) {
+        if (ok && data) {
+            setAllPlayers(prev => [...prev, data])
             setNewGuestName("")
             setShowCreateGuest(false)
-            setRefreshKey(k => k + 1)
         } else {
             setCreateError(apiError ?? 'Failed to create guest player')
         }
@@ -155,9 +154,10 @@ export default function Circle() {
                                                         registeredPlayerId: p.id,
                                                     })
                                                     if (ok) {
-                                                        setSyncingGuestId(null)
-                                                        setRefreshKey(k => k + 1)
-                                                    } else {
+                                                         setCirclePlayers(prev => prev.filter(cp => cp.id !== player.id))
+                                                         setAllPlayers(prev => prev.filter(ap => ap.id !== player.id))
+                                                         setSyncingGuestId(null)
+                                                     } else {
                                                         setError(apiError ?? 'Synchronization failed')
                                                     }
                                                 }}

@@ -146,12 +146,7 @@ class PlayerController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $currentUser = $this->getUser();
-        if (! $currentUser instanceof Player || ! $currentUser->getId()->equals($player->getId())) {
-            return new JsonResponse([
-                'error' => 'You can only update your own profile',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        $this->denyAccessUnlessGranted(PlayerRightVoter::PLAYER_EDIT, $player);
 
         $content = $request->getContent();
         $body = json_decode($content, true);
@@ -187,16 +182,6 @@ class PlayerController extends AbstractController
         );
     }
 
-    #[Route('api/players/{player}/friends/stats', name: 'stats_friends_player', methods: 'GET')]
-    public function friendsStats(Player $player, PlayerRepository $playerRepository): Response
-    {
-        $stats = $playerRepository->getFriendsStats($player);
-        return new JsonResponse(
-            $stats,
-            Response::HTTP_OK
-        );
-    }
-
     #[Route('api/players/{player}/circle', methods: 'GET')]
     public function circle(Player $player, PlayerRepository $playerRepository): Response
     {
@@ -226,18 +211,7 @@ class PlayerController extends AbstractController
         EntityManagerInterface $entityManager,
         PlayerRepository $playerRepository
     ): Response {
-        $currentUser = $this->getUser();
-        if (! $currentUser instanceof Player) {
-            return new JsonResponse([
-                'error' => 'Unauthorized',
-            ], Response::HTTP_UNAUTHORIZED);
-        }
-
-        if (! $guestPlayer->getInPartyOf() instanceof \App\Player\Player || ! $guestPlayer->getInPartyOf()->getId()->equals($currentUser->getId())) {
-            return new JsonResponse([
-                'error' => 'You can only synchronize your own guest players',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        $this->denyAccessUnlessGranted(PlayerRightVoter::GUEST_MANAGE, $guestPlayer);
 
         if ($guestPlayer->getRegisteredOn() instanceof \DateTimeImmutable) {
             return new JsonResponse([

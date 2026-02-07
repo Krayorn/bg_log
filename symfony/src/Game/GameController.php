@@ -18,18 +18,16 @@ use Symfony\Component\Routing\Annotation\Route;
 class GameController extends AbstractController
 {
     #[Route('api/players/{player}/games', methods: 'GET')]
-    public function getPlayerGames(Player $player, GameOwnedRepository $gameOwnedRepository): Response
+    public function getPlayerGames(Player $player, GameRepository $gameRepository): Response
     {
-        $games = $gameOwnedRepository->findBy([
-            'player' => $player,
-        ]);
-
-        return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_OK);
+        return new JsonResponse($gameRepository->getStats($player), Response::HTTP_OK);
     }
 
     #[Route('api/players/{player}/games', methods: 'POST')]
     public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository, GameOwnedRepository $gameOwnedRepository): Response
     {
+        $this->denyAccessUnlessGranted(GameOwnedVoter::GAME_OWNED_ADD, $player);
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 
@@ -70,12 +68,29 @@ class GameController extends AbstractController
         $entityManager->persist($gameOwned);
         $entityManager->flush();
 
-        return new JsonResponse($gameOwned->view(), Response::HTTP_CREATED);
+        $conn = $entityManager->getConnection();
+        $playCount = (int) $conn->executeQuery(
+            'SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE e.game_id = :gameId AND pr.player_id = :playerId',
+            [
+                'gameId' => $game->getId(),
+                'playerId' => $player->getId(),
+            ]
+        )->fetchOne();
+
+        return new JsonResponse([
+            'game_id' => $game->getId(),
+            'game_name' => $game->view()['name'],
+            'game_owned_id' => $gameOwned->getId(),
+            'price' => $gameOwned->view()['price'],
+            'play_count' => $playCount,
+        ], Response::HTTP_CREATED);
     }
 
     #[Route('api/players/{player}/games/{gameOwned}', methods: 'PATCH')]
     public function updatePlayerGame(Player $player, GameOwned $gameOwned, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
     {
+        $this->denyAccessUnlessGranted(GameOwnedVoter::GAME_OWNED_EDIT, $gameOwned);
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 
@@ -118,7 +133,22 @@ class GameController extends AbstractController
 
         $entityManager->flush();
 
-        return new JsonResponse($gameOwned->view(), Response::HTTP_OK);
+        $conn = $entityManager->getConnection();
+        $playCount = (int) $conn->executeQuery(
+            'SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE e.game_id = :gameId AND pr.player_id = :playerId',
+            [
+                'gameId' => $gameOwned->getGame()->getId(),
+                'playerId' => $player->getId(),
+            ]
+        )->fetchOne();
+
+        return new JsonResponse([
+            'game_id' => $gameOwned->getGame()->getId(),
+            'game_name' => $gameOwned->getGame()->view()['name'],
+            'game_owned_id' => $gameOwned->getId(),
+            'price' => $gameOwned->view()['price'],
+            'play_count' => $playCount,
+        ], Response::HTTP_OK);
     }
 
     #[Route('api/games', methods: 'POST')]
@@ -197,12 +227,6 @@ class GameController extends AbstractController
         ]);
 
         return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_CREATED);
-    }
-
-    #[Route('api/players/{player}/games/stats', methods: 'GET')]
-    public function gamesStats(Player $player, GameRepository $gameRepository): Response
-    {
-        return new JsonResponse($gameRepository->getStats($player), Response::HTTP_OK);
     }
 
     #[Route('api/game/{game}/customFields', methods: 'POST')]

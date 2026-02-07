@@ -205,6 +205,14 @@ class Entry
         $this->gameUsed = $gameUsed;
     }
 
+    /**
+     * @return Collection<int, PlayerResult>
+     */
+    public function getPlayerResults(): Collection
+    {
+        return $this->playerResults;
+    }
+
     public function getGame(): Game
     {
         return $this->game;

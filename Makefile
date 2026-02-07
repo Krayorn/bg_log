@@ -13,9 +13,9 @@ symfony:
 	docker exec -it bg_log-symfony-1 bash
 
 backend-precommit:
-	docker exec -it bg_log-symfony-1 vendor/bin/rector
-	docker exec -it bg_log-symfony-1 vendor/bin/ecs --fix
-	docker exec -it bg_log-symfony-1 vendor/bin/phpstan analyse
+	docker exec bg_log-symfony-1 vendor/bin/rector
+	docker exec bg_log-symfony-1 vendor/bin/ecs --fix
+	docker exec bg_log-symfony-1 vendor/bin/phpstan analyse
 
 frontend-precommit:
 	cd react && npm run lint

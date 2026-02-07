@@ -1,21 +1,25 @@
 <?php
 
-namespace App\Player;
+namespace App\Game;
 
+use App\Player\Player;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-class PlayerRightVoter extends Voter
+class GameOwnedVoter extends Voter
 {
-    final public const PLAYER_EDIT = 'PLAYER_EDIT';
+    final public const GAME_OWNED_EDIT = 'GAME_OWNED_EDIT';
 
-    final public const GUEST_MANAGE = 'GUEST_MANAGE';
+    final public const GAME_OWNED_ADD = 'GAME_OWNED_ADD';
 
     #[\Override]
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::PLAYER_EDIT, self::GUEST_MANAGE], true)
-            && $subject instanceof Player;
+        return match ($attribute) {
+            self::GAME_OWNED_EDIT => $subject instanceof GameOwned,
+            self::GAME_OWNED_ADD => $subject instanceof Player,
+            default => false,
+        };
     }
 
     #[\Override]
@@ -27,11 +31,9 @@ class PlayerRightVoter extends Voter
             return false;
         }
 
-        /** @var Player $subject */
         return match ($attribute) {
-            self::PLAYER_EDIT => $user->getId()->equals($subject->getId()),
-            self::GUEST_MANAGE => $subject->getInPartyOf() instanceof Player
-                && $subject->getInPartyOf()->getId()->equals($user->getId()),
+            self::GAME_OWNED_EDIT => $subject->getPlayer()->getId()->equals($user->getId()),
+            self::GAME_OWNED_ADD => $user->getId()->equals($subject->getId()),
             default => false,
         };
     }

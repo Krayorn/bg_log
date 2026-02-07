@@ -5,13 +5,12 @@ import { apiPost, apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 import { Puzzle, ExternalLink } from 'lucide-react'
 
-interface PlayerGame {
-    id: string
-    game: {
-        id: string
-        name: string
-    }
+interface PlayerGameStats {
+    game_id: string
+    game_name: string
+    game_owned_id: string | null
     price: number | null
+    play_count: number
 }
 
 interface Game {
@@ -22,7 +21,7 @@ interface Game {
 export default function Games() {
     const { playerId } = useParams() as { playerId: string }
     const navigate = useNavigate()
-    const [playerGames, setPlayerGames] = useState<PlayerGame[]>([])
+    const [games, setGames] = useState<PlayerGameStats[]>([])
     const [query, setQuery] = useState("")
     const [searchResults, setSearchResults] = useState<Game[]>([])
     const [selected, setSelected] = useState<Game | null>(null)
@@ -31,7 +30,7 @@ export default function Games() {
     const [editingField, setEditingField] = useState<{ id: string; field: 'name' | 'price' } | null>(null)
     const [editValue, setEditValue] = useState("")
 
-    useRequest(`/players/${playerId}/games`, [playerId], setPlayerGames)
+    useRequest(`/players/${playerId}/games`, [playerId], setGames)
 
     const setResultsResetSelected = (results: Game[]) => {
         setSearchResults(results)
@@ -81,10 +80,13 @@ export default function Games() {
             body.price = parseInt(price)
         }
 
-        const { data, error, ok } = await apiPost<PlayerGame>(`/players/${playerId}/games`, body)
+        const { data, error, ok } = await apiPost<PlayerGameStats>(`/players/${playerId}/games`, body)
 
         if (ok && data) {
-            setPlayerGames([...playerGames, data])
+            setGames(prev => {
+                const idx = prev.findIndex(g => g.game_id === data.game_id)
+                return idx >= 0 ? prev.map(g => g.game_id === data.game_id ? data : g) : [...prev, data]
+            })
             setMessage("Game added to your collection")
             setQuery("")
             setPrice("")
@@ -110,21 +112,22 @@ export default function Games() {
         }
     }
 
-    const startEditing = (pg: PlayerGame, field: 'name' | 'price') => {
-        setEditingField({ id: pg.id, field })
-        setEditValue(field === 'name' ? pg.game.name : (pg.price !== null ? String(pg.price) : ""))
+    const startEditing = (game: PlayerGameStats, field: 'name' | 'price') => {
+        if (!game.game_owned_id) return
+        setEditingField({ id: game.game_owned_id, field })
+        setEditValue(field === 'name' ? game.game_name : (game.price !== null ? String(game.price) : ""))
     }
 
-    const saveField = async (pg: PlayerGame) => {
-        if (!editingField) return
+    const saveField = async (game: PlayerGameStats) => {
+        if (!editingField || !game.game_owned_id) return
         const { field } = editingField
         const body: { name?: string; price?: number | null } = {}
 
-        if (field === 'name' && editValue !== pg.game.name) {
+        if (field === 'name' && editValue !== game.game_name) {
             body.name = editValue
         } else if (field === 'price') {
             const newPrice = editValue === "" ? null : parseInt(editValue)
-            if (newPrice !== pg.price) {
+            if (newPrice !== game.price) {
                 body.price = newPrice
             }
         }
@@ -134,13 +137,16 @@ export default function Games() {
 
         if (Object.keys(body).length === 0) return
 
-        const { data, ok, error } = await apiPatch<PlayerGame>(`/players/${playerId}/games/${pg.id}`, body)
+        const { data, ok, error } = await apiPatch<PlayerGameStats>(`/players/${playerId}/games/${game.game_owned_id}`, body)
         if (ok && data) {
-            setPlayerGames(playerGames.map(g => g.id === pg.id ? data : g))
+            setGames(prev => prev.map(g => g.game_id === data.game_id ? data : g))
         } else {
             setMessage(error || "Error updating game")
         }
     }
+
+    const owned = games.filter(g => g.game_owned_id !== null)
+    const played = games.filter(g => g.game_owned_id === null)
 
     return (
         <Layout>
@@ -151,7 +157,7 @@ export default function Games() {
                     </div>
                     <div>
                         <h1 className="text-xl font-semibold">My Games</h1>
-                        <span className="text-sm text-slate-400">{playerGames.length} games in collection</span>
+                        <span className="text-sm text-slate-400">{owned.length} owned · {played.length} played</span>
                     </div>
                 </header>
 
@@ -218,54 +224,135 @@ export default function Games() {
                     </form>
                 </section>
 
-                <section>
-                    {playerGames.map(pg => (
-                        <div key={pg.id} className="flex items-center justify-between border-b border-slate-600 py-3">
-                            <div className="flex items-center gap-4 flex-1 mr-4">
-                                {editingField?.id === pg.id && editingField.field === 'name' ? (
-                                    <input
-                                        autoFocus
-                                        type="text"
-                                        value={editValue}
-                                        onChange={e => setEditValue(e.target.value)}
-                                        onBlur={() => saveField(pg)}
-                                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                                        className="p-1 rounded bg-slate-700 text-white border border-slate-500 focus:outline-none"
-                                    />
-                                ) : (
-                                    <span
-                                        onClick={() => startEditing(pg, 'name')}
-                                        className="cursor-pointer hover:text-cyan-400 transition-colors"
-                                    >{pg.game.name}</span>
-                                )}
-                                {editingField?.id === pg.id && editingField.field === 'price' ? (
-                                    <input
-                                        autoFocus
-                                        type="number"
-                                        value={editValue}
-                                        onChange={e => setEditValue(e.target.value)}
-                                        onBlur={() => saveField(pg)}
-                                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                                        placeholder="Price (cents)"
-                                        className="w-32 p-1 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400 focus:outline-none"
-                                    />
-                                ) : (
-                                    <span
-                                        onClick={() => startEditing(pg, 'price')}
-                                        className="text-gray-500 cursor-pointer hover:text-slate-300 transition-colors"
-                                    >{pg.price !== null ? `${(pg.price / 100).toFixed(2)}€` : '—'}</span>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => navigate(`/games/${pg.game.id}?playerId=${playerId}`)}
-                                className="text-slate-400 hover:text-cyan-400 transition-colors"
-                            >
-                                <ExternalLink className="w-4 h-4" />
-                            </button>
+                <section className="mb-6">
+                    <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">My Collection</h2>
+                    {owned.length === 0 ? (
+                        <div className="text-slate-500 text-sm">No games in your collection yet</div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {owned.map(game => (
+                                <GameCard
+                                    key={game.game_id}
+                                    game={game}
+                                    playerId={playerId}
+                                    editingField={editingField}
+                                    editValue={editValue}
+                                    setEditValue={setEditValue}
+                                    startEditing={startEditing}
+                                    saveField={saveField}
+                                    navigate={navigate}
+                                />
+                            ))}
                         </div>
-                    ))}
+                    )}
                 </section>
+
+                {played.length > 0 && (
+                    <section>
+                        <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">Played</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {played.map(game => (
+                                <GameCard
+                                    key={game.game_id}
+                                    game={game}
+                                    playerId={playerId}
+                                    editingField={editingField}
+                                    editValue={editValue}
+                                    setEditValue={setEditValue}
+                                    startEditing={startEditing}
+                                    saveField={saveField}
+                                    navigate={navigate}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
         </Layout>
+    )
+}
+
+interface GameCardProps {
+    game: PlayerGameStats
+    playerId: string
+    editingField: { id: string; field: 'name' | 'price' } | null
+    editValue: string
+    setEditValue: (v: string) => void
+    startEditing: (game: PlayerGameStats, field: 'name' | 'price') => void
+    saveField: (game: PlayerGameStats) => void
+    navigate: ReturnType<typeof useNavigate>
+}
+
+function GameCard({ game, playerId, editingField, editValue, setEditValue, startEditing, saveField, navigate }: GameCardProps) {
+    const isEditingName = editingField?.id === game.game_owned_id && editingField?.field === 'name'
+    const isEditingPrice = editingField?.id === game.game_owned_id && editingField?.field === 'price'
+
+    return (
+        <div className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50">
+                        <Puzzle className="w-6 h-6 text-slate-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        {isEditingName ? (
+                            <input
+                                autoFocus
+                                type="text"
+                                value={editValue}
+                                onChange={e => setEditValue(e.target.value)}
+                                onBlur={() => saveField(game)}
+                                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                                className="p-1 rounded bg-slate-700 text-white border border-slate-500 focus:outline-none w-full"
+                            />
+                        ) : (
+                            <span
+                                onClick={() => game.game_owned_id ? startEditing(game, 'name') : null}
+                                className={`text-white font-medium block truncate ${game.game_owned_id ? 'cursor-pointer hover:text-cyan-400 transition-colors' : ''}`}
+                            >{game.game_name}</span>
+                        )}
+                        {game.game_owned_id && (
+                            isEditingPrice ? (
+                                <input
+                                    autoFocus
+                                    type="number"
+                                    value={editValue}
+                                    onChange={e => setEditValue(e.target.value)}
+                                    onBlur={() => saveField(game)}
+                                    onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                                    placeholder="Price (cents)"
+                                    className="w-28 p-1 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400 focus:outline-none mt-1"
+                                />
+                            ) : (
+                                <span
+                                    onClick={() => startEditing(game, 'price')}
+                                    className="text-xs text-slate-500 cursor-pointer hover:text-slate-300 transition-colors block"
+                                >{game.price !== null ? `${(game.price / 100).toFixed(2)}€` : '—'}</span>
+                            )
+                        )}
+                    </div>
+                </div>
+                <button
+                    onClick={() => navigate(`/games/${game.game_id}?playerId=${playerId}`)}
+                    className="text-slate-400 hover:text-cyan-400 transition-colors ml-2"
+                >
+                    <ExternalLink className="w-4 h-4" />
+                </button>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-600/30">
+                <div className="flex gap-4 text-sm">
+                    <div className="flex flex-col">
+                        <span className="text-white font-medium">{game.play_count}</span>
+                        <span className="text-xs text-slate-500">Plays</span>
+                    </div>
+                    {game.game_owned_id && game.price !== null && game.play_count > 0 && (
+                        <div className="flex flex-col">
+                            <span className="text-cyan-400 font-medium">{((game.price / game.play_count) / 100).toFixed(2)}€</span>
+                            <span className="text-xs text-slate-500">Per play</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     )
 }

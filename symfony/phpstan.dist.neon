@@ -5,6 +5,7 @@ parameters:
         - config/
         - public/
         - src/
+    phpVersion: 80300
 
 includes:
     - vendor/phpstan/phpstan-doctrine/extension.neon

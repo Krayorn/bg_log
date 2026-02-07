@@ -138,6 +138,8 @@ class EntryController extends AbstractController
         Request                $request,
         UpdateEntry $updateEntry,
     ): Response {
+        $this->denyAccessUnlessGranted(EntryVoter::ENTRY_EDIT, $entry);
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 

@@ -24,15 +24,40 @@ class GameRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = '
-            SELECT g.name, g.id, (CASE WHEN go.player_id IS NOT NULL THEN TRUE ELSE FALSE END) in_library, count(e) 
-            FROM entry e 
+            SELECT
+                g.id   AS game_id,
+                g.name AS game_name,
+                go.id   AS game_owned_id,
+                go.price AS price,
+                COUNT(DISTINCT e.id) AS play_count
+            FROM entry e
             JOIN game g ON e.game_id = g.id
             JOIN player_result pr ON pr.entry_id = e.id
-            LEFT JOIN game_owned go ON go.game_id = g.id AND go.player_id = :playerId
+            LEFT JOIN game_owned go
+                ON go.game_id = g.id AND go.player_id = :playerId
             WHERE pr.player_id = :playerId
-            GROUP BY g.name, g.id, go.player_id ORDER BY count DESC;';
+            GROUP BY g.id, g.name, go.id, go.price
 
-        $conn->prepare($sql);
+            UNION ALL
+
+            SELECT
+                g.id   AS game_id,
+                g.name AS game_name,
+                go.id   AS game_owned_id,
+                go.price AS price,
+                0       AS play_count
+            FROM game_owned go
+            JOIN game g ON go.game_id = g.id
+            WHERE go.player_id = :playerId
+              AND NOT EXISTS (
+                  SELECT 1 FROM entry e
+                  JOIN player_result pr ON pr.entry_id = e.id
+                  WHERE e.game_id = g.id AND pr.player_id = :playerId
+              )
+
+            ORDER BY play_count DESC;
+        ';
+
         $result = $conn->executeQuery($sql, [
             'playerId' => $player->getId(),
         ]);

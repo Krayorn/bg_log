@@ -44,6 +44,11 @@ class PlayerResult
         $this->customFields = new ArrayCollection();
     }
 
+    public function getPlayer(): Player
+    {
+        return $this->player;
+    }
+
     public function addCustomFieldValue(CustomField $customField, string $value): void
     {
         foreach ($this->customFields as $existingCustomFieldValue) {
