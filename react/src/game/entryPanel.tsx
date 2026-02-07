@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 import { apiPatch } from '../hooks/useApi'
+import PlayerSearchSelect from '../components/PlayerSearchSelect'
+import { Plus, X } from 'lucide-react'
 
 type CustomFieldType = 'string' | 'number'
 
@@ -106,7 +108,6 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
     const [players, setPlayers] = useState(entry.players.map(p => ({ ...p })))
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
-    const [newPlayerId, setNewPlayerId] = useState('')
 
     useEffect(() => {
         setNote(entry.note)
@@ -114,8 +115,6 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
         setPlayers(entry.players.map(p => ({ ...p })))
         setCustomFields(entry.customFields.map(c => ({ ...c })))
     }, [entry])
-
-    const availablePlayers = allPlayers.filter(p => !players.some(ep => ep.player.id === p.id))
 
     const patchEntry = async (payload: Record<string, unknown>) => {
         const { data: updatedEntry, ok } = await apiPatch<Entry>(`/entries/${entry.id}`, payload)
@@ -250,26 +249,6 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
         }))
     }
 
-    const handleAddPlayer = async () => {
-        if (!newPlayerId) return
-
-        await patchEntry({
-            customFields: [],
-            players: [{
-                kind: "add",
-                payload: {
-                    playerId: newPlayerId,
-                    note: '',
-                    won: null,
-                    customFields: []
-                }
-            }]
-        })
-
-        setNewPlayerId('')
-        setShowAddPlayer(false)
-    }
-
     const handleRemovePlayer = async (playerResultId: string) => {
         await patchEntry({
             customFields: [],
@@ -393,43 +372,44 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
             <section className="border border-slate-600 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-white font-semibold text-lg">Players</h2>
-                    {availablePlayers.length > 0 && (
-                        <button
-                            onClick={() => setShowAddPlayer(!showAddPlayer)}
-                            className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            Add Player
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setShowAddPlayer(!showAddPlayer)}
+                        className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Player
+                    </button>
                 </div>
 
                 {showAddPlayer && (
                     <div className="mb-4 p-3 border border-slate-500 rounded-lg bg-slate-800/50 flex gap-2 items-end">
                         <div className="flex-1">
-                            <label className="text-slate-300 text-xs block mb-1">Select Player</label>
-                            <select
-                                value={newPlayerId}
-                                onChange={(e) => setNewPlayerId(e.target.value)}
-                                className="w-full p-2 rounded bg-slate-700 text-white border border-slate-500"
-                            >
-                                <option value="">Choose a player...</option>
-                                {availablePlayers.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
+                            <label className="text-slate-300 text-xs block mb-1">Search Player</label>
+                            <PlayerSearchSelect
+                                players={allPlayers}
+                                excludeIds={players.map(p => p.player.id)}
+                                onSelect={async (p) => {
+                                    await patchEntry({
+                                        customFields: [],
+                                        players: [{
+                                            kind: "add",
+                                            payload: {
+                                                playerId: p.id,
+                                                note: '',
+                                                won: null,
+                                                customFields: []
+                                            }
+                                        }]
+                                    })
+                                    setShowAddPlayer(false)
+                                }}
+                                onPlayerCreated={() => {}}
+                                allowCreate
+                                placeholder="Search player..."
+                            />
                         </div>
                         <button
-                            onClick={handleAddPlayer}
-                            disabled={!newPlayerId}
-                            className="px-3 py-2 rounded bg-cyan-500/20 border border-cyan-400/50 text-cyan-400 hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Add
-                        </button>
-                        <button
-                            onClick={() => { setShowAddPlayer(false); setNewPlayerId(''); }}
+                            onClick={() => setShowAddPlayer(false)}
                             className="px-3 py-2 rounded bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
                         >
                             Cancel
@@ -459,9 +439,7 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
                                     className="text-red-400 hover:text-red-300 shrink-0"
                                     title="Remove player"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <X className="w-4 h-4" />
                                 </button>
                             </div>
 

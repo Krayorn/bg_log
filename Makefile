@@ -12,12 +12,15 @@ down:
 symfony:
 	docker exec -it bg_log-symfony-1 bash
 
-.PHONY: pre-commit
-pre-commit:
+backend-precommit:
 	docker exec -it bg_log-symfony-1 vendor/bin/rector
 	docker exec -it bg_log-symfony-1 vendor/bin/ecs --fix
 	docker exec -it bg_log-symfony-1 vendor/bin/phpstan analyse
+
+frontend-precommit:
 	cd react && npm run lint
+
+pre-commit: backend-precommit frontend-precommit
 
 deploy:
 	@echo "Select version bump type:"

@@ -5,6 +5,7 @@ import Home from './home/home.tsx'
 import Game from './game/game.tsx'
 import Games from './game/games.tsx'
 import Login from './login.tsx'
+import Circle from './circle/circle.tsx'
 import './index.css'
 import {
   createBrowserRouter,
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: "/players/:playerId/games",
         element: <Games />,
+      },
+      {
+        path: "/players/:playerId/circle",
+        element: <Circle />,
       }
     ]
   },

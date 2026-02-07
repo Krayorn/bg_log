@@ -23,7 +23,7 @@ class GameOwned
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id', nullable: false)]
         private readonly Game $game,
         #[ORM\Column(type: 'integer', nullable: true)]
-        private readonly ?int $price = null,
+        private ?int $price = null,
     ) {
         $this->id = Uuid::uuid4();
     }
@@ -41,6 +41,11 @@ class GameOwned
     public function getPlayer(): Player
     {
         return $this->player;
+    }
+
+    public function setPrice(?int $price): void
+    {
+        $this->price = $price;
     }
 
     /**

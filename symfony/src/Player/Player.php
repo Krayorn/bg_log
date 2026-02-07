@@ -23,6 +23,10 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'in_party_of_id', referencedColumnName: 'id', onDelete: 'SET NULL', nullable: true)]
+    private ?Player $inPartyOf = null;
+
     public function __construct(
         #[ORM\Column(type: 'string', unique: true)]
         private readonly string $name,
@@ -50,7 +54,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null, email?: string|null}
+     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null, isGuest: bool, inPartyOf: array{id: UuidInterface, name: string}|null, email?: string|null}
      */
     public function view(bool $includeSensitive = false): array
     {
@@ -59,6 +63,11 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
             'name' => $this->name,
             'number' => $this->number,
             'registeredOn' => $this->registeredOn,
+            'isGuest' => ! $this->registeredOn instanceof \DateTimeImmutable,
+            'inPartyOf' => $this->inPartyOf instanceof self ? [
+                'id' => $this->inPartyOf->getId(),
+                'name' => $this->inPartyOf->getName(),
+            ] : null,
         ];
 
         if ($includeSensitive) {
@@ -91,6 +100,21 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // $this->password = null; never called ?
+    }
+
+    public function getRegisteredOn(): ?DateTimeImmutable
+    {
+        return $this->registeredOn;
+    }
+
+    public function getInPartyOf(): ?self
+    {
+        return $this->inPartyOf;
+    }
+
+    public function setInPartyOf(?self $player): void
+    {
+        $this->inPartyOf = $player;
     }
 
     public function register(string $hashedPassword): void

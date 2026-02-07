@@ -26,7 +26,7 @@ class Game
 
     public function __construct(
         #[ORM\Column(type: 'string', unique: true)]
-        private readonly string $name,
+        private string $name
     ) {
         $this->id = Uuid::uuid4();
         $this->customFields = new ArrayCollection();
@@ -47,6 +47,11 @@ class Game
             'name' => $this->name,
             'customFields' => array_values(array_map(fn ($customField) => $customField->view(), $this->customFields->toArray())),
         ];
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
     }
 
     public function getCustomField(string $customFieldId): CustomField

@@ -10,21 +10,21 @@
 
 ## Quality Checks
 - Run full pre-commit checks: `make pre-commit`
-  - Symfony: `vendor/bin/rector`, `vendor/bin/ecs --fix`, `vendor/bin/phpstan analyse`
-  - React: `npm run lint`
+- Backend only: `make backend-precommit`
+- Frontend only: `make frontend-precommit`
+- **Always run checks via `make` targets** — PHP is only available inside Docker, not on the host.
 
 ## Frontend (react/)
 - Install deps: `npm install`
-- Lint: `npm run lint`
+- Lint: `npm run lint` (or `make frontend-precommit`)
 - Build: `npm run build`
 
 ## Backend (symfony/)
-- Run Rector: `vendor/bin/rector`
-- Run ECS (fix): `vendor/bin/ecs --fix`
-- Run PHPStan: `vendor/bin/phpstan analyse`
+- Lint/analyse: `make backend-precommit` (runs rector, ecs, phpstan inside Docker)
+- Do NOT run `vendor/bin/*` directly on the host — PHP is not installed locally.
 
 ## Conventions
-- Prefer running tooling inside Docker when possible (see `make pre-commit`).
+- Prefer running tooling inside Docker when possible (see `make` targets).
 - Keep changes within the relevant app directory (`react/` or `symfony/`).
 - Backend structure: follow DDD-inspired organization (group by domain, not by technical type).
 - Frontend styling: use Tailwind CSS utility classes.

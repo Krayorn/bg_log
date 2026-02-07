@@ -65,9 +65,21 @@ class PlayerController extends AbstractController
     }
 
     #[Route('api/players', methods: 'GET')]
-    public function players(PlayerRepository $playerRepository): Response
+    public function players(Request $request, PlayerRepository $playerRepository): Response
     {
-        $players = $playerRepository->findAll();
+        $forPlayerId = $request->query->get('forPlayer');
+        $forPlayer = null;
+
+        if ($forPlayerId !== null) {
+            $forPlayer = $playerRepository->find($forPlayerId);
+            if ($forPlayer === null) {
+                return new JsonResponse([
+                    'error' => 'Player not found',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $players = $playerRepository->findVisibleFor($forPlayer);
 
         return new JsonResponse(
             array_map(fn ($player): array => $player->view(), $players),
@@ -104,6 +116,11 @@ class PlayerController extends AbstractController
         }
 
         $player = new Player($name, $playerRepository->findNextNumber());
+
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof Player) {
+            $player->setInPartyOf($currentUser);
+        }
 
         $entityManager->persist($player);
         $entityManager->flush();
@@ -178,5 +195,104 @@ class PlayerController extends AbstractController
             $stats,
             Response::HTTP_OK
         );
+    }
+
+    #[Route('api/players/{player}/circle', methods: 'GET')]
+    public function circle(Player $player, PlayerRepository $playerRepository): Response
+    {
+        $rows = $playerRepository->getCircle($player);
+
+        $circle = array_map(fn (array $row): array => [
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'number' => $row['number'],
+            'registeredOn' => $row['registered_on'],
+            'isGuest' => $row['registered_on'] === null,
+            'inPartyOf' => $row['in_party_of_id'] !== null ? [
+                'id' => $row['in_party_of_id'],
+            ] : null,
+            'gamesPlayed' => (int) $row['games_played'],
+            'wins' => (int) $row['wins'],
+            'losses' => (int) $row['losses'],
+        ], $rows);
+
+        return new JsonResponse($circle, Response::HTTP_OK);
+    }
+
+    #[Route('api/players/{guestPlayer}/synchronize', methods: 'POST')]
+    public function synchronize(
+        Player $guestPlayer,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PlayerRepository $playerRepository
+    ): Response {
+        $currentUser = $this->getUser();
+        if (! $currentUser instanceof Player) {
+            return new JsonResponse([
+                'error' => 'Unauthorized',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $guestPlayer->getInPartyOf() instanceof \App\Player\Player || ! $guestPlayer->getInPartyOf()->getId()->equals($currentUser->getId())) {
+            return new JsonResponse([
+                'error' => 'You can only synchronize your own guest players',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        if ($guestPlayer->getRegisteredOn() instanceof \DateTimeImmutable) {
+            return new JsonResponse([
+                'error' => 'This player is not a guest',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+        $registeredPlayerId = $body['registeredPlayerId'] ?? null;
+
+        if ($registeredPlayerId === null) {
+            return new JsonResponse([
+                'error' => 'registeredPlayerId is required',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $registeredPlayer = $playerRepository->find($registeredPlayerId);
+        if ($registeredPlayer === null) {
+            return new JsonResponse([
+                'error' => 'Registered player not found',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($registeredPlayer->getRegisteredOn() === null) {
+            return new JsonResponse([
+                'error' => 'Target player is not registered',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $conn = $entityManager->getConnection();
+        $conn->beginTransaction();
+
+        try {
+            $movedCount = $conn->executeStatement(
+                'UPDATE player_result SET player_id = :registeredId WHERE player_id = :guestId',
+                [
+                    'registeredId' => $registeredPlayer->getId(),
+                    'guestId' => $guestPlayer->getId(),
+                ]
+            );
+
+            $entityManager->remove($guestPlayer);
+            $entityManager->flush();
+            $conn->commit();
+        } catch (\Exception) {
+            $conn->rollBack();
+            return new JsonResponse([
+                'error' => 'Synchronization failed',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JsonResponse([
+            'movedResults' => $movedCount,
+            'registeredPlayer' => $registeredPlayer->view(),
+        ], Response::HTTP_OK);
     }
 }

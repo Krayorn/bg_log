@@ -5,6 +5,7 @@ import Layout from '../Layout'
 import { StatisticsPanel } from './statistics'
 import { EntryListItem, EntryDetailPanel } from './entryPanel'
 import { GameDetailPanel } from './gameDetailPanel'
+import { BarChart3, FileText } from 'lucide-react'
 
 type CustomField = {
     kind: string
@@ -100,7 +101,7 @@ export default function Game() {
     }, [entryIdFromUrl, entries, selectedEntryId])
 
     const onEntryCreated = (newEntry: Entry) => {
-        setEntries([...entries, newEntry])
+        setEntries([newEntry, ...entries])
     }
 
     const onEntryUpdated = (id: string, newEntry: Entry) => {
@@ -110,7 +111,7 @@ export default function Game() {
     useRequest(`/games/${gameId}`, [gameId], setGame)
     useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
     useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
-    useRequest(`/players`, [], setPlayersList)
+    useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
 
     if (game === null) {
         return (
@@ -140,9 +141,7 @@ export default function Game() {
                                     : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
                                     }`}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                                </svg>
+                                <BarChart3 className="w-4 h-4" />
                                 Statistics
                             </button>
                         )}
@@ -150,9 +149,7 @@ export default function Game() {
                     <div className="overflow-y-auto flex-1">
                         {entries.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 text-slate-600 mb-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                </svg>
+                                <FileText className="w-12 h-12 text-slate-600 mb-3" strokeWidth={1} />
                                 <span className="text-slate-500 text-sm">No entries yet</span>
                                 <span className="text-slate-600 text-xs mt-1">Add your first game session</span>
                             </div>

@@ -99,6 +99,60 @@ class PlayerRepository extends ServiceEntityRepository
         return $result->fetchAllAssociative();
     }
 
+    /**
+     * @return Player[]
+     */
+    public function findVisibleFor(?Player $forPlayer): array
+    {
+        $qb = $this->createQueryBuilder('p');
+
+        if ($forPlayer instanceof \App\Player\Player) {
+            $qb->where('p.registeredOn IS NOT NULL')
+                ->orWhere('p.inPartyOf = :forPlayer')
+                ->setParameter('forPlayer', $forPlayer);
+        } else {
+            $qb->where('p.registeredOn IS NOT NULL');
+        }
+
+        $qb->orderBy('p.name', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array<array<string, mixed>>
+     */
+    public function getCircle(Player $player): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = '
+            SELECT
+                p.id,
+                p.name,
+                p.number,
+                p.registered_on,
+                p.in_party_of_id,
+                (p.registered_on IS NULL) as is_guest,
+                COUNT(*) as games_played,
+                SUM(CASE WHEN opr.won = true AND pr.won = false THEN 1 ELSE 0 END) as losses,
+                SUM(CASE WHEN opr.won = false AND pr.won = true THEN 1 ELSE 0 END) as wins
+            FROM player_result pr
+            JOIN player_result opr ON opr.entry_id = pr.entry_id
+            JOIN player p ON p.id = opr.player_id
+            WHERE pr.player_id = :playerId AND opr.player_id != :playerId
+            GROUP BY p.id, p.name, p.number, p.registered_on, p.in_party_of_id
+            ORDER BY is_guest DESC, p.name ASC
+        ';
+
+        $conn->prepare($sql);
+        $result = $conn->executeQuery($sql, [
+            'playerId' => $player->getId(),
+        ]);
+
+        return $result->fetchAllAssociative();
+    }
+
     public function findNextNumber(): int
     {
         $conn = $this->getEntityManager()->getConnection();

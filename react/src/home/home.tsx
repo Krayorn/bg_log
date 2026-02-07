@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import { apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
+import { Landmark, User, Check, X, Pencil, ExternalLink } from 'lucide-react'
 
 function Home() {
     const { playerId } = useParams() as { playerId: string }
@@ -13,9 +14,7 @@ function Home() {
                 <div className="flex">
                     <div className="border-b border-slate-600">
                         <div className="rounded-full border-cyan-400/50 border-2 p-2 bg-cyan-500/10 mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-cyan-400">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
-                            </svg>
+                            <Landmark className="w-8 h-8 text-cyan-400" />
                         </div>
                     </div>
                     <div className="ml-4 text-white flex-col border-b border-slate-600">
@@ -112,9 +111,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
         <div className="flex flex-col h-full">
             <div className="flex items-center pb-4 border-b border-slate-600/30">    
                 <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50 mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
+                    <User className="w-8 h-8 text-slate-400" />
                 </div>
                 <div>
                     <div className="text-lg font-semibold">{playerInfos.name}</div>
@@ -139,14 +136,10 @@ function PlayerBox({ playerId }: {playerId: string}) {
                                         className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm flex-1"
                                     />
                                     <button onClick={handleSaveEmail} className="text-cyan-400 hover:text-cyan-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                        </svg>
+                                        <Check className="w-5 h-5" />
                                     </button>
                                     <button onClick={handleCancelEmail} className="text-slate-400 hover:text-slate-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
+                                        <X className="w-5 h-5" />
                                     </button>
                                 </div>
                                 {emailError && <span className="text-red-400 text-xs">{emailError}</span>}
@@ -157,9 +150,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
                                     {playerInfos.email ?? 'No email set'}
                                 </span>
                                 <button onClick={handleEditEmail} className="text-slate-400 hover:text-cyan-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                    </svg>
+                                    <Pencil className="w-4 h-4" />
                                 </button>
                             </>
                         )}
@@ -265,18 +256,18 @@ function GameStatistics({ playerId }: {playerId: string}) {
     )
 }
 
-interface PlayerStats {
+interface CirclePlayer {
     id: string
-    count: number
     name: string
-    losses: number
+    gamesPlayed: number
     wins: number
+    losses: number
 }
 
 function PlayerStatistics({ playerId }: {playerId: string}) {
-    const [playerStats, setPlayerStats] = useState<PlayerStats[]|null>(null)
+    const [playerStats, setPlayerStats] = useState<CirclePlayer[]|null>(null)
 
-    useRequest(`/players/${playerId}/friends/stats`, [playerId], setPlayerStats)
+    useRequest(`/players/${playerId}/circle`, [playerId], setPlayerStats)
 
     if (playerStats === null) {
         return <div className="text-slate-500">Loading...</div>
@@ -286,7 +277,7 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
         return <div className="text-slate-500">No games with other players yet</div>
     }
 
-    const sortedByCount = [...playerStats].sort((a, b) => b.count - a.count)
+    const sortedByCount = [...playerStats].sort((a, b) => b.gamesPlayed - a.gamesPlayed)
     const wins = [...playerStats].sort((a, b) => b.wins - a.wins)
     const losses = [...playerStats].sort((a, b) => b.losses - a.losses)
 
@@ -299,11 +290,9 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
                         <div key={player.id} className="flex justify-between items-center text-sm group">
                             <span className="truncate text-slate-300">{player.name}</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-cyan-400 font-medium">{player.count}</span>
+                                <span className="text-cyan-400 font-medium">{player.gamesPlayed}</span>
                                 <Link to={`/players/${player.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-500 hover:text-cyan-400">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                    </svg>
+                                    <ExternalLink className="w-4 h-4 text-slate-500 hover:text-cyan-400" />
                                 </Link>
                             </div>
                         </div>

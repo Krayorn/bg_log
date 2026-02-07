@@ -73,6 +73,54 @@ class GameController extends AbstractController
         return new JsonResponse($gameOwned->view(), Response::HTTP_CREATED);
     }
 
+    #[Route('api/players/{player}/games/{gameOwned}', methods: 'PATCH')]
+    public function updatePlayerGame(Player $player, GameOwned $gameOwned, Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+    {
+        $content = $request->getContent();
+        $body = json_decode($content, true);
+
+        $errors = [];
+
+        if (isset($body['name'])) {
+            $name = trim((string) $body['name']);
+            if ($name === '') {
+                $errors[] = 'Name can\'t be empty';
+            } else {
+                $existing = $gameRepository->findOneBy([
+                    'name' => $name,
+                ]);
+                if ($existing !== null && (string) $existing->getId() !== (string) $gameOwned->getGame()->getId()) {
+                    $errors[] = 'Already a game with the same name';
+                } else {
+                    $gameOwned->getGame()->setName($name);
+                }
+            }
+        }
+
+        if (array_key_exists('price', $body)) {
+            $price = $body['price'];
+            if ($price !== null) {
+                if (! is_numeric($price)) {
+                    $errors[] = 'Price must be a correct int or must not be provided';
+                } else {
+                    $gameOwned->setPrice((int) $price);
+                }
+            } else {
+                $gameOwned->setPrice(null);
+            }
+        }
+
+        if ($errors !== []) {
+            return new JsonResponse([
+                'errors' => $errors,
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $entityManager->flush();
+
+        return new JsonResponse($gameOwned->view(), Response::HTTP_OK);
+    }
+
     #[Route('api/games', methods: 'POST')]
     public function create(Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
     {

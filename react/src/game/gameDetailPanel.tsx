@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRequest } from '../hooks/useRequest'
 import { apiPost, apiDelete } from '../hooks/useApi'
 import { v4 as uuidv4 } from 'uuid'
+import PlayerSearchSelect from '../components/PlayerSearchSelect'
+import { X, UserPlus, Trash2 } from 'lucide-react'
 
 enum CustomFieldType {
     string = "string",
@@ -95,8 +97,19 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
 
-    useRequest(`/players`, [], setPlayersList)
+    useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
     useRequest(`/games/${game.id}/owners`, [game.id], setGameOwners)
+
+    const [initialPlayerSet, setInitialPlayerSet] = useState(false)
+    useEffect(() => {
+        if (playerId && playersList.length > 0 && !initialPlayerSet) {
+            const currentPlayer = playersList.find(p => p.id === playerId)
+            if (currentPlayer) {
+                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
+            }
+            setInitialPlayerSet(true)
+        }
+    }, [playersList, playerId, initialPlayerSet])
 
     const currentPlayerOwnership = gameOwners.find(go => go.player.id === playerId)
     const defaultGameUsed = currentPlayerOwnership?.id || ""
@@ -209,7 +222,12 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             setEntryPlayedAt("")
             setEntryGameUsed("")
             setEntryCustomFields({})
-            setEntryPlayers([])
+            const currentPlayer = playerId ? playersList.find(p => p.id === playerId) : null
+            if (currentPlayer) {
+                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
+            } else {
+                setEntryPlayers([])
+            }
             onEntryCreated(data)
         }
     }
@@ -310,23 +328,24 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                         className="self-end text-slate-400 hover:text-white"
                                         onClick={() => removePlayerFromEntry(player.genId)}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
+                                        <X className="w-5 h-5" />
                                     </button>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-slate-300 text-xs">Player</label>
-                                        <select
-                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm"
-                                            value={player.id}
-                                            onChange={e => updatePlayer(player.genId, 'id', e.target.value)}
-                                            required
-                                        >
-                                            <option value="">Select player</option>
-                                            {playersList.map(p => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
-                                        </select>
+                                        {player.id ? (
+                                            <div className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm">
+                                                {playersList.find(p => p.id === player.id)?.name ?? player.id}
+                                            </div>
+                                        ) : (
+                                            <PlayerSearchSelect
+                                                players={playersList}
+                                                excludeIds={entryPlayers.filter(p => p.id).map(p => p.id)}
+                                                onSelect={p => updatePlayer(player.genId, 'id', p.id)}
+                                                onPlayerCreated={p => setPlayersList(prev => [...prev, { id: p.id, name: p.name }])}
+                                                allowCreate
+                                                placeholder="Search player..."
+                                            />
+                                        )}
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-slate-300 text-xs">Notes</label>
@@ -371,9 +390,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                 className="border border-dashed border-slate-500 rounded-lg p-4 w-[220px] flex items-center justify-center flex-col text-slate-400 hover:text-white hover:border-white transition-colors"
                                 onClick={addPlayerToEntry}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                                </svg>
+                                <UserPlus className="w-8 h-8" />
                                 <span className="text-sm mt-1">Add player</span>
                             </button>
                         </div>
@@ -468,9 +485,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                             className="text-slate-400 hover:text-red-400 transition-colors"
                                             title="Delete custom field"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                            </svg>
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                     <div className="flex gap-2 text-xs">
