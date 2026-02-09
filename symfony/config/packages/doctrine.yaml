@@ -24,6 +24,10 @@ doctrine:
                 is_bundle: false
                 dir: '%kernel.project_dir%/src/Player'
                 prefix: 'App\Player'
+            StatisticsQuery:
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/StatisticsQuery'
+                prefix: 'App\StatisticsQuery'
 
 when@test:
     doctrine:

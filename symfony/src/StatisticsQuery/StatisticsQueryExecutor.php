@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Game\CustomField;
+namespace App\StatisticsQuery;
 
 use App\Entry\CustomFieldValue;
 use App\Entry\PlayerResult\PlayerResult;
+use App\Game\CustomField\CustomField;
+use App\Game\CustomField\CustomFieldKind;
 use App\Player\Player;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
-class StatisticsRepository
+class StatisticsQueryExecutor
 {
     /**
      * @var array<string, string>

@@ -73,7 +73,7 @@ class CustomFieldValue
 
     private function getValue(): int|string|null
     {
-        if ($this->customField->getKind() === CustomFieldKind::STRING) {
+        if ($this->customField->getKind() === CustomFieldKind::STRING || $this->customField->getKind() === CustomFieldKind::ENUM) {
             return $this->valueString;
         }
         return $this->valueNumber;

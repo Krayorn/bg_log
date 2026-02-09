@@ -44,5 +44,6 @@ deploy:
 	sed -i "s/^VITE_RELEASE_DATE=.*/VITE_RELEASE_DATE=$$today/" react/.env; \
 	echo "Updated to version $$new_version (released $$today)"
 	docker-compose down
+	cd react && npm i
 	cd react && npm run build
 	docker-compose up -d --build

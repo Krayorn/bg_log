@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react"
 import { apiPatch } from '../hooks/useApi'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
+import EnumSelect from '../components/EnumSelect'
 import { Plus, X } from 'lucide-react'
 
-type CustomFieldType = 'string' | 'number'
+type CustomFieldType = 'string' | 'number' | 'enum'
 
 type CustomField = {
     kind: CustomFieldType
     name: string
     global: boolean
     id: string
+    enumValues: { id: string; value: string }[]
 }
 
 type CustomFieldValue = {
@@ -343,15 +345,27 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
                                                 )}
                                             </div>
                                             {editField === fieldKey ? (
-                                                <input
-                                                    autoFocus
-                                                    type={cf.kind === 'number' ? 'number' : 'text'}
-                                                    value={cfValue?.value ?? ''}
-                                                    onChange={(e) => updateLocalCustomField(cf, e.target.value)}
-                                                    onBlur={(e) => handleEntryCustomFieldBlur(cf, e.target.value, cfValue?.id)}
-                                                    placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                                                />
+                                                cf.kind === 'enum' ? (
+                                                    <EnumSelect
+                                                        options={cf.enumValues.map(v => v.value)}
+                                                        value={String(cfValue?.value ?? '')}
+                                                        onChange={(v) => {
+                                                            updateLocalCustomField(cf, v)
+                                                            handleEntryCustomFieldBlur(cf, v, cfValue?.id)
+                                                        }}
+                                                        placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        autoFocus
+                                                        type={cf.kind === 'number' ? 'number' : 'text'}
+                                                        value={cfValue?.value ?? ''}
+                                                        onChange={(e) => updateLocalCustomField(cf, e.target.value)}
+                                                        onBlur={(e) => handleEntryCustomFieldBlur(cf, e.target.value, cfValue?.id)}
+                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                                                    />
+                                                )
                                             ) : (
                                                 <div
                                                     onClick={() => setEditField(fieldKey)}
@@ -486,15 +500,27 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
                                                     )}
                                                 </div>
                                                 {editField === fieldKey ? (
-                                                    <input
-                                                        autoFocus
-                                                        type={cf.kind === 'number' ? 'number' : 'text'}
-                                                        value={cfValue?.value ?? ''}
-                                                        onChange={(e) => updateLocalPlayerCustomField(playerResult.id, cf, e.target.value)}
-                                                        onBlur={(e) => handlePlayerCustomFieldBlur(playerResult.id, cf, e.target.value, cfValue?.id)}
-                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
-                                                    />
+                                                    cf.kind === 'enum' ? (
+                                                        <EnumSelect
+                                                            options={cf.enumValues.map(v => v.value)}
+                                                            value={String(cfValue?.value ?? '')}
+                                                            onChange={(v) => {
+                                                                updateLocalPlayerCustomField(playerResult.id, cf, v)
+                                                                handlePlayerCustomFieldBlur(playerResult.id, cf, v, cfValue?.id)
+                                                            }}
+                                                            placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            autoFocus
+                                                            type={cf.kind === 'number' ? 'number' : 'text'}
+                                                            value={cfValue?.value ?? ''}
+                                                            onChange={(e) => updateLocalPlayerCustomField(playerResult.id, cf, e.target.value)}
+                                                            onBlur={(e) => handlePlayerCustomFieldBlur(playerResult.id, cf, e.target.value, cfValue?.id)}
+                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
+                                                        />
+                                                    )
                                                 ) : (
                                                     <div
                                                         onClick={() => setEditField(fieldKey)}

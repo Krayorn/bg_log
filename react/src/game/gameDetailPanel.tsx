@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react"
 import { useRequest } from '../hooks/useRequest'
-import { apiPost, apiDelete } from '../hooks/useApi'
+import { apiPost, apiDelete, apiPatch } from '../hooks/useApi'
 import { v4 as uuidv4 } from 'uuid'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
+import EnumSelect from '../components/EnumSelect'
 import { X, UserPlus, Trash2 } from 'lucide-react'
 
 enum CustomFieldType {
     string = "string",
     number = 'number',
+    enum = 'enum',
 }
 
 type CustomField = {
@@ -15,6 +17,7 @@ type CustomField = {
     name: string
     global: boolean
     id: string
+    enumValues: { id: string; value: string }[]
 }
 
 type CustomFieldValue = {
@@ -86,6 +89,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
     const [entrySpecific, setEntrySpecific] = useState<boolean>(false)
     const [errors, setErrors] = useState<string[]>([])
     const [customFieldsList, setCustomFieldsList] = useState<CustomField[]>(game.customFields)
+    const [newEnumValues, setNewEnumValues] = useState<{ [key: string]: string }>({})
 
     const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
     const [gameOwners, setGameOwners] = useState<GameOwner[]>([])
@@ -144,6 +148,35 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             const updatedCustomFields = customFieldsList.filter(cf => cf.id !== customFieldId)
             setCustomFieldsList(updatedCustomFields)
             onGameUpdated({ ...game, customFields: updatedCustomFields })
+        }
+    }
+
+    const addEnumValue = async (customField: CustomField) => {
+        const val = (newEnumValues[customField.id] || '').trim()
+        if (!val) return
+        const newValues = [...customField.enumValues.map(v => v.value), val]
+        const { data, ok } = await apiPatch<Game>(`/customFields/${customField.id}`, { enumValues: newValues })
+        if (ok && data) {
+            setCustomFieldsList(data.customFields)
+            onGameUpdated(data)
+            setNewEnumValues(prev => ({ ...prev, [customField.id]: '' }))
+        }
+    }
+
+    const removeEnumValue = async (customField: CustomField, enumValueId: string) => {
+        const newValues = customField.enumValues.filter(v => v.id !== enumValueId).map(v => v.value)
+        const { data, ok } = await apiPatch<Game>(`/customFields/${customField.id}`, { enumValues: newValues })
+        if (ok && data) {
+            setCustomFieldsList(data.customFields)
+            onGameUpdated(data)
+        }
+    }
+
+    const convertCustomFieldKind = async (customField: CustomField, newKind: 'string' | 'enum') => {
+        const { data, ok } = await apiPatch<Game>(`/customFields/${customField.id}`, { kind: newKind })
+        if (ok && data) {
+            setCustomFieldsList(data.customFields)
+            onGameUpdated(data)
         }
     }
 
@@ -236,8 +269,9 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
         return <div>Loading stylé</div>
     }
 
-    const globalCustomFields = customFieldsList.filter(c => c.global)
-    const playerCustomFields = customFieldsList.filter(c => !c.global)
+    const sortedCustomFields = [...customFieldsList].sort((a, b) => a.name.localeCompare(b.name))
+    const globalCustomFields = sortedCustomFields.filter(c => c.global)
+    const playerCustomFields = sortedCustomFields.filter(c => !c.global)
 
     return (
         <div className="flex flex-col">
@@ -304,13 +338,22 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                     {globalCustomFields.map(cf => (
                                         <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
                                             <label className="text-slate-300 text-xs">{cf.name}</label>
-                                            <input
-                                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                                                type={cf.kind === 'number' ? 'number' : 'text'}
-                                                placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                value={entryCustomFields[cf.id] || ''}
-                                                onChange={e => updateEntryCustomField(cf.id, e.target.value)}
-                                            />
+                                            {cf.kind === 'enum' ? (
+                                                <EnumSelect
+                                                    options={cf.enumValues.map(v => v.value)}
+                                                    value={entryCustomFields[cf.id] || ''}
+                                                    onChange={v => updateEntryCustomField(cf.id, v)}
+                                                    placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                />
+                                            ) : (
+                                                <input
+                                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                                                    type={cf.kind === 'number' ? 'number' : 'text'}
+                                                    placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                    value={entryCustomFields[cf.id] || ''}
+                                                    onChange={e => updateEntryCustomField(cf.id, e.target.value)}
+                                                />
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -372,13 +415,22 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                             {playerCustomFields.map(cf => (
                                                 <div key={cf.id} className="flex flex-col gap-1 mt-2">
                                                     <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                    <input
-                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
-                                                        type={cf.kind === 'number' ? 'number' : 'text'}
-                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                        value={player.customFields[cf.id] || ''}
-                                                        onChange={e => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
-                                                    />
+                                                    {cf.kind === 'enum' ? (
+                                                        <EnumSelect
+                                                            options={cf.enumValues.map(v => v.value)}
+                                                            value={player.customFields[cf.id] || ''}
+                                                            onChange={v => updatePlayerCustomField(player.genId, cf.id, v)}
+                                                            placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
+                                                            type={cf.kind === 'number' ? 'number' : 'text'}
+                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                            value={player.customFields[cf.id] || ''}
+                                                            onChange={e => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
+                                                        />
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -493,7 +545,56 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                         <span className={`px-2 py-0.5 rounded ${customField.global ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
                                             {customField.global ? 'Entry' : 'Player'}
                                         </span>
+                                        {customField.kind === 'string' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => convertCustomFieldKind(customField, 'enum')}
+                                                className="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 hover:bg-purple-800/50 transition-colors"
+                                            >
+                                                → enum
+                                            </button>
+                                        )}
+                                        {customField.kind === 'enum' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => convertCustomFieldKind(customField, 'string')}
+                                                className="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 hover:bg-purple-800/50 transition-colors"
+                                            >
+                                                → string
+                                            </button>
+                                        )}
                                     </div>
+                                    {customField.kind === 'enum' && (
+                                        <div className="mt-2 border-t border-slate-600 pt-2">
+                                            <span className="text-slate-400 text-xs">Allowed Values</span>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {customField.enumValues.map(ev => (
+                                                    <span key={ev.id} className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-xs">
+                                                        {ev.value}
+                                                        <button onClick={() => removeEnumValue(customField, ev.id)} className="text-slate-500 hover:text-red-400">
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <div className="flex gap-1 mt-2">
+                                                <input
+                                                    className="p-1 rounded bg-slate-700 text-white border border-slate-500 text-xs placeholder-slate-400 flex-1"
+                                                    placeholder="New value..."
+                                                    value={newEnumValues[customField.id] || ''}
+                                                    onChange={e => setNewEnumValues(prev => ({ ...prev, [customField.id]: e.target.value }))}
+                                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addEnumValue(customField) } }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addEnumValue(customField)}
+                                                    className="px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-white text-xs transition-colors"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

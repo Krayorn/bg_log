@@ -16,6 +16,12 @@ player:
         namespace: App\Player
     type: attribute
 
+statistics_query:
+    resource:
+        path: ../src/StatisticsQuery/
+        namespace: App\StatisticsQuery
+    type: attribute
+
 # config/routes.yaml
 api_login_check:
     path: /api/login_check

@@ -23,7 +23,9 @@ services:
             - '../src/Game/Game.php'
             - '../src/Game/GameOwned.php'
             - '../src/Game/CustomField/CustomField.php'
+            - '../src/Game/CustomField/CustomFieldEnumValue.php'
             - '../src/Player/Player.php'
+            - '../src/StatisticsQuery/StatisticsQuery.php'
             - '../src/Kernel.php'
 
     # add more service definitions when explicit configuration is needed

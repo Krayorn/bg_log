@@ -10,5 +10,7 @@ enum CustomFieldKind: string
 
     case NUMBER = 'number';
 
+    case ENUM = 'enum';
+
     // case ARRAY = 'array';
 }
