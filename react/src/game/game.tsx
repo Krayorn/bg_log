@@ -134,7 +134,7 @@ export default function Game() {
 
     return (
         <Layout>
-            <div className='flex text-white h-full gap-4'>
+            <div className='flex text-white h-[calc(100vh-7rem)] gap-4'>
                 <section className="w-80 shrink-0 flex flex-col bg-slate-900/30 backdrop-blur-sm rounded-lg border border-slate-600/30 overflow-hidden">
                     <div className="shrink-0 border-b border-slate-600/30">
                         <div
@@ -195,7 +195,7 @@ export default function Game() {
                     ) : showStatistics ? (
                         <StatisticsPanel gameId={gameId} playerId={playerId} customFields={game.customFields} />
                     ) : selectedEntry ? (
-                        <EntryDetailPanel key={selectedEntry.id} game={game} gameId={gameId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
+                        <EntryDetailPanel key={selectedEntry.id} game={game} gameId={gameId} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
                     ) : (
                         <GameDetailPanel game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} onGameUpdated={setGame} />
                     )}

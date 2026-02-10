@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import { apiPatch, apiPost, apiDelete } from '../hooks/useApi'
 import Layout from '../Layout'
-import { ArrowLeft, Pencil, Check, X, Scroll, ChevronDown, ChevronRight, Plus, Trash2, Settings } from 'lucide-react'
+import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
 
 type PlayerResult = {
     id: string
@@ -156,7 +156,6 @@ export default function CampaignPage() {
     const [campaign, setCampaign] = useState<Campaign | null>(null)
     const [editingName, setEditingName] = useState(false)
     const [nameInput, setNameInput] = useState("")
-    const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set())
     const [addingEventFor, setAddingEventFor] = useState<string | null>(null)
     const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
     const [showKeyManager, setShowKeyManager] = useState(false)
@@ -176,18 +175,6 @@ export default function CampaignPage() {
             setCampaign(data)
         }
         setEditingName(false)
-    }
-
-    const toggleEntry = (entryId: string) => {
-        setExpandedEntries(prev => {
-            const next = new Set(prev)
-            if (next.has(entryId)) {
-                next.delete(entryId)
-            } else {
-                next.add(entryId)
-            }
-            return next
-        })
     }
 
     const handleAddEvent = async (entryId: string, campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[]) => {
@@ -346,134 +333,122 @@ export default function CampaignPage() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3">
-                                {sortedEntries.map((entry, index) => {
-                                    const isExpanded = expandedEntries.has(entry.id)
-                                    return (
-                                        <div
-                                            key={entry.id}
-                                            className={`border rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm transition-colors ${
-                                                selectedEntry === entry.id
-                                                    ? 'border-purple-500/50'
-                                                    : 'border-slate-600'
-                                            }`}
-                                            onClick={() => setSelectedEntry(entry.id)}
-                                        >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); toggleEntry(entry.id) }}
-                                                        className="text-slate-400 hover:text-slate-200 transition-colors"
-                                                    >
-                                                        {isExpanded
-                                                            ? <ChevronDown className="w-4 h-4" />
-                                                            : <ChevronRight className="w-4 h-4" />
-                                                        }
-                                                    </button>
-                                                    <span className="text-xs font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded">
-                                                        #{index + 1}
+                                {sortedEntries.map((entry, index) => (
+                                    <div
+                                        key={entry.id}
+                                        className="border rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm border-slate-600"
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded">
+                                                    #{index + 1}
+                                                </span>
+                                                <span className="text-slate-300 text-sm">
+                                                    {new Date(entry.playedAt.date).toLocaleDateString('fr-FR')}
+                                                </span>
+                                                {entry.events.length > 0 && (
+                                                    <span className="text-xs text-purple-400">
+                                                        {entry.events.length} event{entry.events.length !== 1 ? 's' : ''}
                                                     </span>
-                                                    <span className="text-slate-300 text-sm">
-                                                        {new Date(entry.playedAt.date).toLocaleDateString('fr-FR')}
-                                                    </span>
-                                                    {entry.events.length > 0 && (
-                                                        <span className="text-xs text-purple-400">
-                                                            {entry.events.length} event{entry.events.length !== 1 ? 's' : ''}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <Link
-                                                    to={`/games/${campaign.game.id}?playerId=${playerId}&entryId=${entry.id}`}
-                                                    className="text-cyan-400 hover:text-cyan-300 text-xs transition-colors"
-                                                    onClick={e => e.stopPropagation()}
-                                                >
-                                                    View details
-                                                </Link>
+                                                )}
                                             </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {entry.players.map(pr => (
-                                                    <span
-                                                        key={pr.id}
-                                                        className={`text-xs px-2 py-1 rounded-full border ${
-                                                            pr.won === true
-                                                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                                                : pr.won === false
-                                                                    ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                                                    : 'bg-slate-700 text-slate-300 border-slate-600'
-                                                        }`}
-                                                    >
-                                                        {pr.player.name}
-                                                        {pr.won === true && ' ✓'}
-                                                        {pr.won === false && ' ✗'}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            {entry.note && (
-                                                <p className="text-slate-500 text-xs mt-2 truncate">{entry.note}</p>
-                                            )}
-
-                                            {isExpanded && (
-                                                <div className="mt-3 pt-3 border-t border-slate-700">
-                                                    {entry.events.length > 0 && (
-                                                        <div className="flex flex-col gap-1.5 mb-3">
-                                                            {entry.events.map(event => {
-                                                                const playerResult = event.playerResult
-                                                                    ? entry.players.find(pr => pr.id === event.playerResult)
-                                                                    : null
-                                                                const verb = event.payload.verb as string
-                                                                return (
-                                                                    <div key={event.id} className="flex items-center justify-between group">
-                                                                        <div className="flex items-center gap-2 text-sm">
-                                                                            <span className={`text-xs px-1.5 py-0.5 rounded ${verbColor(verb)}`}>
-                                                                                {verb}
-                                                                            </span>
-                                                                            {playerResult && (
-                                                                                <span className="text-xs text-cyan-400">
-                                                                                    {playerResult.player.name}:
-                                                                                </span>
-                                                                            )}
-                                                                            <span className="text-slate-300">
-                                                                                {formatEventLabel(event)}
-                                                                            </span>
-                                                                        </div>
-                                                                        <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id) }}
-                                                                            className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                                                                        >
-                                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                                        </button>
-                                                                    </div>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
-
-                                                    {campaignKeys.length === 0 ? (
-                                                        <p className="text-slate-600 text-xs">
-                                                            No campaign keys defined for this game.
-                                                        </p>
-                                                    ) : addingEventFor === entry.id ? (
-                                                        <AddEventForm
-                                                            entry={entry}
-                                                            campaignKeys={campaignKeys}
-                                                            onSubmit={(campaignKeyId, playerResultId, payloads) =>
-                                                                handleAddEvent(entry.id, campaignKeyId, playerResultId, payloads)
-                                                            }
-                                                            onCancel={() => setAddingEventFor(null)}
-                                                        />
-                                                    ) : (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setAddingEventFor(entry.id) }}
-                                                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-purple-400 transition-colors"
-                                                        >
-                                                            <Plus className="w-3.5 h-3.5" />
-                                                            Add event
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
+                                            <Link
+                                                to={`/games/${campaign.game.id}?playerId=${playerId}&entryId=${entry.id}`}
+                                                className="text-cyan-400 hover:text-cyan-300 text-xs transition-colors"
+                                            >
+                                                View details
+                                            </Link>
                                         </div>
-                                    )
-                                })}
+                                        <div className="flex flex-wrap gap-2">
+                                            {entry.players.map(pr => (
+                                                <span
+                                                    key={pr.id}
+                                                    className={`text-xs px-2 py-1 rounded-full border ${
+                                                        pr.won === true
+                                                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                                            : pr.won === false
+                                                                ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                                                : 'bg-slate-700 text-slate-300 border-slate-600'
+                                                    }`}
+                                                >
+                                                    {pr.player.name}
+                                                    {pr.won === true && ' ✓'}
+                                                    {pr.won === false && ' ✗'}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {entry.note && (
+                                            <p className="text-slate-500 text-xs mt-2 truncate">{entry.note}</p>
+                                        )}
+
+                                        <div className="mt-3 pt-3 border-t border-slate-700">
+                                            {entry.events.length > 0 && (
+                                                <div className="flex flex-col gap-1.5 mb-3">
+                                                    {entry.events.map(event => {
+                                                        const playerResult = event.playerResult
+                                                            ? entry.players.find(pr => pr.id === event.playerResult)
+                                                            : null
+                                                        const verb = event.payload.verb as string
+                                                        return (
+                                                            <div key={event.id} className="flex items-center justify-between group">
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <span className={`text-xs px-1.5 py-0.5 rounded ${verbColor(verb)}`}>
+                                                                        {verb}
+                                                                    </span>
+                                                                    {playerResult && (
+                                                                        <span className="text-xs text-cyan-400">
+                                                                            {playerResult.player.name}:
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="text-slate-300">
+                                                                        {formatEventLabel(event)}
+                                                                    </span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {campaignKeys.length === 0 ? (
+                                                <p className="text-slate-600 text-xs">
+                                                    No campaign keys defined for this game.
+                                                </p>
+                                            ) : addingEventFor === entry.id ? (
+                                                <AddEventForm
+                                                    entry={entry}
+                                                    campaignKeys={campaignKeys}
+                                                    onSubmit={(campaignKeyId, playerResultId, payloads) =>
+                                                        handleAddEvent(entry.id, campaignKeyId, playerResultId, payloads)
+                                                    }
+                                                    onCancel={() => setAddingEventFor(null)}
+                                                />
+                                            ) : (
+                                                <button
+                                                    onClick={() => setAddingEventFor(entry.id)}
+                                                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-purple-400 transition-colors"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                    Create event
+                                                </button>
+                                            )}
+
+                                            <button
+                                                onClick={() => setSelectedEntry(entry.id)}
+                                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-purple-400 transition-colors mt-2"
+                                            >
+                                                <Eye className="w-3.5 h-3.5" />
+                                                See campaign state at this point
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </section>
@@ -481,11 +456,14 @@ export default function CampaignPage() {
                     <aside className="w-72 shrink-0">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold">Campaign State</h2>
-                            {selectedEntry && selectedEntry !== lastEntry?.id && (
-                                <span className="text-xs text-purple-400">
-                                    as of #{sortedEntries.findIndex(e => e.id === selectedEntry) + 1}
-                                </span>
-                            )}
+                            {selectedEntry && selectedEntry !== lastEntry?.id ? (
+                                <button
+                                    onClick={() => setSelectedEntry(null)}
+                                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                                >
+                                    as of #{sortedEntries.findIndex(e => e.id === selectedEntry) + 1} · See latest
+                                </button>
+                            ) : null}
                         </div>
                         <StateDisplay state={
                             selectedEntry
@@ -815,7 +793,7 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
                     onClick={handleSubmit}
                     className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded transition-colors"
                 >
-                    Add
+                    Create event
                 </button>
             </div>
         </div>

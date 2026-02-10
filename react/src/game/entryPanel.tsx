@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { apiPatch } from '../hooks/useApi'
 import { useRequest } from '../hooks/useRequest'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Scroll } from 'lucide-react'
 
 type CustomFieldType = 'string' | 'number' | 'enum'
 
@@ -117,11 +118,12 @@ type EntryDetailPanelProps = {
     entry: Entry
     game: Game
     gameId: string
+    playerId: string | null
     onEntryUpdated: (id: string, newEntry: Entry) => void
     allPlayers: { id: string; name: string }[]
 }
 
-export function EntryDetailPanel({ entry, game, gameId, onEntryUpdated, allPlayers }: EntryDetailPanelProps) {
+export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated, allPlayers }: EntryDetailPanelProps) {
     const [editField, setEditField] = useState<string | null>(null)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
@@ -310,7 +312,7 @@ export function EntryDetailPanel({ entry, game, gameId, onEntryUpdated, allPlaye
     const playerCustomFields = game.customFields.filter(c => !c.global)
 
     return (
-        <div className="m-4 overflow-y-scroll h-[90vh]">
+        <div className="m-4 overflow-y-auto h-full">
             <section className="border border-slate-600 rounded-lg p-4 mb-4">
                 <h2 className="text-white font-semibold text-lg mb-4">Entry Details</h2>
 
@@ -370,6 +372,15 @@ export function EntryDetailPanel({ entry, game, gameId, onEntryUpdated, allPlaye
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
+                        {entry.campaign && (
+                            <Link
+                                to={`/campaigns/${entry.campaign.id}?playerId=${playerId}`}
+                                className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors mt-1 w-fit"
+                            >
+                                <Scroll className="w-3.5 h-3.5" />
+                                Go to campaign page
+                            </Link>
+                        )}
                     </div>
 
                     {globalCustomFields.length > 0 && (
