@@ -6,7 +6,6 @@ use App\Entry\PlayerResult\PlayerResult;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldKind;
 use Doctrine\ORM\Mapping as ORM;
-use Exception;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -34,11 +33,11 @@ class CustomFieldValue
         private ?int $valueNumber,
     ) {
         if (! $this->entry instanceof \App\Entry\Entry && ! $this->playerResult instanceof \App\Entry\PlayerResult\PlayerResult) {
-            throw new Exception('wtf');
+            throw new \DomainException('CustomFieldValue must be associated with either an Entry or a PlayerResult');
         }
 
         if ($this->valueString === null && $this->valueNumber === null) {
-            throw new Exception('wtf 2');
+            throw new \DomainException('CustomFieldValue must have a string or numeric value');
         }
 
         $this->id = Uuid::uuid4();

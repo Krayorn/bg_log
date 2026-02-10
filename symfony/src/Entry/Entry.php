@@ -155,14 +155,14 @@ class Entry
 
         foreach ($this->customFields as $existingCustomFieldValue) {
             if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
-                throw new \Exception('There is already a value for this customField on this player result');
+                throw new \DomainException('There is already a value for this custom field on this entry');
             }
         }
 
         $valueString = null;
         $valueNumber = null;
 
-        if ($customField->getKind() === CustomFieldKind::STRING) {
+        if ($customField->getKind() === CustomFieldKind::STRING || $customField->getKind() === CustomFieldKind::ENUM) {
             $valueString = $value;
         } elseif ($customField->getKind() === CustomFieldKind::NUMBER) {
             $valueNumber = (int) $value;

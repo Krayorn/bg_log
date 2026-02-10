@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
+import { useDebounce } from '../hooks/useDebounce'
 import { apiPost, apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 import { Puzzle, ExternalLink } from 'lucide-react'
@@ -30,6 +31,7 @@ export default function Games() {
     const [editingField, setEditingField] = useState<{ id: string; field: 'name' | 'price' } | null>(null)
     const [editValue, setEditValue] = useState("")
     const [addToCollection, setAddToCollection] = useState(true)
+    const debouncedQuery = useDebounce(query, 300)
 
     useRequest(`/players/${playerId}/games`, [playerId], setGames)
 
@@ -38,13 +40,13 @@ export default function Games() {
         setSelected(null)
     }
 
-    useRequest(`/games?query=${query}`, [query], setResultsResetSelected, query !== "")
+    useRequest(`/games?query=${debouncedQuery}`, [debouncedQuery], setResultsResetSelected, debouncedQuery !== "")
 
     useEffect(() => {
-        if (query === "" && searchResults.length > 0) {
+        if (debouncedQuery === "" && searchResults.length > 0) {
             setResultsResetSelected([])
         }
-    }, [query, searchResults.length])
+    }, [debouncedQuery, searchResults.length])
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
