@@ -6,6 +6,7 @@ import Game from './game/game.tsx'
 import Games from './game/games.tsx'
 import Login from './login.tsx'
 import Circle from './circle/circle.tsx'
+import CampaignPage from './campaign/campaign.tsx'
 import './index.css'
 import {
   createBrowserRouter,
@@ -52,6 +53,17 @@ const router = createBrowserRouter([
       {
         path: "/games/:gameId",
         element: <Game />,
+      }
+    ]
+  },
+  {
+    path: "/campaigns",
+    element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        path: "/campaigns/:campaignId",
+        element: <CampaignPage />,
       }
     ]
   },

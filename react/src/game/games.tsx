@@ -29,6 +29,7 @@ export default function Games() {
     const [message, setMessage] = useState("")
     const [editingField, setEditingField] = useState<{ id: string; field: 'name' | 'price' } | null>(null)
     const [editValue, setEditValue] = useState("")
+    const [addToCollection, setAddToCollection] = useState(true)
 
     useRequest(`/players/${playerId}/games`, [playerId], setGames)
 
@@ -96,8 +97,32 @@ export default function Games() {
         }
     }
 
+    const createGameOnly = async () => {
+        if (selected) {
+            setMessage("Game already exists in the database")
+            setQuery("")
+            setSelected(null)
+            return
+        }
+
+        if (query.trim() === "") return
+
+        const { error, ok } = await apiPost<Game>('/games', { name: query.trim() })
+        if (ok) {
+            setMessage("Game created in the database")
+            setQuery("")
+        } else {
+            setMessage(error || "Error creating game")
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!addToCollection) {
+            await createGameOnly()
+            return
+        }
 
         if (selected) {
             await addGameToLibrary(selected.id)
@@ -198,16 +223,28 @@ export default function Games() {
                                 </span>
                             )}
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium">Price in cents (optional)</label>
+                        <label className="flex items-center gap-2 text-sm">
                             <input
-                                type="number"
-                                value={price}
-                                onChange={e => setPrice(e.target.value)}
-                                placeholder="e.g. 4999 for 49.99€"
-                                className="w-1/3 p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400 focus:outline-none"
+                                type="checkbox"
+                                checked={addToCollection}
+                                onChange={e => setAddToCollection(e.target.checked)}
+                                className="accent-cyan-400"
                             />
-                        </div>
+                            Add to my collection
+                        </label>
+
+                        {addToCollection && (
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium">Price in cents (optional)</label>
+                                <input
+                                    type="number"
+                                    value={price}
+                                    onChange={e => setPrice(e.target.value)}
+                                    placeholder="e.g. 4999 for 49.99€"
+                                    className="w-1/3 p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400 focus:outline-none"
+                                />
+                            </div>
+                        )}
 
                         {message && (
                             <div className="p-2 rounded bg-slate-800 border border-slate-500">
@@ -219,7 +256,7 @@ export default function Games() {
                             type="submit"
                             className="self-start px-4 py-2 rounded bg-slate-600 hover:bg-slate-500 border border-slate-500"
                         >
-                            Add to library
+                            {addToCollection ? 'Add to library' : 'Create game'}
                         </button>
                     </form>
                 </section>

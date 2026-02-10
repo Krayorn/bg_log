@@ -2,6 +2,7 @@
 
 namespace App\Entry;
 
+use App\Campaign\CampaignRepository;
 use App\Entry\PlayerResult\PlayerEvent;
 use App\Game\Game;
 use App\Game\GameOwnedRepository;
@@ -61,7 +62,8 @@ class EntryController extends AbstractController
         EntityManagerInterface $entityManager,
         GameRepository         $gameRepository,
         GameOwnedRepository         $gameOwnedRepository,
-        PlayerRepository       $playerRepository
+        PlayerRepository       $playerRepository,
+        CampaignRepository     $campaignRepository
     ): Response {
         $content = $request->getContent();
         $body = json_decode($content, true);
@@ -72,6 +74,7 @@ class EntryController extends AbstractController
         $playedAt = $body['playedAt'];
         $playersData = $body['players'] ?? [];
         $customFieldsData = $body['customFields'] ?? [];
+        $campaignId = $body['campaign'] ?? null;
 
         /** @var ?Game $game */
         $game = $gameRepository->find($gameId);
@@ -126,6 +129,13 @@ class EntryController extends AbstractController
             $entry->addCustomFieldValue($customFieldData['id'], $customFieldData['value']);
         }
 
+        if ($campaignId !== null) {
+            $campaign = $campaignRepository->find($campaignId);
+            if ($campaign !== null) {
+                $entry->setCampaign($campaign);
+            }
+        }
+
         $entityManager->persist($entry);
         $entityManager->flush();
 
@@ -148,11 +158,12 @@ class EntryController extends AbstractController
         $players = $body['players'];
         $gameUsed = $body['gameUsed'] ?? null;
         $playedAt = $body['playedDate'] ?? null;
+        $campaign = $body['campaign'] ?? null;
 
         $customFieldsEvents = array_map(fn ($customField) => new CustomFieldEvent($customField), $customFields);
         $playersEvents = array_map(fn ($player) => new PlayerEvent($player), $players);
 
-        $entry = $updateEntry->__invoke($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents);
+        $entry = $updateEntry->__invoke($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents, $campaign);
 
         return new JsonResponse($entry->view(), Response::HTTP_CREATED);
     }

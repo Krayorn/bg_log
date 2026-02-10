@@ -2,6 +2,7 @@
 
 namespace App\Entry;
 
+use App\Campaign\CampaignRepository;
 use App\Entry\PlayerResult\PlayerEvent;
 use App\Event;
 use App\Game\GameOwnedRepository;
@@ -14,6 +15,7 @@ class UpdateEntry
         private readonly EntityManagerInterface $entityManager,
         private readonly GameOwnedRepository $gameOwnedRepository,
         private readonly PlayerRepository $playerRepository,
+        private readonly CampaignRepository $campaignRepository,
     ) {
     }
 
@@ -21,7 +23,7 @@ class UpdateEntry
      * @param array<CustomFieldEvent> $customFieldEvents
      * @param array<PlayerEvent> $playerEvents
      */
-    public function __invoke(Entry $entry, ?string $note, ?string $gameUsed, ?string $playedAt, array $customFieldEvents, array $playerEvents): Entry
+    public function __invoke(Entry $entry, ?string $note, ?string $gameUsed, ?string $playedAt, array $customFieldEvents, array $playerEvents, ?string $campaign = null): Entry
     {
         if ($note !== null) {
             $entry->updateNote($note);
@@ -34,6 +36,15 @@ class UpdateEntry
 
         if ($playedAt !== null) {
             $entry->updatePlayedAt(new \DateTimeImmutable($playedAt));
+        }
+
+        if ($campaign !== null) {
+            if ($campaign === 'null' || $campaign === '') {
+                $entry->setCampaign(null);
+            } else {
+                $campaignEntity = $this->campaignRepository->find($campaign);
+                $entry->setCampaign($campaignEntity);
+            }
         }
 
         foreach ($customFieldEvents as $customFieldEvent) {

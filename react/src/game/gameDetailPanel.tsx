@@ -75,6 +75,11 @@ type PlayerEntry = {
     customFields: { [key: string]: string }
 }
 
+type Campaign = {
+    id: string
+    name: string
+}
+
 type GameDetailPanelProps = {
     game: Game
     gameStats: GameStats | null
@@ -100,9 +105,12 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
     const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
+    const [campaigns, setCampaigns] = useState<Campaign[]>([])
+    const [entryCampaign, setEntryCampaign] = useState("")
 
     useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
     useRequest(`/games/${game.id}/owners`, [game.id], setGameOwners)
+    useRequest(`/campaigns?game=${game.id}`, [game.id], setCampaigns)
 
     const [initialPlayerSet, setInitialPlayerSet] = useState(false)
     useEffect(() => {
@@ -233,6 +241,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             note: entryNote,
             playedAt: entryPlayedAt + 'T12:00:00+02:00',
             gameUsed: entryGameUsed || defaultGameUsed || null,
+            campaign: entryCampaign || null,
             customFields: Object.entries(entryCustomFields)
                 .filter(([, value]) => value !== '')
                 .map(([id, value]) => ({ id, value })),
@@ -255,6 +264,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             setEntryPlayedAt("")
             setEntryGameUsed("")
             setEntryCustomFields({})
+            setEntryCampaign("")
             const currentPlayer = playerId ? playersList.find(p => p.id === playerId) : null
             if (currentPlayer) {
                 setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
@@ -327,6 +337,21 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                         <option key={go.id} value={go.id}>
                                             {go.player.name}'s copy {go.player.id === playerId ? '(yours)' : ''}
                                         </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        {campaigns.length > 0 && (
+                            <div className="flex flex-col gap-1">
+                                <label className="text-white text-sm font-medium">Campaign</label>
+                                <select
+                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500"
+                                    value={entryCampaign}
+                                    onChange={e => setEntryCampaign(e.target.value)}
+                                >
+                                    <option value="">No campaign</option>
+                                    {campaigns.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             </div>

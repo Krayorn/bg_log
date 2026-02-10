@@ -2,6 +2,7 @@
 
 namespace App\Entry;
 
+use App\Campaign\Campaign;
 use App\Entry\PlayerResult\PlayerResult;
 use App\Event;
 use App\Game\CustomField\CustomFieldKind;
@@ -35,6 +36,10 @@ class Entry
      */
     #[ORM\OneToMany(mappedBy: 'entry', targetEntity: CustomFieldValue::class, cascade: ['persist', 'remove'], orphanRemoval: true, indexBy: 'id')]
     private Collection   $customFields;
+
+    #[ORM\ManyToOne(targetEntity: Campaign::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'campaign_id', referencedColumnName: 'id', nullable: true)]
+    private ?Campaign $campaign = null;
 
     /**
      * @param array<array{player: Player, note: string, won: bool|null, customFields?: array<array{id: string, value: string}>}> $players
@@ -82,6 +87,7 @@ class Entry
             'players' => array_values(array_map(fn ($playerResult) => $playerResult->view(), $this->playerResults->toArray())),
             'gameUsed' => $this->gameUsed?->view(),
             'customFields' => array_values(array_map(fn ($customField) => $customField->view(), $this->customFields->toArray())),
+            'campaign' => $this->campaign?->viewSummary(),
         ];
     }
 
@@ -243,5 +249,20 @@ class Entry
         }
 
         throw new BadRequestException("Player result not found: {$playerResultId}");
+    }
+
+    public function getCampaign(): ?Campaign
+    {
+        return $this->campaign;
+    }
+
+    public function setCampaign(?Campaign $campaign): void
+    {
+        $this->campaign = $campaign;
+    }
+
+    public function getPlayedAt(): DateTimeImmutable
+    {
+        return $this->playedAt;
     }
 }

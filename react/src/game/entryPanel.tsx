@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { apiPatch } from '../hooks/useApi'
+import { useRequest } from '../hooks/useRequest'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
 import { Plus, X } from 'lucide-react'
@@ -39,6 +40,15 @@ type Entry = {
         date: string
     }
     customFields: CustomFieldValue[]
+    campaign?: {
+        id: string
+        name: string
+    }
+}
+
+type Campaign = {
+    id: string
+    name: string
 }
 
 type Game = {
@@ -88,6 +98,13 @@ export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryList
                     {entry.note.split(';')[0]}
                 </div>
             )}
+            {entry.campaign && (
+                <div className="mt-1">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        {entry.campaign.name}
+                    </span>
+                </div>
+            )}
         </div>
     )
 }
@@ -99,23 +116,32 @@ function formatDateForInput(date: Date) {
 type EntryDetailPanelProps = {
     entry: Entry
     game: Game
+    gameId: string
     onEntryUpdated: (id: string, newEntry: Entry) => void
     allPlayers: { id: string; name: string }[]
 }
 
-export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: EntryDetailPanelProps) {
+export function EntryDetailPanel({ entry, game, gameId, onEntryUpdated, allPlayers }: EntryDetailPanelProps) {
     const [editField, setEditField] = useState<string | null>(null)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
     const [players, setPlayers] = useState(entry.players.map(p => ({ ...p })))
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
+    const [campaigns, setCampaigns] = useState<Campaign[]>([])
+    const [selectedCampaignId, setSelectedCampaignId] = useState<string>(entry.campaign?.id ?? '')
+
+    useRequest(`/campaigns?game=${gameId}`, [gameId], (data: unknown) => {
+        const campaignList = data as Campaign[]
+        setCampaigns(campaignList)
+    })
 
     useEffect(() => {
         setNote(entry.note)
         setPlayedAt(new Date(entry.playedAt.date))
         setPlayers(entry.players.map(p => ({ ...p })))
         setCustomFields(entry.customFields.map(c => ({ ...c })))
+        setSelectedCampaignId(entry.campaign?.id ?? '')
     }, [entry])
 
     const patchEntry = async (payload: Record<string, unknown>) => {
@@ -220,6 +246,15 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
         })
     }
 
+    const handleCampaignChange = async (campaignId: string) => {
+        setSelectedCampaignId(campaignId)
+        await patchEntry({
+            campaign: campaignId || 'null',
+            customFields: [],
+            players: []
+        })
+    }
+
     const updateLocalCustomField = (customField: CustomField, value: string) => {
         const existingIndex = customFields.findIndex(cf => cf.customField.id === customField.id)
         if (existingIndex >= 0) {
@@ -321,6 +356,20 @@ export function EntryDetailPanel({ entry, game, onEntryUpdated, allPlayers }: En
                                 {note || <span className="text-slate-500">No notes...</span>}
                             </div>
                         )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-slate-300 text-xs">Campaign</label>
+                        <select
+                            className="p-2 rounded bg-slate-700 text-white border border-slate-500"
+                            value={selectedCampaignId}
+                            onChange={e => handleCampaignChange(e.target.value)}
+                        >
+                            <option value="">No campaign</option>
+                            {campaigns.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {globalCustomFields.length > 0 && (

@@ -5,7 +5,8 @@ import Layout from '../Layout'
 import { StatisticsPanel } from './statistics'
 import { EntryListItem, EntryDetailPanel } from './entryPanel'
 import { GameDetailPanel } from './gameDetailPanel'
-import { BarChart3, FileText } from 'lucide-react'
+import { BarChart3, FileText, Scroll } from 'lucide-react'
+import { CampaignPanel } from './campaignPanel'
 
 type CustomField = {
     kind: string
@@ -39,6 +40,10 @@ type Entry = {
         date: string
     }
     customFields: CustomFieldValue[]
+    campaign?: {
+        id: string
+        name: string
+    }
 }
 
 type Game = {
@@ -61,6 +66,7 @@ export default function Game() {
     const [entries, setEntries] = useState<Entry[]>([])
     const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
     const [showStatistics, setShowStatistics] = useState(false)
+    const [showCampaigns, setShowCampaigns] = useState(false)
     const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
 
     const [searchParams] = useSearchParams();
@@ -73,6 +79,7 @@ export default function Game() {
     const selectEntry = (entry: Entry | null) => {
         setSelectedEntryId(entry?.id ?? null)
         setShowStatistics(false)
+        setShowCampaigns(false)
         const params = new URLSearchParams(searchParams)
         if (entry) {
             params.set('entryId', entry.id)
@@ -85,6 +92,12 @@ export default function Game() {
     const toggleStatistics = () => {
         selectEntry(null)
         setShowStatistics(true)
+        setShowCampaigns(false)
+    }
+
+    const toggleCampaigns = () => {
+        selectEntry(null)
+        setShowCampaigns(true)
     }
 
     useEffect(() => {
@@ -126,7 +139,7 @@ export default function Game() {
                     <div className="shrink-0 border-b border-slate-600/30">
                         <div
                             onClick={() => selectEntry(null)}
-                            className={`p-4 flex items-center justify-center cursor-pointer transition-all ${!selectedEntry && !showStatistics
+                            className={`p-4 flex items-center justify-center cursor-pointer transition-all ${!selectedEntry && !showStatistics && !showCampaigns
                                 ? 'bg-cyan-500/20 text-cyan-400'
                                 : 'hover:bg-slate-800/50'
                                 }`}
@@ -145,6 +158,16 @@ export default function Game() {
                                 Statistics
                             </button>
                         )}
+                        <button
+                            onClick={toggleCampaigns}
+                            className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showCampaigns
+                                ? 'bg-cyan-500/20 text-cyan-400'
+                                : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
+                                }`}
+                        >
+                            <Scroll className="w-4 h-4" />
+                            Campaigns
+                        </button>
                     </div>
                     <div className="overflow-y-auto flex-1">
                         {entries.length === 0 ? (
@@ -167,10 +190,12 @@ export default function Game() {
                     </div>
                 </section>
                 <section className="flex-1 overflow-y-auto">
-                    {showStatistics ? (
+                    {showCampaigns ? (
+                        <CampaignPanel gameId={gameId} />
+                    ) : showStatistics ? (
                         <StatisticsPanel gameId={gameId} playerId={playerId} customFields={game.customFields} />
                     ) : selectedEntry ? (
-                        <EntryDetailPanel key={selectedEntry.id} game={game} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
+                        <EntryDetailPanel key={selectedEntry.id} game={game} gameId={gameId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
                     ) : (
                         <GameDetailPanel game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} onGameUpdated={setGame} />
                     )}

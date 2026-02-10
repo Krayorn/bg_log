@@ -1,3 +1,9 @@
+campaign:
+    resource:
+        path: ../src/Campaign/
+        namespace: App\Campaign
+    type: attribute
+
 game:
     resource:
         path: ../src/Game/

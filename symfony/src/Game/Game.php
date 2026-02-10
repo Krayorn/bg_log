@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Game\CampaignKey\CampaignKey;
 use App\Game\CustomField\CustomField;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -24,12 +25,19 @@ class Game
     #[ORM\OneToMany(mappedBy: 'game', targetEntity: CustomField::class, indexBy: 'id', cascade: ['persist'])]
     private Collection $customFields;
 
+    /**
+     * @var Collection<int, CampaignKey>
+     */
+    #[ORM\OneToMany(mappedBy: 'game', targetEntity: CampaignKey::class, indexBy: 'id', cascade: ['persist'])]
+    private Collection $campaignKeys;
+
     public function __construct(
         #[ORM\Column(type: 'string', unique: true)]
         private string $name
     ) {
         $this->id = Uuid::uuid4();
         $this->customFields = new ArrayCollection();
+        $this->campaignKeys = new ArrayCollection();
     }
 
     public function getId(): UuidInterface
@@ -46,6 +54,7 @@ class Game
             'id' => $this->id,
             'name' => $this->name,
             'customFields' => array_values(array_map(fn ($customField) => $customField->view(), $this->customFields->toArray())),
+            'campaignKeys' => array_values(array_map(fn ($campaignKey) => $campaignKey->view(), $this->campaignKeys->toArray())),
         ];
     }
 
@@ -63,5 +72,16 @@ class Game
         }
 
         throw new BadRequestException("Custom field not found: {$customFieldId}");
+    }
+
+    public function getCampaignKey(string $campaignKeyId): CampaignKey
+    {
+        foreach ($this->campaignKeys as $ck) {
+            if ((string) $ck->id === $campaignKeyId) {
+                return $ck;
+            }
+        }
+
+        throw new BadRequestException("Campaign key not found: {$campaignKeyId}");
     }
 }

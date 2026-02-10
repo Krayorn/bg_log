@@ -28,6 +28,10 @@ doctrine:
                 is_bundle: false
                 dir: '%kernel.project_dir%/src/StatisticsQuery'
                 prefix: 'App\StatisticsQuery'
+            Campaign:
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Campaign'
+                prefix: 'App\Campaign'
 
 when@test:
     doctrine:
