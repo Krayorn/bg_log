@@ -117,6 +117,14 @@ class PlayerResult
     }
 
     /**
+     * @return Collection<int, CustomFieldValue>
+     */
+    public function getCustomFieldValues(): Collection
+    {
+        return $this->customFields;
+    }
+
+    /**
      * @return array{id: UuidInterface, player: array<string, mixed>, note: string, won: bool|null}
      */
     public function view(): array

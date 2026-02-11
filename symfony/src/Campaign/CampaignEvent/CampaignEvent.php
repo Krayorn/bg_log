@@ -3,6 +3,7 @@
 namespace App\Campaign\CampaignEvent;
 
 use App\Campaign\Campaign;
+use App\Entry\CustomFieldValue;
 use App\Entry\Entry;
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\CampaignKey\CampaignKey;
@@ -40,6 +41,9 @@ class CampaignEvent
         private readonly CampaignKey $campaignKey,
         #[ORM\Column(type: 'json')]
         private readonly array $payload,
+        #[ORM\ManyToOne(targetEntity: CustomFieldValue::class)]
+        #[ORM\JoinColumn(name: 'custom_field_value_id', referencedColumnName: 'id', nullable: true)]
+        private readonly ?CustomFieldValue $customFieldValue = null,
     ) {
         $this->id = Uuid::uuid4();
         $this->createdAt = new DateTimeImmutable();
@@ -78,6 +82,11 @@ class CampaignEvent
         return $this->campaign;
     }
 
+    public function getCustomFieldValue(): ?CustomFieldValue
+    {
+        return $this->customFieldValue;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -89,6 +98,7 @@ class CampaignEvent
             'playerResult' => $this->playerResult?->id,
             'campaignKey' => $this->campaignKey->view(),
             'payload' => $this->payload,
+            'customFieldValue' => $this->customFieldValue?->view(),
             'createdAt' => $this->createdAt,
         ];
     }

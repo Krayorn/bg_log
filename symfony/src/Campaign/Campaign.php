@@ -125,7 +125,7 @@ class Campaign
     }
 
     /**
-     * @param array{campaign: array<string, mixed>, players: array<string, array{player: array<string, mixed>, state: array<string, mixed>}>} $state
+     * @param array{campaign: array<string, mixed>, players: array<string, array{player: array<string, mixed>, state: array<string, mixed>, scoped: array<string, array<string, array<string, mixed>>>}>} $state
      */
     private function applyEvent(array &$state, CampaignEvent $event): void
     {
@@ -137,9 +137,20 @@ class Campaign
                 $state['players'][$playerId] = [
                     'player' => $playerResult->getPlayer()->view(),
                     'state' => [],
+                    'scoped' => [],
                 ];
             }
-            $target = &$state['players'][$playerId]['state'];
+
+            $customFieldValue = $event->getCustomFieldValue();
+            if ($customFieldValue instanceof \App\Entry\CustomFieldValue) {
+                $scopeLabel = (string) $customFieldValue->getDisplayValue();
+                if (! isset($state['players'][$playerId]['scoped'][$scopeLabel])) {
+                    $state['players'][$playerId]['scoped'][$scopeLabel] = [];
+                }
+                $target = &$state['players'][$playerId]['scoped'][$scopeLabel];
+            } else {
+                $target = &$state['players'][$playerId]['state'];
+            }
         } else {
             $target = &$state['campaign'];
         }

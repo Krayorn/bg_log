@@ -58,6 +58,11 @@ class CustomFieldValue
         return $this->customField;
     }
 
+    public function getDisplayValue(): int|string|null
+    {
+        return $this->getValue();
+    }
+
     /**
      * @return array<string, mixed>
      */

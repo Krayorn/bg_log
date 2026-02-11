@@ -160,6 +160,17 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             const updatedCustomFields = customFieldsList.filter(cf => cf.id !== customFieldId)
             setCustomFieldsList(updatedCustomFields)
             onGameUpdated({ ...game, customFields: updatedCustomFields })
+
+            setEntryCustomFields(prev => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [customFieldId]: _removed, ...rest } = prev
+                return rest
+            })
+            setEntryPlayers(prev => prev.map(p => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [customFieldId]: _removed, ...rest } = p.customFields
+                return { ...p, customFields: rest }
+            }))
         }
     }
 

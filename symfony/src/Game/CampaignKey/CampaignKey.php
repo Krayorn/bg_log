@@ -2,6 +2,7 @@
 
 namespace App\Game\CampaignKey;
 
+use App\Game\CustomField\CustomField;
 use App\Game\Game;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
@@ -27,6 +28,9 @@ class CampaignKey
         string $type,
         #[ORM\Column(type: 'boolean')]
         private readonly bool $global,
+        #[ORM\ManyToOne(targetEntity: CustomField::class)]
+        #[ORM\JoinColumn(name: 'scoped_to_custom_field_id', referencedColumnName: 'id', nullable: true)]
+        private readonly ?CustomField $scopedToCustomField = null,
     ) {
         $this->id = Uuid::uuid4();
         $typeEnum = CampaignKeyType::tryFrom($type);
@@ -61,6 +65,11 @@ class CampaignKey
         return $this->name;
     }
 
+    public function getScopedToCustomField(): ?CustomField
+    {
+        return $this->scopedToCustomField;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -71,6 +80,7 @@ class CampaignKey
             'name' => $this->name,
             'type' => $this->type->value,
             'global' => $this->global,
+            'scopedToCustomField' => $this->scopedToCustomField?->view(),
         ];
     }
 }

@@ -233,7 +233,23 @@ class CampaignController extends AbstractController
             }
         }
 
-        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $payload);
+        $customFieldValue = null;
+        $scopedCustomField = $campaignKey->getScopedToCustomField();
+        if ($scopedCustomField instanceof \App\Game\CustomField\CustomField && $playerResult !== null) {
+            foreach ($playerResult->getCustomFieldValues() as $cfv) {
+                if ((string) $cfv->getCustomField()->getId() === (string) $scopedCustomField->getId()) {
+                    $customFieldValue = $cfv;
+                    break;
+                }
+            }
+            if ($customFieldValue === null) {
+                return new JsonResponse([
+                    'errors' => ['Player does not have a value for the scoped custom field on this entry'],
+                ], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $payload, $customFieldValue);
 
         $entityManager->persist($event);
         $entityManager->flush();

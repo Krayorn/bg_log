@@ -38,7 +38,16 @@ class CampaignKeyController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $campaignKey = new CampaignKey($game, trim((string) $name), $type, (bool) $global);
+        $scopedToCustomFieldId = $body['scopedToCustomField'] ?? null;
+        $scopedToCustomField = null;
+        if ($scopedToCustomFieldId !== null) {
+            $scopedToCustomField = $game->getCustomField($scopedToCustomFieldId);
+            if (! $scopedToCustomField->isGlobal()) {
+                $global = false;
+            }
+        }
+
+        $campaignKey = new CampaignKey($game, trim((string) $name), $type, (bool) $global, $scopedToCustomField);
 
         $entityManager->persist($campaignKey);
         $entityManager->flush();

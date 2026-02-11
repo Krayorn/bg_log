@@ -5,6 +5,19 @@ import { apiPatch, apiPost, apiDelete } from '../hooks/useApi'
 import Layout from '../Layout'
 import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
 
+type CustomField = {
+    kind: string
+    name: string
+    global: boolean
+    id: string
+}
+
+type CustomFieldValue = {
+    id: string
+    value: string | number | boolean
+    customField: CustomField
+}
+
 type PlayerResult = {
     id: string
     note: string
@@ -13,6 +26,7 @@ type PlayerResult = {
         name: string
         id: string
     }
+    customFields: CustomFieldValue[]
 }
 
 type CampaignKey = {
@@ -20,6 +34,7 @@ type CampaignKey = {
     name: string
     type: 'string' | 'number' | 'list' | 'counted_list'
     global: boolean
+    scopedToCustomField: CustomField | null
 }
 
 type CampaignEvent = {
@@ -28,16 +43,20 @@ type CampaignEvent = {
     playerResult: string | null
     campaignKey: CampaignKey
     payload: Record<string, unknown>
+    customFieldValue: CustomFieldValue | null
     createdAt: { date: string }
 }
 
 type StateValue = string | number | string[] | Record<string, number>
+
+type ScopedState = Record<string, Record<string, StateValue>>
 
 type CampaignState = {
     campaign: Record<string, StateValue>
     players: Record<string, {
         player: { id: string; name: string }
         state: Record<string, StateValue>
+        scoped?: ScopedState
     }>
 }
 
@@ -48,12 +67,13 @@ type Entry = {
     playedAt: { date: string }
     events: CampaignEvent[]
     stateAfter: CampaignState
+    customFields: CustomFieldValue[]
 }
 
 type Campaign = {
     id: string
     name: string
-    game: { id: string; name: string; campaignKeys: CampaignKey[] }
+    game: { id: string; name: string; campaignKeys: CampaignKey[]; customFields: CustomField[] }
     createdBy: { id: string; name: string }
     createdAt: { date: string }
     entries: Entry[]
@@ -115,10 +135,18 @@ function StateDisplay({ state }: { state: CampaignState }) {
                     <StateEntries entries={state.campaign} />
                 </div>
             )}
-            {Object.entries(state.players).map(([playerId, { player, state: playerState }]) => (
+            {Object.entries(state.players).map(([playerId, { player, state: playerState, scoped }]) => (
                 <div key={playerId} className="border border-slate-600 rounded-lg p-3 bg-slate-900/30">
                     <p className="text-xs text-cyan-400 font-semibold mb-2">{player.name}</p>
-                    <StateEntries entries={playerState} />
+                    {Object.keys(playerState).length > 0 && (
+                        <StateEntries entries={playerState} />
+                    )}
+                    {scoped && Object.entries(scoped).map(([scopeLabel, scopeState]) => (
+                        <div key={scopeLabel} className="mt-2 ml-2 border-l-2 border-purple-500/30 pl-2">
+                            <p className="text-xs text-purple-400 font-semibold mb-1">{scopeLabel}</p>
+                            <StateEntries entries={scopeState} />
+                        </div>
+                    ))}
                 </div>
             ))}
         </div>
@@ -200,9 +228,11 @@ export default function CampaignPage() {
         }
     }
 
-    const handleAddKey = async (name: string, type: string, global: boolean) => {
+    const handleAddKey = async (name: string, type: string, global: boolean, scopedToCustomField?: string) => {
         if (!campaign) return
-        const { data, ok } = await apiPost<Campaign['game']>(`/game/${campaign.game.id}/campaignKeys`, { name, type, global })
+        const body: Record<string, unknown> = { name, type, global }
+        if (scopedToCustomField) body.scopedToCustomField = scopedToCustomField
+        const { data, ok } = await apiPost<Campaign['game']>(`/game/${campaign.game.id}/campaignKeys`, body)
         if (ok && data) {
             setCampaign(prev => prev ? { ...prev, game: { ...prev.game, campaignKeys: data.campaignKeys } } : prev)
         }
@@ -302,7 +332,9 @@ export default function CampaignPage() {
                                 >
                                     {k.name}
                                     <span className="text-slate-500">{k.type.replace('_', ' ')}</span>
-                                    {!k.global && <span className="text-cyan-400/60">per player</span>}
+                                    <span className={k.scopedToCustomField ? 'text-purple-400/60' : 'text-slate-500'}>
+                                        {k.scopedToCustomField ? k.scopedToCustomField.name : k.global ? 'entry' : 'player'}
+                                    </span>
                                 </span>
                             ))}
                         </div>
@@ -314,6 +346,7 @@ export default function CampaignPage() {
                     {showKeyManager && (
                         <KeyManager
                             keys={campaignKeys}
+                            customFields={campaign.game.customFields}
                             onAdd={handleAddKey}
                             onDelete={handleDeleteKey}
                         />
@@ -361,24 +394,43 @@ export default function CampaignPage() {
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {entry.players.map(pr => (
-                                                <span
-                                                    key={pr.id}
-                                                    className={`text-xs px-2 py-1 rounded-full border ${
-                                                        pr.won === true
-                                                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                                            : pr.won === false
-                                                                ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                                                : 'bg-slate-700 text-slate-300 border-slate-600'
-                                                    }`}
-                                                >
-                                                    {pr.player.name}
-                                                    {pr.won === true && ' ✓'}
-                                                    {pr.won === false && ' ✗'}
-                                                </span>
+                                                <div key={pr.id} className="flex flex-col gap-0.5">
+                                                    <span
+                                                        className={`text-xs px-2 py-1 rounded-full border ${
+                                                            pr.won === true
+                                                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                                                : pr.won === false
+                                                                    ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                                                    : 'bg-slate-700 text-slate-300 border-slate-600'
+                                                        }`}
+                                                    >
+                                                        {pr.player.name}
+                                                        {pr.won === true && ' ✓'}
+                                                        {pr.won === false && ' ✗'}
+                                                    </span>
+                                                    {pr.customFields.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 px-1">
+                                                            {pr.customFields.map(cf => (
+                                                                <span key={cf.id} className="text-[10px] text-slate-500">
+                                                                    {cf.customField.name}: <span className="text-slate-400">{String(cf.value)}</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
+                                        {entry.customFields.length > 0 && (
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                                                {entry.customFields.map(cf => (
+                                                    <span key={cf.id} className="text-xs text-slate-500">
+                                                        {cf.customField.name}: <span className="text-slate-300">{String(cf.value)}</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         {entry.note && (
-                                            <p className="text-slate-500 text-xs mt-2 truncate">{entry.note}</p>
+                                            <p className="text-slate-500 text-xs mt-2 break-words whitespace-pre-wrap">{entry.note}</p>
                                         )}
 
                                         <div className="mt-3 pt-3 border-t border-slate-700">
@@ -397,7 +449,10 @@ export default function CampaignPage() {
                                                                     </span>
                                                                     {playerResult && (
                                                                         <span className="text-xs text-cyan-400">
-                                                                            {playerResult.player.name}:
+                                                                            {playerResult.player.name}
+                                                                            {event.customFieldValue && (
+                                                                                <span className="text-purple-400"> ({String(event.customFieldValue.value)})</span>
+                                                                            )}:
                                                                         </span>
                                                                     )}
                                                                     <span className="text-slate-300">
@@ -479,18 +534,21 @@ export default function CampaignPage() {
 
 const KEY_TYPES = ['string', 'number', 'list', 'counted_list'] as const
 
-function KeyManager({ keys, onAdd, onDelete }: {
+function KeyManager({ keys, customFields, onAdd, onDelete }: {
     keys: CampaignKey[]
-    onAdd: (name: string, type: string, global: boolean) => void
+    customFields: CustomField[]
+    onAdd: (name: string, type: string, global: boolean, scopedToCustomField?: string) => void
     onDelete: (keyId: string) => void
 }) {
     const [name, setName] = useState('')
     const [type, setType] = useState<string>('number')
-    const [global, setGlobal] = useState(true)
+    const [scope, setScope] = useState<string>('entry')
 
     const handleSubmit = () => {
         if (!name.trim()) return
-        onAdd(name.trim(), type, global)
+        const isGlobal = scope === 'entry'
+        const scopedTo = scope !== 'entry' && scope !== 'player' ? scope : undefined
+        onAdd(name.trim(), type, isGlobal, scopedTo)
         setName('')
     }
 
@@ -500,25 +558,30 @@ function KeyManager({ keys, onAdd, onDelete }: {
 
             {keys.length > 0 && (
                 <div className="flex flex-col gap-1.5 mb-4">
-                    {keys.map(k => (
-                        <div key={k.id} className="flex items-center justify-between group">
-                            <div className="flex items-center gap-2 text-sm">
-                                <span className="text-slate-300">{k.name}</span>
-                                <span className="text-xs text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
-                                    {k.type.replace('_', ' ')}
-                                </span>
-                                {!k.global && (
-                                    <span className="text-xs text-cyan-400/60">per player</span>
-                                )}
+                    {keys.map(k => {
+                        const kScope = k.scopedToCustomField
+                            ? k.scopedToCustomField.name
+                            : k.global ? 'Entry' : 'Player'
+                        return (
+                            <div key={k.id} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-slate-300">{k.name}</span>
+                                    <span className="text-xs text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
+                                        {k.type.replace('_', ' ')}
+                                    </span>
+                                    <span className={`text-xs ${k.scopedToCustomField ? 'text-purple-400/60' : 'text-slate-500'}`}>
+                                        {kScope}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => onDelete(k.id)}
+                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => onDelete(k.id)}
-                                className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
@@ -542,15 +605,20 @@ function KeyManager({ keys, onAdd, onDelete }: {
                     </select>
                 </div>
                 <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={!global}
-                            onChange={e => setGlobal(!e.target.checked)}
-                            className="rounded border-slate-600"
-                        />
-                        Per player
-                    </label>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-slate-400 shrink-0">Scope</label>
+                        <select
+                            value={scope}
+                            onChange={e => setScope(e.target.value)}
+                            className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+                        >
+                            <option value="entry">Entry</option>
+                            <option value="player">Player</option>
+                            {customFields.map(cf => (
+                                <option key={cf.id} value={cf.id}>{cf.name} (Custom field scoped by {cf.global ? 'Entry' : 'Player'})</option>
+                            ))}
+                        </select>
+                    </div>
                     <button
                         onClick={handleSubmit}
                         disabled={!name.trim()}
