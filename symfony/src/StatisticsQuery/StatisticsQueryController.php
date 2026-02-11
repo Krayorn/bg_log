@@ -62,10 +62,11 @@ class StatisticsQueryController extends AbstractController
             $player,
             $game,
             $body['name'],
-            Uuid::fromString($body['customFieldId']),
+            isset($body['customFieldId']) ? Uuid::fromString($body['customFieldId']) : null,
             isset($body['groupByFieldId']) ? Uuid::fromString($body['groupByFieldId']) : null,
             $body['groupByPlayer'] ?? false,
             $body['aggregation'] ?? null,
+            $body['metric'] ?? null,
         );
 
         $entityManager->persist($query);
@@ -79,6 +80,7 @@ class StatisticsQueryController extends AbstractController
         Request $request,
         CustomFieldRepository $customFieldRepository,
         PlayerRepository $playerRepository,
+        GameRepository $gameRepository,
         StatisticsQueryExecutor $statisticsQueryExecutor,
     ): Response {
         $customFieldId = $request->query->get('customFieldId');
@@ -86,19 +88,8 @@ class StatisticsQueryController extends AbstractController
         $groupByFieldId = $request->query->get('groupByFieldId');
         $groupByPlayer = $request->query->getBoolean('groupByPlayer', false);
         $aggregation = $request->query->get('aggregation', 'sum');
-
-        if ($customFieldId === null) {
-            return new JsonResponse([
-                'error' => 'customFieldId is required',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $customField = $customFieldRepository->find($customFieldId);
-        if ($customField === null) {
-            return new JsonResponse([
-                'error' => 'Custom field not found',
-            ], Response::HTTP_NOT_FOUND);
-        }
+        $metric = $request->query->get('metric');
+        $gameId = $request->query->get('gameId');
 
         $player = null;
         if ($playerId !== null) {
@@ -116,6 +107,32 @@ class StatisticsQueryController extends AbstractController
             $groupByField = $customFieldRepository->find($groupByFieldId);
         }
 
+        if ($metric === 'winrate') {
+            $game = $gameId !== null ? $gameRepository->find($gameId) : null;
+            if ($game === null) {
+                return new JsonResponse([
+                    'error' => 'gameId is required for winrate queries',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $stats = $statisticsQueryExecutor->getWinRateStats($player, $game, $groupByField, $groupByPlayer);
+
+            return new JsonResponse($stats, Response::HTTP_OK);
+        }
+
+        if ($customFieldId === null) {
+            return new JsonResponse([
+                'error' => 'customFieldId is required',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $customField = $customFieldRepository->find($customFieldId);
+        if ($customField === null) {
+            return new JsonResponse([
+                'error' => 'Custom field not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
         $stats = $statisticsQueryExecutor->getCustomFieldStats($customField, $player, $groupByField, $groupByPlayer, $aggregation);
 
         return new JsonResponse($stats, Response::HTTP_OK);
@@ -130,10 +147,11 @@ class StatisticsQueryController extends AbstractController
 
         $statisticsQuery->update(
             $body['name'],
-            Uuid::fromString($body['customFieldId']),
+            isset($body['customFieldId']) ? Uuid::fromString($body['customFieldId']) : null,
             isset($body['groupByFieldId']) ? Uuid::fromString($body['groupByFieldId']) : null,
             $body['groupByPlayer'] ?? false,
             $body['aggregation'] ?? null,
+            $body['metric'] ?? null,
         );
 
         $entityManager->flush();

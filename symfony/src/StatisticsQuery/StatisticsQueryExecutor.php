@@ -6,6 +6,7 @@ use App\Entry\CustomFieldValue;
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldKind;
+use App\Game\Game;
 use App\Player\Player;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -25,6 +26,80 @@ class StatisticsQueryExecutor
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
     ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getWinRateStats(
+        Player $player,
+        Game $game,
+        ?CustomField $groupByField = null,
+        bool $groupByPlayer = false,
+    ): array {
+        $conn = $this->entityManager->getConnection();
+
+        $fromSql = 'FROM player_result pr JOIN entry e ON e.id = pr.entry_id';
+        $whereSql = ' WHERE e.game_id = :gameId'
+            . ' AND EXISTS (SELECT 1 FROM player_result pr_filter WHERE pr_filter.entry_id = pr.entry_id AND pr_filter.player_id = :playerId)';
+        $params = [
+            'playerId' => (string) $player->getId(),
+            'gameId' => (string) $game->getId(),
+        ];
+
+        if ($groupByField instanceof CustomField) {
+            if ($groupByField->isGlobal()) {
+                $fromSql .= ' JOIN custom_fields_values cfv ON cfv.entry_id = e.id AND cfv.custom_field_id = :groupByFieldId';
+            } else {
+                $fromSql .= ' JOIN custom_fields_values cfv ON cfv.player_result_id = pr.id AND cfv.custom_field_id = :groupByFieldId';
+            }
+            $params['groupByFieldId'] = (string) $groupByField->getId();
+
+            $labelExpr = 'COALESCE(cfv.value_string, CAST(cfv.value_number AS TEXT)) AS label';
+
+            if ($groupByPlayer) {
+                $sql = 'SELECT ' . $labelExpr . ', p.name AS player_label,'
+                    . ' COUNT(CASE WHEN pr.won = true THEN 1 END) AS wins, COUNT(pr.id) AS total'
+                    . ' ' . $fromSql
+                    . ' JOIN player p ON p.id = pr.player_id'
+                    . $whereSql
+                    . ' GROUP BY label, p.id, p.name'
+                    . ' ORDER BY total DESC';
+
+                return $this->formatWinRateByPlayer($conn->executeQuery($sql, $params)->fetchAllAssociative());
+            }
+
+            $sql = 'SELECT ' . $labelExpr . ','
+                . ' COUNT(CASE WHEN pr.won = true THEN 1 END) AS wins, COUNT(pr.id) AS total'
+                . ' ' . $fromSql . $whereSql
+                . ' GROUP BY label'
+                . ' ORDER BY total DESC';
+
+            return $this->formatWinRateGrouped($conn->executeQuery($sql, $params)->fetchAllAssociative());
+        }
+
+        if ($groupByPlayer) {
+            $sql = 'SELECT p.name AS label, COUNT(CASE WHEN pr.won = true THEN 1 END) AS wins, COUNT(pr.id) AS total ' . $fromSql
+                . ' JOIN player p ON p.id = pr.player_id'
+                . $whereSql
+                . ' GROUP BY p.id, p.name'
+                . ' ORDER BY total DESC';
+
+            return $this->formatWinRateGrouped($conn->executeQuery($sql, $params)->fetchAllAssociative());
+        }
+
+        $sql = 'SELECT COUNT(CASE WHEN pr.won = true THEN 1 END) AS wins, COUNT(pr.id) AS total ' . $fromSql . $whereSql;
+
+        $result = $conn->executeQuery($sql, $params)->fetchAssociative();
+        $wins = (int) ($result['wins'] ?? 0);
+        $total = (int) ($result['total'] ?? 0);
+
+        return [
+            'type' => 'winrate',
+            'wins' => $wins,
+            'total' => $total,
+            'rate' => $total > 0 ? round($wins / $total, 4) : 0,
+        ];
     }
 
     /**
@@ -193,6 +268,57 @@ class StatisticsQueryExecutor
         }
 
         $qb->setParameter('groupByField', $groupByField);
+    }
+
+    /**
+     * @param array<array<string, mixed>> $rows
+     * @return array{type: 'winrate', data: array<array{label: string, wins: int, total: int, rate: float}>}
+     */
+    private function formatWinRateGrouped(array $rows): array
+    {
+        return [
+            'type' => 'winrate',
+            'data' => array_map(
+                function ($r) {
+                    $wins = (int) ($r['wins'] ?? 0);
+                    $total = (int) ($r['total'] ?? 0);
+
+                    return [
+                        'label' => (string) ($r['label'] ?? 'N/A'),
+                        'wins' => $wins,
+                        'total' => $total,
+                        'rate' => $total > 0 ? round($wins / $total, 4) : 0,
+                    ];
+                },
+                $rows
+            ),
+        ];
+    }
+
+    /**
+     * @param array<array<string, mixed>> $rows
+     * @return array{type: 'winrate_by_player', data: array<array{label: string, player: string, wins: int, total: int, rate: float}>}
+     */
+    private function formatWinRateByPlayer(array $rows): array
+    {
+        return [
+            'type' => 'winrate_by_player',
+            'data' => array_map(
+                function ($r) {
+                    $wins = (int) ($r['wins'] ?? 0);
+                    $total = (int) ($r['total'] ?? 0);
+
+                    return [
+                        'label' => (string) ($r['label'] ?? 'N/A'),
+                        'player' => (string) ($r['player_label'] ?? 'N/A'),
+                        'wins' => $wins,
+                        'total' => $total,
+                        'rate' => $total > 0 ? round($wins / $total, 4) : 0,
+                    ];
+                },
+                $rows
+            ),
+        ];
     }
 
     /**

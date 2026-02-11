@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { useRequest } from '../hooks/useRequest'
-import { apiPost, apiDelete, apiPatch } from '../hooks/useApi'
+import { apiPost, apiDelete, apiPatch, apiGet } from '../hooks/useApi'
 import { v4 as uuidv4 } from 'uuid'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
-import { X, UserPlus, Trash2 } from 'lucide-react'
+import { X, UserPlus, Trash2, RotateCcw } from 'lucide-react'
 
 enum CustomFieldType {
     string = "string",
@@ -17,6 +17,7 @@ type CustomField = {
     name: string
     global: boolean
     id: string
+    multiple: boolean
     enumValues: { id: string; value: string }[]
 }
 
@@ -72,7 +73,7 @@ type PlayerEntry = {
     id: string
     note: string
     won: boolean
-    customFields: { [key: string]: string }
+    customFields: { [key: string]: string | string[] }
 }
 
 type Campaign = {
@@ -92,6 +93,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
     const [customFieldName, setCustomFieldName] = useState<string>("")
     const [customFieldType, setCustomFieldType] = useState<CustomFieldType | string>("")
     const [entrySpecific, setEntrySpecific] = useState<boolean>(false)
+    const [customFieldMultiple, setCustomFieldMultiple] = useState<boolean>(false)
     const [errors, setErrors] = useState<string[]>([])
     const [customFieldsList, setCustomFieldsList] = useState<CustomField[]>(game.customFields)
     const [newEnumValues, setNewEnumValues] = useState<{ [key: string]: string }>({})
@@ -102,7 +104,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
     const [entryNote, setEntryNote] = useState("")
     const [entryPlayedAt, setEntryPlayedAt] = useState("")
     const [entryGameUsed, setEntryGameUsed] = useState("")
-    const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string }>({})
+    const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string | string[] }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -137,7 +139,8 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
         const { data, error, ok } = await apiPost<Game>(`/game/${game.id}/customFields`, {
             name: customFieldName,
             kind: customFieldType,
-            global: entrySpecific
+            global: entrySpecific,
+            multiple: customFieldMultiple
         })
 
         if (!ok || !data) {
@@ -145,6 +148,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
         } else {
             setCustomFieldName("")
             setCustomFieldType("")
+            setCustomFieldMultiple(false)
             onGameUpdated(data)
             setCustomFieldsList(data.customFields)
         }
@@ -204,15 +208,64 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
         }))
     }
 
-    const updatePlayerCustomField = (genId: string, customFieldId: string, value: string) => {
+    const updatePlayerCustomField = (genId: string, customFieldId: string, value: string | string[]) => {
         setEntryPlayers(entryPlayers.map(p => {
             if (p.genId !== genId) return p
             return { ...p, customFields: { ...p.customFields, [customFieldId]: value } }
         }))
     }
 
-    const updateEntryCustomField = (customFieldId: string, value: string) => {
+    const updateEntryCustomField = (customFieldId: string, value: string | string[]) => {
         setEntryCustomFields({ ...entryCustomFields, [customFieldId]: value })
+    }
+
+    const loadFromLastGame = async () => {
+        if (!entryCampaign) return
+        const { data, ok } = await apiGet<Entry>(`/campaigns/${entryCampaign}/last-entry`)
+        if (!ok || !data) return
+
+        const newPlayers: PlayerEntry[] = data.players.map(p => ({
+            genId: uuidv4(),
+            id: p.player.id,
+            note: "",
+            won: false,
+            customFields: (() => {
+                const grouped: { [key: string]: string | string[] } = {}
+                for (const cf of p.customFields) {
+                    const id = cf.customField.id
+                    if (cf.customField.multiple) {
+                        if (!grouped[id]) grouped[id] = []
+                        ;(grouped[id] as string[]).push(String(cf.value))
+                    } else {
+                        grouped[id] = String(cf.value)
+                    }
+                }
+                return grouped
+            })()
+        }))
+        setEntryPlayers(newPlayers)
+
+        setEntryCustomFields((() => {
+            const grouped: { [key: string]: string | string[] } = {}
+            for (const cf of data.customFields) {
+                const id = cf.customField.id
+                if (cf.customField.multiple) {
+                    if (!grouped[id]) grouped[id] = []
+                    ;(grouped[id] as string[]).push(String(cf.value))
+                } else {
+                    grouped[id] = String(cf.value)
+                }
+            }
+            return grouped
+        })())
+
+        const existingIds = new Set(playersList.map(p => p.id))
+        const missingPlayers = data.players
+            .filter(p => !existingIds.has(p.player.id))
+            .map(p => ({ id: p.player.id, name: p.player.name }))
+        if (missingPlayers.length > 0) {
+            setPlayersList(prev => [...prev, ...missingPlayers])
+        }
     }
 
     const submitEntry = async (e: React.FormEvent) => {
@@ -243,14 +296,14 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
             gameUsed: entryGameUsed || defaultGameUsed || null,
             campaign: entryCampaign || null,
             customFields: Object.entries(entryCustomFields)
-                .filter(([, value]) => value !== '')
+                .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== '')
                 .map(([id, value]) => ({ id, value })),
             players: entryPlayers.map(p => ({
                 id: p.id,
                 note: p.note,
                 won: p.won,
                 customFields: Object.entries(p.customFields)
-                    .filter(([, value]) => value !== '')
+                    .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== '')
                     .map(([id, value]) => ({ id, value }))
             }))
         }
@@ -344,16 +397,29 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                         {campaigns.length > 0 && (
                             <div className="flex flex-col gap-1">
                                 <label className="text-white text-sm font-medium">Campaign</label>
-                                <select
-                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500"
-                                    value={entryCampaign}
-                                    onChange={e => setEntryCampaign(e.target.value)}
-                                >
-                                    <option value="">No campaign</option>
-                                    {campaigns.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 flex-1"
+                                        value={entryCampaign}
+                                        onChange={e => setEntryCampaign(e.target.value)}
+                                    >
+                                        <option value="">No campaign</option>
+                                        {campaigns.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    {entryCampaign && (
+                                        <button
+                                            type="button"
+                                            onClick={loadFromLastGame}
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded bg-slate-600 hover:bg-slate-500 text-slate-300 hover:text-white text-sm transition-colors whitespace-nowrap"
+                                            title="Prefill players and custom fields from the last entry in this campaign"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                            Load from last game
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                         {globalCustomFields.length > 0 && (
@@ -363,21 +429,102 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                     {globalCustomFields.map(cf => (
                                         <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
                                             <label className="text-slate-300 text-xs">{cf.name}</label>
-                                            {cf.kind === 'enum' ? (
-                                                <EnumSelect
-                                                    options={cf.enumValues.map(v => v.value)}
-                                                    value={entryCustomFields[cf.id] || ''}
-                                                    onChange={v => updateEntryCustomField(cf.id, v)}
-                                                    placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                                />
+                                            {cf.multiple ? (
+                                                cf.kind === 'enum' ? (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {cf.enumValues.map(ev => {
+                                                            const selected = Array.isArray(entryCustomFields[cf.id])
+                                                                ? (entryCustomFields[cf.id] as string[]).includes(ev.value)
+                                                                : false
+                                                            return (
+                                                                <label key={ev.id} className="flex items-center gap-1.5 text-white text-sm">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selected}
+                                                                        onChange={() => {
+                                                                            const current = Array.isArray(entryCustomFields[cf.id])
+                                                                                ? (entryCustomFields[cf.id] as string[])
+                                                                                : []
+                                                                            const updated = selected
+                                                                                ? current.filter(v => v !== ev.value)
+                                                                                : [...current, ev.value]
+                                                                            updateEntryCustomField(cf.id, updated)
+                                                                        }}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                    {ev.value}
+                                                                </label>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-1">
+                                                        {(Array.isArray(entryCustomFields[cf.id])
+                                                            ? (entryCustomFields[cf.id] as string[])
+                                                            : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                        ).map((val, idx) => (
+                                                            <div key={idx} className="flex gap-1">
+                                                                <input
+                                                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400 flex-1"
+                                                                    type={cf.kind === 'number' ? 'number' : 'text'}
+                                                                    placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                                    value={val}
+                                                                    onChange={e => {
+                                                                        const current = Array.isArray(entryCustomFields[cf.id])
+                                                                            ? [...(entryCustomFields[cf.id] as string[])]
+                                                                            : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                                        current[idx] = e.target.value
+                                                                        updateEntryCustomField(cf.id, current)
+                                                                    }}
+                                                                />
+                                                                {idx > 0 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const current = Array.isArray(entryCustomFields[cf.id])
+                                                                                ? [...(entryCustomFields[cf.id] as string[])]
+                                                                                : [entryCustomFields[cf.id] as string]
+                                                                            current.splice(idx, 1)
+                                                                            updateEntryCustomField(cf.id, current)
+                                                                        }}
+                                                                        className="text-slate-400 hover:text-red-400"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const current = Array.isArray(entryCustomFields[cf.id])
+                                                                    ? [...(entryCustomFields[cf.id] as string[])]
+                                                                    : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                                updateEntryCustomField(cf.id, [...current, ''])
+                                                            }}
+                                                            className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
+                                                        >
+                                                            + Add another
+                                                        </button>
+                                                    </div>
+                                                )
                                             ) : (
-                                                <input
-                                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                                                    type={cf.kind === 'number' ? 'number' : 'text'}
-                                                    placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                    value={entryCustomFields[cf.id] || ''}
-                                                    onChange={e => updateEntryCustomField(cf.id, e.target.value)}
-                                                />
+                                                cf.kind === 'enum' ? (
+                                                    <EnumSelect
+                                                        options={cf.enumValues.map(v => v.value)}
+                                                        value={entryCustomFields[cf.id] as string || ''}
+                                                        onChange={v => updateEntryCustomField(cf.id, v)}
+                                                        placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                                                        type={cf.kind === 'number' ? 'number' : 'text'}
+                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                        value={entryCustomFields[cf.id] as string || ''}
+                                                        onChange={e => updateEntryCustomField(cf.id, e.target.value)}
+                                                    />
+                                                )
                                             )}
                                         </div>
                                     ))}
@@ -440,21 +587,102 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                             {playerCustomFields.map(cf => (
                                                 <div key={cf.id} className="flex flex-col gap-1 mt-2">
                                                     <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                    {cf.kind === 'enum' ? (
-                                                        <EnumSelect
-                                                            options={cf.enumValues.map(v => v.value)}
-                                                            value={player.customFields[cf.id] || ''}
-                                                            onChange={v => updatePlayerCustomField(player.genId, cf.id, v)}
-                                                            placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                                        />
+                                                    {cf.multiple ? (
+                                                        cf.kind === 'enum' ? (
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {cf.enumValues.map(ev => {
+                                                                    const selected = Array.isArray(player.customFields[cf.id])
+                                                                        ? (player.customFields[cf.id] as string[]).includes(ev.value)
+                                                                        : false
+                                                                    return (
+                                                                        <label key={ev.id} className="flex items-center gap-1.5 text-white text-sm">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={selected}
+                                                                                onChange={() => {
+                                                                                    const current = Array.isArray(player.customFields[cf.id])
+                                                                                        ? (player.customFields[cf.id] as string[])
+                                                                                        : []
+                                                                                    const updated = selected
+                                                                                        ? current.filter(v => v !== ev.value)
+                                                                                        : [...current, ev.value]
+                                                                                    updatePlayerCustomField(player.genId, cf.id, updated)
+                                                                                }}
+                                                                                className="w-4 h-4"
+                                                                            />
+                                                                            {ev.value}
+                                                                        </label>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col gap-1">
+                                                                {(Array.isArray(player.customFields[cf.id])
+                                                                    ? (player.customFields[cf.id] as string[])
+                                                                    : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                                ).map((val, idx) => (
+                                                                    <div key={idx} className="flex gap-1">
+                                                                        <input
+                                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400 flex-1"
+                                                                            type={cf.kind === 'number' ? 'number' : 'text'}
+                                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                                            value={val}
+                                                                            onChange={e => {
+                                                                                const current = Array.isArray(player.customFields[cf.id])
+                                                                                    ? [...(player.customFields[cf.id] as string[])]
+                                                                                    : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                                                current[idx] = e.target.value
+                                                                                updatePlayerCustomField(player.genId, cf.id, current)
+                                                                            }}
+                                                                        />
+                                                                        {idx > 0 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const current = Array.isArray(player.customFields[cf.id])
+                                                                                        ? [...(player.customFields[cf.id] as string[])]
+                                                                                        : [player.customFields[cf.id] as string]
+                                                                                    current.splice(idx, 1)
+                                                                                    updatePlayerCustomField(player.genId, cf.id, current)
+                                                                                }}
+                                                                                className="text-slate-400 hover:text-red-400"
+                                                                            >
+                                                                                <X className="w-4 h-4" />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const current = Array.isArray(player.customFields[cf.id])
+                                                                            ? [...(player.customFields[cf.id] as string[])]
+                                                                            : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                                        updatePlayerCustomField(player.genId, cf.id, [...current, ''])
+                                                                    }}
+                                                                    className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
+                                                                >
+                                                                    + Add another
+                                                                </button>
+                                                            </div>
+                                                        )
                                                     ) : (
-                                                        <input
-                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
-                                                            type={cf.kind === 'number' ? 'number' : 'text'}
-                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                            value={player.customFields[cf.id] || ''}
-                                                            onChange={e => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
-                                                        />
+                                                        cf.kind === 'enum' ? (
+                                                            <EnumSelect
+                                                                options={cf.enumValues.map(v => v.value)}
+                                                                value={player.customFields[cf.id] as string || ''}
+                                                                onChange={v => updatePlayerCustomField(player.genId, cf.id, v)}
+                                                                placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                            />
+                                                        ) : (
+                                                            <input
+                                                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
+                                                                type={cf.kind === 'number' ? 'number' : 'text'}
+                                                                placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                                value={player.customFields[cf.id] as string || ''}
+                                                                onChange={e => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
+                                                            />
+                                                        )
                                                     )}
                                                 </div>
                                             ))}
@@ -532,6 +760,17 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                     </button>
                                 </div>
                             </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-white text-sm font-medium">List</label>
+                                <div className="flex items-center h-[42px]">
+                                    <input
+                                        type="checkbox"
+                                        checked={customFieldMultiple}
+                                        onChange={e => setCustomFieldMultiple(e.target.checked)}
+                                        className="w-4 h-4"
+                                    />
+                                </div>
+                            </div>
                         </div>
                         {errors.length > 0 && (
                             <div className="text-red-400 text-center">
@@ -570,6 +809,9 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, onG
                                         <span className={`px-2 py-0.5 rounded ${customField.global ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
                                             {customField.global ? 'Entry' : 'Player'}
                                         </span>
+                                        {customField.multiple && (
+                                            <span className="px-2 py-0.5 rounded bg-amber-900/50 text-amber-300">list</span>
+                                        )}
                                         {customField.kind === 'string' && (
                                             <button
                                                 type="button"

@@ -2,6 +2,7 @@
 
 namespace App\Entry;
 
+use App\Campaign\Campaign;
 use App\Game\Game;
 use App\Player\Player;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -39,5 +40,16 @@ class EntryRepository extends ServiceEntityRepository
 
         return $qb->getQuery()
             ->getResult();
+    }
+
+    public function findLastByCampaign(Campaign $campaign): ?Entry
+    {
+        return $this->createQueryBuilder('e')
+            ->where('e.campaign = :campaign')
+            ->setParameter('campaign', $campaign)
+            ->orderBy('e.playedAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

@@ -93,6 +93,22 @@ class CampaignController extends AbstractController
         return new JsonResponse($campaign->view(), Response::HTTP_OK);
     }
 
+    #[Route('api/campaigns/{campaign}/last-entry', methods: 'GET')]
+    public function lastEntry(Campaign $campaign, EntryRepository $entryRepository): Response
+    {
+        $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_VIEW, $campaign);
+
+        $entry = $entryRepository->findLastByCampaign($campaign);
+
+        if (! $entry instanceof \App\Entry\Entry) {
+            return new JsonResponse([
+                'error' => 'No entries found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse($entry->view(), Response::HTTP_OK);
+    }
+
     #[Route('api/campaigns/{campaign}', methods: 'PATCH')]
     public function update(Campaign $campaign, Request $request, EntityManagerInterface $entityManager): Response
     {

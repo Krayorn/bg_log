@@ -238,6 +238,7 @@ class GameController extends AbstractController
         $name = $body['name'];
         $kind = $body['kind'];
         $global = $body['global'];
+        $multiple = $body['multiple'] ?? false;
 
         $alreadyExist = $customFieldRepository->findOneBy([
             'game' => $game,
@@ -248,7 +249,7 @@ class GameController extends AbstractController
             throw new \Exception('custom field with this name already exist on this game');
         }
 
-        $customField = new CustomField($game, $name, $kind, $global);
+        $customField = new CustomField($game, $name, $kind, $global, $multiple);
 
         $entityManager->persist($customField);
         $entityManager->flush();
@@ -308,6 +309,10 @@ class GameController extends AbstractController
     #[Route('api/customFields/{customField}', methods: 'DELETE')]
     public function deleteCustomField(CustomField $customField, EntityManagerInterface $entityManager): Response
     {
+        $entityManager->createQuery('DELETE FROM App\Entry\CustomFieldValue cfv WHERE cfv.customField = :cf')
+            ->setParameter('cf', $customField->getId(), 'uuid')
+            ->execute();
+
         $entityManager->remove($customField);
         $entityManager->flush();
 

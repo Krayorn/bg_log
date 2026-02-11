@@ -36,6 +36,10 @@ class CustomField
         string $kind,
         #[ORM\Column(type: 'boolean')]
         private readonly bool $global,
+        #[ORM\Column(type: 'boolean', options: [
+            'default' => false,
+        ])]
+        private readonly bool $multiple = false,
     ) {
         $this->id = Uuid::uuid4();
         $this->enumValues = new ArrayCollection();
@@ -61,6 +65,11 @@ class CustomField
         return $this->global;
     }
 
+    public function isMultiple(): bool
+    {
+        return $this->multiple;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -71,6 +80,7 @@ class CustomField
             'kind' => $this->kind,
             'name' => $this->name,
             'global' => $this->global,
+            'multiple' => $this->multiple,
             'enumValues' => array_values(array_map(fn ($v) => $v->view(), $this->enumValues->toArray())),
         ];
     }

@@ -42,7 +42,7 @@ class Entry
     private ?Campaign $campaign = null;
 
     /**
-     * @param array<array{player: Player, note: string, won: bool|null, customFields?: array<array{id: string, value: string}>}> $players
+     * @param array<array{player: Player, note: string, won: bool|null, customFields?: array<array{id: string, value: string|array<string>}>}> $players
      */
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
@@ -67,7 +67,14 @@ class Entry
             $playerCustomFields = $player['customFields'] ?? [];
             foreach ($playerCustomFields as $customFieldData) {
                 $customField = $this->game->getCustomField($customFieldData['id']);
-                $playerResult->addCustomFieldValue($customField, $customFieldData['value']);
+                $value = $customFieldData['value'];
+                if (is_array($value)) {
+                    foreach ($value as $singleValue) {
+                        $playerResult->addCustomFieldValue($customField, $singleValue);
+                    }
+                } else {
+                    $playerResult->addCustomFieldValue($customField, $value);
+                }
             }
 
             $this->playerResults->add($playerResult);
@@ -153,9 +160,11 @@ class Entry
     {
         $customField = $this->game->getCustomField($customFieldId);
 
-        foreach ($this->customFields as $existingCustomFieldValue) {
-            if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
-                throw new \DomainException('There is already a value for this custom field on this entry');
+        if (! $customField->isMultiple()) {
+            foreach ($this->customFields as $existingCustomFieldValue) {
+                if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
+                    throw new \DomainException('There is already a value for this custom field on this entry');
+                }
             }
         }
 
@@ -225,7 +234,7 @@ class Entry
     }
 
     /**
-     * @param array<array{id: string, value: string}> $customFields
+     * @param array<array{id: string, value: string|array<string>}> $customFields
      */
     public function addPlayer(Player $player, string $note, ?bool $won, array $customFields): void
     {
@@ -233,7 +242,14 @@ class Entry
 
         foreach ($customFields as $customFieldData) {
             $customField = $this->game->getCustomField($customFieldData['id']);
-            $playerResult->addCustomFieldValue($customField, $customFieldData['value']);
+            $value = $customFieldData['value'];
+            if (is_array($value)) {
+                foreach ($value as $singleValue) {
+                    $playerResult->addCustomFieldValue($customField, $singleValue);
+                }
+            } else {
+                $playerResult->addCustomFieldValue($customField, $value);
+            }
         }
 
         $this->playerResults->add($playerResult);

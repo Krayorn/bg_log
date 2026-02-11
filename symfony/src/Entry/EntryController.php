@@ -126,7 +126,14 @@ class EntryController extends AbstractController
         );
 
         foreach ($customFieldsData as $customFieldData) {
-            $entry->addCustomFieldValue($customFieldData['id'], $customFieldData['value']);
+            $value = $customFieldData['value'];
+            if (is_array($value)) {
+                foreach ($value as $singleValue) {
+                    $entry->addCustomFieldValue($customFieldData['id'], (string) $singleValue);
+                }
+            } else {
+                $entry->addCustomFieldValue($customFieldData['id'], $value);
+            }
         }
 
         if ($campaignId !== null) {

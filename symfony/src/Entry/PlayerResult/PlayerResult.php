@@ -51,9 +51,11 @@ class PlayerResult
 
     public function addCustomFieldValue(CustomField $customField, string $value): void
     {
-        foreach ($this->customFields as $existingCustomFieldValue) {
-            if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
-                throw new \DomainException('There is already a value for this custom field on this player result');
+        if (! $customField->isMultiple()) {
+            foreach ($this->customFields as $existingCustomFieldValue) {
+                if ($existingCustomFieldValue->getCustomField()->getId() === $customField->getId()) {
+                    throw new \DomainException('There is already a value for this custom field on this player result');
+                }
             }
         }
 

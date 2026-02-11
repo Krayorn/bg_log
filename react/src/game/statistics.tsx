@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { apiGet, apiPost, apiPut, apiDelete } from '../hooks/useApi'
-import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp } from 'lucide-react'
+import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Legend, Rectangle, Sector } from 'recharts'
 import type { BarShapeProps, PieSectorShapeProps } from 'recharts'
 
@@ -17,6 +17,9 @@ type StatsResult =
     | { type: 'grouped'; data: { label: string; total: number }[] }
     | { type: 'stacked'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
     | { type: 'crosstab'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
+    | { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }
+    | { type: 'winrate'; wins: number; total: number; rate: number }
+    | { type: 'winrate_by_player'; data: { label: string; player: string; wins: number; total: number; rate: number }[] }
 
 type ChartType = 'bar' | 'pie'
 type AggregationType = 'sum' | 'avg' | 'min' | 'max'
@@ -28,6 +31,7 @@ type SavedQuery = {
     groupByFieldId: string | null
     groupByPlayer: boolean
     aggregation: string | null
+    metric: string | null
 }
 
 const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#f97316']
@@ -109,6 +113,7 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
 
             {showExplorer && (
                 <QueryExplorer
+                    gameId={gameId}
                     playerId={playerId}
                     customFields={customFields}
                     onSave={handleSave}
@@ -119,6 +124,7 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
                 <SavedQueryCard
                     key={sq.id}
                     savedQuery={sq}
+                    gameId={gameId}
                     playerId={playerId}
                     customFields={customFields}
                     onUpdate={handleUpdate}
@@ -131,12 +137,14 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
 
 function SavedQueryCard({
     savedQuery,
+    gameId,
     playerId,
     customFields,
     onUpdate,
     onDelete,
 }: {
     savedQuery: SavedQuery
+    gameId: string
     playerId: string | null
     customFields: CustomField[]
     onUpdate: (id: string, query: Omit<SavedQuery, 'id'>) => Promise<void>
@@ -151,12 +159,18 @@ function SavedQueryCard({
 
     const selectedField = customFields.find(cf => cf.id === savedQuery.customFieldId)
     const groupByField = savedQuery.groupByFieldId ? customFields.find(cf => cf.id === savedQuery.groupByFieldId) : null
-    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
+    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
     const fetchStats = useCallback(async () => {
         setLoading(true)
-        const params = new URLSearchParams({ customFieldId: savedQuery.customFieldId })
+        const params = new URLSearchParams()
+        if (savedQuery.metric) {
+            params.set('metric', savedQuery.metric)
+            params.set('gameId', gameId)
+        } else {
+            params.set('customFieldId', savedQuery.customFieldId)
+        }
         if (playerId) params.set('playerId', playerId)
         if (savedQuery.groupByFieldId) params.set('groupByFieldId', savedQuery.groupByFieldId)
         if (savedQuery.groupByPlayer) params.set('groupByPlayer', 'true')
@@ -165,7 +179,7 @@ function SavedQueryCard({
         const { data, ok } = await apiGet<StatsResult>(`/statisticsQueries/execute?${params.toString()}`)
         if (ok && data) setStatsResult(data)
         setLoading(false)
-    }, [playerId, savedQuery])
+    }, [gameId, playerId, savedQuery])
 
     useEffect(() => { fetchStats() }, [fetchStats])
 
@@ -176,6 +190,7 @@ function SavedQueryCard({
             groupByFieldId: savedQuery.groupByFieldId,
             groupByPlayer: savedQuery.groupByPlayer,
             aggregation: savedQuery.aggregation,
+            metric: savedQuery.metric,
         })
         setEditing(false)
     }
@@ -255,10 +270,12 @@ function SavedQueryCard({
 }
 
 function QueryExplorer({
+    gameId,
     playerId,
     customFields,
     onSave,
 }: {
+    gameId: string
     playerId: string | null
     customFields: CustomField[]
     onSave: (query: Omit<SavedQuery, 'id'>) => Promise<void>
@@ -272,16 +289,26 @@ function QueryExplorer({
     const [loading, setLoading] = useState(false)
     const [saveName, setSaveName] = useState('')
     const [showSaveInput, setShowSaveInput] = useState(false)
+    const [metric, setMetric] = useState<string | null>(null)
 
     const selectedField = customFields.find(cf => cf.id === selectedFieldId)
     const groupByField = customFields.find(cf => cf.id === groupByFieldId)
     const isNumberField = selectedField?.kind === 'number'
-    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
+    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
-    const canQuery = selectedFieldId !== null
+    const canQuery = selectedFieldId !== null || metric !== null
 
     const handleFieldClick = (fieldId: string) => {
+        if (metric !== null) {
+            if (groupByFieldId === fieldId) {
+                setGroupByFieldId(null)
+            } else {
+                setGroupByFieldId(fieldId)
+            }
+            setStatsResult(null)
+            return
+        }
         if (selectedFieldId === null) {
             setSelectedFieldId(fieldId)
             setGroupByFieldId(null)
@@ -305,19 +332,21 @@ function QueryExplorer({
     }
 
     const handlePlayerClick = () => {
-        if (selectedFieldId === null) return
+        if (selectedFieldId === null && metric === null) return
         
         if (groupByPlayer) {
             setGroupByPlayer(false)
         } else {
             setGroupByPlayer(true)
-            setGroupByFieldId(null)
+            if (!metric) {
+                setGroupByFieldId(null)
+            }
         }
         setStatsResult(null)
     }
 
     const isFieldCompatibleForGroupBy = (fieldId: string): boolean => {
-        if (selectedFieldId === null) return true
+        if (selectedFieldId === null && metric === null) return true
         if (fieldId === selectedFieldId) return false
         return true
     }
@@ -325,13 +354,14 @@ function QueryExplorer({
     const getFieldState = (fieldId: string): 'selected-aggregate' | 'selected-groupby' | 'compatible' | 'incompatible' | 'idle' => {
         if (selectedFieldId === fieldId) return 'selected-aggregate'
         if (groupByFieldId === fieldId) return 'selected-groupby'
+        if (metric !== null) return isFieldCompatibleForGroupBy(fieldId) ? 'compatible' : 'incompatible'
         if (selectedFieldId === null) return 'idle'
         return isFieldCompatibleForGroupBy(fieldId) ? 'compatible' : 'incompatible'
     }
 
     const getPlayerState = (): 'selected-groupby' | 'compatible' | 'idle' => {
         if (groupByPlayer) return 'selected-groupby'
-        if (selectedFieldId === null) return 'idle'
+        if (selectedFieldId === null && metric === null) return 'idle'
         return 'compatible'
     }
 
@@ -341,15 +371,22 @@ function QueryExplorer({
         setGroupByPlayer(false)
         setStatsResult(null)
         setShowSaveInput(false)
+        setMetric(null)
     }
 
     const fetchStats = async () => {
-        if (!selectedFieldId) return
+        if (!selectedFieldId && !metric) return
         
         setLoading(true)
         setStatsResult(null)
         
-        const params = new URLSearchParams({ customFieldId: selectedFieldId })
+        const params = new URLSearchParams()
+        if (metric) {
+            params.set('metric', metric)
+            params.set('gameId', gameId)
+        } else if (selectedFieldId) {
+            params.set('customFieldId', selectedFieldId)
+        }
         if (playerId) {
             params.set('playerId', playerId)
         }
@@ -359,7 +396,7 @@ function QueryExplorer({
         if (groupByPlayer) {
             params.set('groupByPlayer', 'true')
         }
-        if (isNumberField) {
+        if (!metric && isNumberField) {
             params.set('aggregation', aggregation)
         }
         
@@ -372,13 +409,14 @@ function QueryExplorer({
     }
 
     const handleSave = async () => {
-        if (!selectedFieldId || !saveName.trim()) return
+        if ((!selectedFieldId && !metric) || !saveName.trim()) return
         await onSave({
             name: saveName.trim(),
-            customFieldId: selectedFieldId,
+            customFieldId: metric ? '' : selectedFieldId!,
             groupByFieldId: groupByFieldId,
             groupByPlayer: groupByPlayer,
-            aggregation: isNumberField ? aggregation : null,
+            aggregation: metric ? null : (isNumberField ? aggregation : null),
+            metric: metric,
         })
         setSaveName('')
         setShowSaveInput(false)
@@ -401,14 +439,16 @@ function QueryExplorer({
             <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-slate-400 text-sm">
-                        {selectedFieldId === null 
-                            ? 'Select a field to aggregate'
-                            : groupByFieldId || groupByPlayer 
-                                ? 'Selection complete' 
-                                : 'Optionally select a field or player to group by'
+                        {metric !== null
+                            ? (groupByFieldId || groupByPlayer ? 'Selection complete' : 'Optionally select a field or player to group by')
+                            : selectedFieldId === null 
+                                ? 'Select a metric or field to aggregate'
+                                : groupByFieldId || groupByPlayer 
+                                    ? 'Selection complete' 
+                                    : 'Optionally select a field or player to group by'
                         }
                     </p>
-                    {selectedFieldId && (
+                    {(selectedFieldId || metric) && (
                         <button
                             onClick={clearSelection}
                             className="text-slate-400 hover:text-white text-sm flex items-center gap-1"
@@ -417,6 +457,32 @@ function QueryExplorer({
                             Clear
                         </button>
                     )}
+                </div>
+
+                <div className="mb-4">
+                    <p className="text-xs text-amber-400 mb-2 font-medium">Metrics</p>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => {
+                                if (metric === 'winrate') {
+                                    setMetric(null)
+                                    setStatsResult(null)
+                                } else {
+                                    setMetric('winrate')
+                                    setSelectedFieldId(null)
+                                    setStatsResult(null)
+                                }
+                            }}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                                metric === 'winrate'
+                                    ? 'bg-amber-500/30 border-2 border-amber-400 text-amber-300 ring-2 ring-amber-400/50'
+                                    : 'bg-slate-800 border border-amber-500/50 text-amber-300 hover:border-amber-400 hover:bg-amber-500/10'
+                            }`}
+                        >
+                            <Trophy className="w-4 h-4" />
+                            Win Rate
+                        </button>
+                    </div>
                 </div>
 
                 {entryFields.length > 0 && (
@@ -459,13 +525,13 @@ function QueryExplorer({
                         <PlayerBox 
                             state={getPlayerState()}
                             onClick={handlePlayerClick}
-                            disabled={selectedFieldId === null}
+                            disabled={selectedFieldId === null && metric === null}
                         />
                     </div>
                 </div>
             </div>
 
-            {isNumberField && (
+            {isNumberField && !metric && (
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-600">
                     <span className="text-slate-400 text-sm">Aggregation:</span>
                     {(['sum', 'avg', 'min', 'max'] as AggregationType[]).map(agg => (
@@ -530,7 +596,7 @@ function QueryExplorer({
                         </div>
                     )}
                     <span className="ml-3 text-slate-500 text-sm">
-                        {selectedField?.name}
+                        {metric ? 'Win Rate' : selectedField?.name}
                         {groupByFieldId && ` → grouped by ${groupByField?.name}`}
                         {groupByPlayer && ` → grouped by Player`}
                     </span>
@@ -768,6 +834,98 @@ function StatsResultDisplay({
                                             fill={CHART_COLORS[index % CHART_COLORS.length]}
                                         />
                                     ))}
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {statsResult.type === 'winrate' && !('data' in statsResult) && (
+                <div className="text-center">
+                    <p className="text-slate-400 text-sm mb-2">Win Rate</p>
+                    <p className="text-5xl font-bold text-amber-400">
+                        {(statsResult.rate * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-slate-500 text-sm mt-2">
+                        {statsResult.wins} wins / {statsResult.total} total
+                    </p>
+                </div>
+            )}
+
+            {statsResult.type === 'winrate' && 'data' in statsResult && Array.isArray((statsResult as { data: unknown }).data) && (
+                <div>
+                    <p className="text-slate-400 text-sm mb-4 text-center">Win Rate by group</p>
+                    {(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length === 0 ? (
+                        <p className="text-slate-500 text-center">No data available</p>
+                    ) : (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.map(d => ({ ...d, rate: d.rate * 100 }))}
+                                    layout="vertical"
+                                    margin={{ left: 20, right: 20 }}
+                                >
+                                    <XAxis type="number" stroke="#94a3b8" domain={[0, 100]} unit="%" />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="label"
+                                        stroke="#94a3b8"
+                                        width={150}
+                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#1e293b',
+                                            border: '1px solid #475569',
+                                            borderRadius: '8px'
+                                        }}
+                                        labelStyle={{ color: '#e2e8f0' }}
+                                        formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
+                                            [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
+                                        }
+                                    />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {statsResult.type === 'winrate_by_player' && (
+                <div>
+                    <p className="text-slate-400 text-sm mb-4 text-center">Win Rate by group and player</p>
+                    {statsResult.data.length === 0 ? (
+                        <p className="text-slate-500 text-center">No data available</p>
+                    ) : (
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={statsResult.data.map(d => ({ ...d, rate: d.rate * 100, displayLabel: `${d.label} — ${d.player}` }))}
+                                    layout="vertical"
+                                    margin={{ left: 20, right: 20 }}
+                                >
+                                    <XAxis type="number" stroke="#94a3b8" domain={[0, 100]} unit="%" />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="displayLabel"
+                                        stroke="#94a3b8"
+                                        width={200}
+                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#1e293b',
+                                            border: '1px solid #475569',
+                                            borderRadius: '8px'
+                                        }}
+                                        labelStyle={{ color: '#e2e8f0' }}
+                                        formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
+                                            [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
+                                        }
+                                    />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

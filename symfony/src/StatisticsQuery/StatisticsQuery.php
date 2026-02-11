@@ -25,14 +25,16 @@ class StatisticsQuery
         private readonly Game $game,
         #[ORM\Column(type: 'string')]
         private string $name,
-        #[ORM\Column(type: 'uuid')]
-        private UuidInterface $customFieldId,
+        #[ORM\Column(type: 'uuid', nullable: true)]
+        private ?UuidInterface $customFieldId,
         #[ORM\Column(type: 'uuid', nullable: true)]
         private ?UuidInterface $groupByFieldId,
         #[ORM\Column(type: 'boolean')]
         private bool $groupByPlayer,
         #[ORM\Column(type: 'string', nullable: true)]
         private ?string $aggregation,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $metric = null,
     ) {
         $this->id = Uuid::uuid4();
     }
@@ -49,16 +51,18 @@ class StatisticsQuery
 
     public function update(
         string $name,
-        UuidInterface $customFieldId,
+        ?UuidInterface $customFieldId,
         ?UuidInterface $groupByFieldId,
         bool $groupByPlayer,
         ?string $aggregation,
+        ?string $metric = null,
     ): void {
         $this->name = $name;
         $this->customFieldId = $customFieldId;
         $this->groupByFieldId = $groupByFieldId;
         $this->groupByPlayer = $groupByPlayer;
         $this->aggregation = $aggregation;
+        $this->metric = $metric;
     }
 
     /**
@@ -73,6 +77,7 @@ class StatisticsQuery
             'groupByFieldId' => $this->groupByFieldId,
             'groupByPlayer' => $this->groupByPlayer,
             'aggregation' => $this->aggregation,
+            'metric' => $this->metric,
         ];
     }
 }
