@@ -15,7 +15,7 @@ symfony:
 backend-precommit:
 	docker exec bg_log-symfony-1 vendor/bin/rector
 	docker exec bg_log-symfony-1 vendor/bin/ecs --fix
-	docker exec bg_log-symfony-1 vendor/bin/phpstan analyse
+	docker exec bg_log-symfony-1 vendor/bin/phpstan analyse --memory-limit=256M
 
 frontend-precommit:
 	cd react && npm run lint

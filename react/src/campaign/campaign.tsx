@@ -10,6 +10,7 @@ type CustomField = {
     name: string
     global: boolean
     id: string
+    multiple: boolean
 }
 
 type CustomFieldValue = {
@@ -205,7 +206,7 @@ export default function CampaignPage() {
         setEditingName(false)
     }
 
-    const handleAddEvent = async (entryId: string, campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[]) => {
+    const handleAddEvent = async (entryId: string, campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[], customFieldValueId: string | null = null) => {
         let lastResult: { data: Campaign | null; ok: boolean } = { data: null, ok: false }
         for (const payload of payloads) {
             lastResult = await apiPost<Campaign>(`/campaigns/${campaignId}/events`, {
@@ -213,6 +214,7 @@ export default function CampaignPage() {
                 campaignKey: campaignKeyId,
                 playerResult: playerResultId,
                 payload,
+                ...(customFieldValueId ? { customFieldValue: customFieldValueId } : {}),
             })
         }
         if (lastResult.ok && lastResult.data) {
@@ -479,8 +481,8 @@ export default function CampaignPage() {
                                                 <AddEventForm
                                                     entry={entry}
                                                     campaignKeys={campaignKeys}
-                                                    onSubmit={(campaignKeyId, playerResultId, payloads) =>
-                                                        handleAddEvent(entry.id, campaignKeyId, playerResultId, payloads)
+                                                    onSubmit={(campaignKeyId, playerResultId, payloads, customFieldValueId) =>
+                                                        handleAddEvent(entry.id, campaignKeyId, playerResultId, payloads, customFieldValueId)
                                                     }
                                                     onCancel={() => setAddingEventFor(null)}
                                                 />
@@ -635,7 +637,7 @@ function KeyManager({ keys, customFields, onAdd, onDelete }: {
 function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
     entry: Entry
     campaignKeys: CampaignKey[]
-    onSubmit: (campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[]) => void
+    onSubmit: (campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[], customFieldValueId: string | null) => void
     onCancel: () => void
 }) {
     const [selectedKeyId, setSelectedKeyId] = useState(campaignKeys[0]?.id ?? '')
@@ -643,6 +645,7 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
     const allowedVerbs = selectedKey ? VERBS_BY_TYPE[selectedKey.type] : []
     const [verb, setVerb] = useState(allowedVerbs[0] ?? '')
     const [playerResultId, setPlayerResultId] = useState<string>(entry.players[0]?.id ?? '')
+    const [customFieldValueId, setCustomFieldValueId] = useState<string>('')
 
     const [stringValue, setStringValue] = useState('')
     const [numberAmount, setNumberAmount] = useState('')
@@ -715,7 +718,8 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
         const payloads = buildPayloads()
         if (payloads.length === 0) return
         const prId = selectedKey && !selectedKey.global ? playerResultId : null
-        onSubmit(selectedKeyId, prId, payloads)
+        const cfvId = selectedKey?.scopedToCustomField?.multiple ? (customFieldValueId || null) : null
+        onSubmit(selectedKeyId, prId, payloads, cfvId)
     }
 
     return (
@@ -744,15 +748,43 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
             </div>
 
             {selectedKey && !selectedKey.global && (
-                <select
-                    value={playerResultId}
-                    onChange={e => setPlayerResultId(e.target.value)}
-                    className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
-                >
-                    {entry.players.map(pr => (
-                        <option key={pr.id} value={pr.id}>{pr.player.name}</option>
-                    ))}
-                </select>
+                <>
+                    <select
+                        value={playerResultId}
+                        onChange={e => {
+                            setPlayerResultId(e.target.value)
+                            if (selectedKey.scopedToCustomField?.multiple) {
+                                const pr = entry.players.find(p => p.id === e.target.value)
+                                const matchingCfvs = pr?.customFields.filter(cf => cf.customField.id === selectedKey.scopedToCustomField!.id) ?? []
+                                setCustomFieldValueId(matchingCfvs[0]?.id ?? '')
+                            }
+                        }}
+                        className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+                    >
+                        {entry.players.map(pr => {
+                            if (selectedKey.scopedToCustomField && !selectedKey.scopedToCustomField.multiple) {
+                                const cfValue = pr.customFields.find(cf => cf.customField.id === selectedKey.scopedToCustomField!.id)?.value
+                                return <option key={pr.id} value={pr.id}>{pr.player.name} ({cfValue})</option>
+                            }
+                            return <option key={pr.id} value={pr.id}>{pr.player.name}</option>
+                        })}
+                    </select>
+                    {selectedKey.scopedToCustomField?.multiple && (() => {
+                        const selectedPlayer = entry.players.find(p => p.id === playerResultId)
+                        const matchingCfvs = selectedPlayer?.customFields.filter(cf => cf.customField.id === selectedKey.scopedToCustomField!.id) ?? []
+                        return (
+                            <select
+                                value={customFieldValueId}
+                                onChange={e => setCustomFieldValueId(e.target.value)}
+                                className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+                            >
+                                {matchingCfvs.map(cfv => (
+                                    <option key={cfv.id} value={cfv.id}>{cfv.value}</option>
+                                ))}
+                            </select>
+                        )
+                    })()}
+                </>
             )}
 
             {selectedKey?.type === 'string' && (

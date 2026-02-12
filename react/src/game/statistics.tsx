@@ -562,7 +562,12 @@ function QueryExplorer({
                         </button>
                         {statsResult && !showSaveInput && (
                             <button
-                                onClick={() => setShowSaveInput(true)}
+                                onClick={() => {
+                                    const primary = metric === 'winrate' ? 'Win Rate' : selectedField?.name ?? ''
+                                    const groupBy = groupByPlayer ? 'Player' : groupByField?.name
+                                    setSaveName(groupBy ? `${primary} by ${groupBy}` : primary)
+                                    setShowSaveInput(true)
+                                }}
                                 className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors flex items-center gap-2"
                             >
                                 <Save className="w-4 h-4" />
@@ -639,6 +644,10 @@ function QueryExplorer({
     )
 }
 
+function chartHeight(dataLength: number): number {
+    return Math.max(320, dataLength * 40)
+}
+
 function StatsResultDisplay({
     statsResult,
     chartType,
@@ -680,7 +689,7 @@ function StatsResultDisplay({
                     {statsResult.data.length === 0 ? (
                         <p className="text-slate-500 text-center">No data available</p>
                     ) : chartType === 'bar' ? (
-                        <div className="h-80">
+                        <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" stroke="#94a3b8" />
@@ -695,11 +704,12 @@ function StatsResultDisplay({
                                         contentStyle={{ 
                                             backgroundColor: '#1e293b', 
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                     />
-                                    <Bar dataKey="total" radius={[0, 4, 4, 0]} shape={ColoredBar} />
+                                    <Bar dataKey="total" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -723,7 +733,8 @@ function StatsResultDisplay({
                                         contentStyle={{ 
                                             backgroundColor: '#1e293b', 
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                     />
@@ -743,7 +754,7 @@ function StatsResultDisplay({
                     {statsResult.data.length === 0 ? (
                         <p className="text-slate-500 text-center">No data available</p>
                     ) : chartType === 'bar' ? (
-                        <div className="h-80">
+                        <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" stroke="#94a3b8" />
@@ -758,11 +769,12 @@ function StatsResultDisplay({
                                         contentStyle={{ 
                                             backgroundColor: '#1e293b', 
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                     />
-                                    <Bar dataKey="count" radius={[0, 4, 4, 0]} shape={ColoredBar} />
+                                    <Bar dataKey="count" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -786,7 +798,8 @@ function StatsResultDisplay({
                                         contentStyle={{ 
                                             backgroundColor: '#1e293b', 
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                     />
@@ -806,7 +819,7 @@ function StatsResultDisplay({
                     {statsResult.data.length === 0 ? (
                         <p className="text-slate-500 text-center">No data available</p>
                     ) : (
-                        <div className="h-96">
+                        <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={getStackedChartData()} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" stroke="#94a3b8" />
@@ -821,7 +834,8 @@ function StatsResultDisplay({
                                         contentStyle={{ 
                                             backgroundColor: '#1e293b', 
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                     />
@@ -859,7 +873,7 @@ function StatsResultDisplay({
                     {(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length === 0 ? (
                         <p className="text-slate-500 text-center">No data available</p>
                     ) : (
-                        <div className="h-80">
+                        <div style={{ height: chartHeight((statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.map(d => ({ ...d, rate: d.rate * 100 }))}
@@ -878,14 +892,15 @@ function StatsResultDisplay({
                                         contentStyle={{
                                             backgroundColor: '#1e293b',
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                         formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
                                             [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
                                         }
                                     />
-                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -899,7 +914,7 @@ function StatsResultDisplay({
                     {statsResult.data.length === 0 ? (
                         <p className="text-slate-500 text-center">No data available</p>
                     ) : (
-                        <div className="h-80">
+                        <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={statsResult.data.map(d => ({ ...d, rate: d.rate * 100, displayLabel: `${d.label} — ${d.player}` }))}
@@ -918,14 +933,15 @@ function StatsResultDisplay({
                                         contentStyle={{
                                             backgroundColor: '#1e293b',
                                             border: '1px solid #475569',
-                                            borderRadius: '8px'
+                                            borderRadius: '8px',
+                                            color: '#e2e8f0'
                                         }}
                                         labelStyle={{ color: '#e2e8f0' }}
                                         formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
                                             [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
                                         }
                                     />
-                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

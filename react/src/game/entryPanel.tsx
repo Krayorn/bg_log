@@ -183,7 +183,9 @@ export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated
                 players: []
             })
         }
-        setEditField(null)
+        if (!customField.multiple) {
+            setEditField(null)
+        }
     }
 
     const handlePlayerNoteBlur = async (playerResultId: string, newNote: string) => {
@@ -226,7 +228,9 @@ export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated
                 }]
             })
         }
-        setEditField(null)
+        if (!customField.multiple) {
+            setEditField(null)
+        }
     }
 
     const handleRemoveEntryCustomField = async (customFieldValueId: string) => {

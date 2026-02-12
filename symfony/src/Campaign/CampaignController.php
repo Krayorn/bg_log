@@ -157,6 +157,7 @@ class CampaignController extends AbstractController
         $entryId = $body['entry'] ?? null;
         $campaignKeyId = $body['campaignKey'] ?? null;
         $payload = $body['payload'] ?? null;
+        $customFieldValueId = $body['customFieldValue'] ?? null;
 
         $errors = [];
 
@@ -236,16 +237,35 @@ class CampaignController extends AbstractController
         $customFieldValue = null;
         $scopedCustomField = $campaignKey->getScopedToCustomField();
         if ($scopedCustomField instanceof \App\Game\CustomField\CustomField && $playerResult !== null) {
-            foreach ($playerResult->getCustomFieldValues() as $cfv) {
-                if ((string) $cfv->getCustomField()->getId() === (string) $scopedCustomField->getId()) {
-                    $customFieldValue = $cfv;
-                    break;
+            if ($customFieldValueId !== null) {
+                foreach ($playerResult->getCustomFieldValues() as $cfv) {
+                    if ((string) $cfv->getId() === (string) $customFieldValueId) {
+                        if ((string) $cfv->getCustomField()->getId() !== (string) $scopedCustomField->getId()) {
+                            return new JsonResponse([
+                                'errors' => ['The provided custom field value does not belong to the expected custom field'],
+                            ], Response::HTTP_BAD_REQUEST);
+                        }
+                        $customFieldValue = $cfv;
+                        break;
+                    }
                 }
-            }
-            if ($customFieldValue === null) {
-                return new JsonResponse([
-                    'errors' => ['Player does not have a value for the scoped custom field on this entry'],
-                ], Response::HTTP_BAD_REQUEST);
+                if ($customFieldValue === null) {
+                    return new JsonResponse([
+                        'errors' => ['The provided custom field value was not found in the player result'],
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+            } else {
+                foreach ($playerResult->getCustomFieldValues() as $cfv) {
+                    if ((string) $cfv->getCustomField()->getId() === (string) $scopedCustomField->getId()) {
+                        $customFieldValue = $cfv;
+                        break;
+                    }
+                }
+                if ($customFieldValue === null) {
+                    return new JsonResponse([
+                        'errors' => ['Player does not have a value for the scoped custom field on this entry'],
+                    ], Response::HTTP_BAD_REQUEST);
+                }
             }
         }
 

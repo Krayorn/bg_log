@@ -53,6 +53,11 @@ class CustomFieldValue
         $this->valueNumber = $value;
     }
 
+    public function getId(): UuidInterface
+    {
+        return $this->id;
+    }
+
     public function getCustomField(): CustomField
     {
         return $this->customField;
