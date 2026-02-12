@@ -72,9 +72,6 @@ export default function EnumSelect({
         const v = e.target.value
         setQuery(v)
         setOpen(true)
-        if (v === '') {
-            onChange('')
-        }
     }
 
     return (

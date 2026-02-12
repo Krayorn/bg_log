@@ -196,7 +196,7 @@ class Entry
             throw new BadRequestException("Custom field value not found: {$id}");
         }
 
-        if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING) {
+        if ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::STRING || $customFieldValue->getCustomField()->getKind() === CustomFieldKind::ENUM) {
             $customFieldValue->updateStringValue($value);
         } elseif ($customFieldValue->getCustomField()->getKind() === CustomFieldKind::NUMBER) {
             $customFieldValue->updateNumberValue((int) $value);
