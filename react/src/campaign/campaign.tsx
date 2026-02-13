@@ -66,6 +66,7 @@ type Entry = {
     note: string
     players: PlayerResult[]
     playedAt: { date: string }
+    createdAt: { date: string }
     events: CampaignEvent[]
     stateAfter: CampaignState
     customFields: CustomFieldValue[]
@@ -82,7 +83,7 @@ type Campaign = {
 
 const VERBS_BY_TYPE: Record<CampaignKey['type'], string[]> = {
     string: ['replace'],
-    number: ['increase', 'decrease', 'replace'],
+    number: ['replace', 'increase', 'decrease'],
     list: ['add', 'remove'],
     counted_list: ['add', 'remove'],
 }
@@ -220,7 +221,6 @@ export default function CampaignPage() {
         if (lastResult.ok && lastResult.data) {
             setCampaign(lastResult.data)
         }
-        setAddingEventFor(null)
     }
 
     const handleDeleteEvent = async (eventId: string) => {
@@ -254,9 +254,11 @@ export default function CampaignPage() {
         return <Layout><div className="text-white">Loading...</div></Layout>
     }
 
-    const sortedEntries = [...campaign.entries].sort((a, b) =>
-        new Date(a.playedAt.date).getTime() - new Date(b.playedAt.date).getTime()
-    )
+    const sortedEntries = [...campaign.entries].sort((a, b) => {
+        const dateDiff = new Date(a.playedAt.date).getTime() - new Date(b.playedAt.date).getTime()
+        if (dateDiff !== 0) return dateDiff
+        return new Date(a.createdAt.date).getTime() - new Date(b.createdAt.date).getTime()
+    })
 
     const lastEntry = sortedEntries.length > 0 ? sortedEntries[sortedEntries.length - 1] : null
     const currentState: CampaignState = lastEntry?.stateAfter ?? { campaign: {}, players: {} }
@@ -720,6 +722,11 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
         const prId = selectedKey && !selectedKey.global ? playerResultId : null
         const cfvId = selectedKey?.scopedToCustomField?.multiple ? (customFieldValueId || null) : null
         onSubmit(selectedKeyId, prId, payloads, cfvId)
+        setStringValue('')
+        setNumberAmount('')
+        setListItems([''])
+        setListRemoveValue('')
+        setCountedItems([{ item: '', quantity: '1' }])
     }
 
     return (

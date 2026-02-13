@@ -23,6 +23,12 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
+    /**
+     * @var array<string>
+     */
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
+
     #[ORM\ManyToOne(targetEntity: self::class)]
     #[ORM\JoinColumn(name: 'in_party_of_id', referencedColumnName: 'id', onDelete: 'SET NULL', nullable: true)]
     private ?Player $inPartyOf = null;
@@ -68,6 +74,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
                 'id' => $this->inPartyOf->getId(),
                 'name' => $this->inPartyOf->getName(),
             ] : null,
+            'roles' => $this->roles,
         ];
 
         if ($includeSensitive) {
@@ -89,7 +96,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return [];
+        return $this->roles;
     }
 
     public function getUserIdentifier(): string

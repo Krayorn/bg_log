@@ -36,7 +36,8 @@ class EntryRepository extends ServiceEntityRepository
                 ->setParameter('player', $player);
         }
 
-        $qb->orderBy('e.playedAt', 'DESC');
+        $qb->orderBy('e.playedAt', 'DESC')
+           ->addOrderBy('e.createdAt', 'DESC');
 
         return $qb->getQuery()
             ->getResult();
@@ -48,6 +49,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.campaign = :campaign')
             ->setParameter('campaign', $campaign)
             ->orderBy('e.playedAt', 'DESC')
+            ->addOrderBy('e.createdAt', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

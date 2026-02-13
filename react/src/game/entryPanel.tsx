@@ -4,6 +4,7 @@ import { apiPatch } from '../hooks/useApi'
 import { useRequest } from '../hooks/useRequest'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
+import MultiEnumSelect from "../components/MultiEnumSelect"
 import { Plus, X, Scroll } from 'lucide-react'
 
 type CustomFieldType = 'string' | 'number' | 'enum'
@@ -41,6 +42,9 @@ type Entry = {
     playedAt: {
         date: string
     }
+    createdAt: {
+        date: string
+    }
     customFields: CustomFieldValue[]
     campaign?: {
         id: string
@@ -51,12 +55,6 @@ type Entry = {
 type Campaign = {
     id: string
     name: string
-}
-
-type Game = {
-    name: string
-    id: string
-    customFields: CustomField[]
 }
 
 type EntryListItemProps = {
@@ -117,14 +115,14 @@ function formatDateForInput(date: Date) {
 
 type EntryDetailPanelProps = {
     entry: Entry
-    game: Game
     gameId: string
     playerId: string | null
     onEntryUpdated: (id: string, newEntry: Entry) => void
     allPlayers: { id: string; name: string }[]
+    customFields: CustomField[]
 }
 
-export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated, allPlayers }: EntryDetailPanelProps) {
+export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allPlayers, customFields: gameCustomFields }: EntryDetailPanelProps) {
     const [editField, setEditField] = useState<string | null>(null)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
@@ -313,8 +311,8 @@ export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated
         })
     }
 
-    const globalCustomFields = game.customFields.filter(c => c.global)
-    const playerCustomFields = game.customFields.filter(c => !c.global)
+    const globalCustomFields = gameCustomFields.filter(c => c.global)
+    const playerCustomFields = gameCustomFields.filter(c => !c.global)
 
     return (
         <div className="m-4 overflow-y-auto h-full">
@@ -418,30 +416,25 @@ export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated
                                                 editField === fieldKey ? (
                                                     cf.kind === 'enum' ? (
                                                         <div className="flex flex-wrap gap-2">
-                                                            {cf.enumValues.map(ev => {
-                                                                const selected = cfValues.some(v => v.value === ev.value)
-                                                                return (
-                                                                    <label key={ev.id} className="flex items-center gap-1.5 text-white text-sm">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={selected}
-                                                                            onChange={async () => {
-                                                                                if (selected) {
-                                                                                    const toRemove = cfValues.find(v => v.value === ev.value)
-                                                                                    if (toRemove?.id) await handleRemoveEntryCustomField(toRemove.id)
-                                                                                } else {
-                                                                                    await patchEntry({
-                                                                                        customFields: [{ kind: "add", payload: { id: cf.id, value: ev.value } }],
-                                                                                        players: []
-                                                                                    })
-                                                                                }
-                                                                            }}
-                                                                            className="w-4 h-4"
-                                                                        />
-                                                                        {ev.value}
-                                                                    </label>
-                                                                )
-                                                            })}
+                                                            <MultiEnumSelect
+                                                                options={cf.enumValues.map(v => v.value)}
+                                                                selected={cfValues.map(v => v.value)}
+                                                                onChange={async (values) => {
+                                                                    const toRemove = cfValues.filter(v => !values.includes(v.value))
+                                                                    const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
+                                                                    for (const cv of toRemove) {
+                                                                        if (cv.id) await handleRemoveEntryCustomField(cv.id)
+                                                                    }
+                                                                    for (const v of toAdd) {
+                                                                        await patchEntry({
+                                                                            customFields: [{ kind: "add", payload: { id: cf.id, value: v } }],
+                                                                            players: []
+                                                                        })
+                                                                    }
+                                                                    setEditField(null)
+                                                                }}
+                                                                placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                            />
                                                             <button
                                                                 onClick={() => setEditField(null)}
                                                                 className="text-slate-400 hover:text-white text-xs ml-2"
@@ -680,36 +673,31 @@ export function EntryDetailPanel({ entry, game, gameId, playerId, onEntryUpdated
                                                     editField === fieldKey ? (
                                                         cf.kind === 'enum' ? (
                                                             <div className="flex flex-wrap gap-2">
-                                                                {cf.enumValues.map(ev => {
-                                                                    const selected = cfValues.some(v => v.value === ev.value)
-                                                                    return (
-                                                                        <label key={ev.id} className="flex items-center gap-1.5 text-white text-sm">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={selected}
-                                                                                onChange={async () => {
-                                                                                    if (selected) {
-                                                                                        const toRemove = cfValues.find(v => v.value === ev.value)
-                                                                                        if (toRemove?.id) await handleRemovePlayerCustomField(playerResult.id, toRemove.id)
-                                                                                    } else {
-                                                                                        await patchEntry({
-                                                                                            customFields: [],
-                                                                                            players: [{
-                                                                                                kind: "update",
-                                                                                                id: playerResult.id,
-                                                                                                payload: {
-                                                                                                    customFields: [{ kind: "add", payload: { id: cf.id, value: ev.value } }]
-                                                                                                }
-                                                                                            }]
-                                                                                        })
+                                                                <MultiEnumSelect
+                                                                    options={cf.enumValues.map(v => v.value)}
+                                                                    selected={cfValues.map(v => v.value)}
+                                                                    onChange={async (values) => {
+                                                                        const toRemove = cfValues.filter(v => !values.includes(v.value))
+                                                                        const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
+                                                                        for (const cv of toRemove) {
+                                                                            if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)
+                                                                        }
+                                                                        for (const v of toAdd) {
+                                                                            await patchEntry({
+                                                                                customFields: [],
+                                                                                players: [{
+                                                                                    kind: "update",
+                                                                                    id: playerResult.id,
+                                                                                    payload: {
+                                                                                        customFields: [{ kind: "add", payload: { id: cf.id, value: v } }]
                                                                                     }
-                                                                                }}
-                                                                                className="w-4 h-4"
-                                                                            />
-                                                                            {ev.value}
-                                                                        </label>
-                                                                    )
-                                                                })}
+                                                                                }]
+                                                                            })
+                                                                        }
+                                                                        setEditField(null)
+                                                                    }}
+                                                                    placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                                />
                                                                 <button
                                                                     onClick={() => setEditField(null)}
                                                                     className="text-slate-400 hover:text-white text-xs ml-2"

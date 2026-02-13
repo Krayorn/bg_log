@@ -3,6 +3,7 @@
 namespace App\Game\CustomField;
 
 use App\Game\Game;
+use App\Player\Player;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,7 +40,17 @@ class CustomField
         #[ORM\Column(type: 'boolean', options: [
             'default' => false,
         ])]
-        private readonly bool $multiple = false,
+        private readonly bool $multiple,
+        #[ORM\ManyToOne(targetEntity: Player::class)]
+        #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id')]
+        private readonly Player $player,
+        #[ORM\Column(type: 'boolean', options: [
+            'default' => false,
+        ])]
+        private bool $shareable = false,
+        #[ORM\ManyToOne(targetEntity: self::class)]
+        #[ORM\JoinColumn(name: 'origin_custom_field_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+        private readonly ?self $originCustomField = null,
     ) {
         $this->id = Uuid::uuid4();
         $this->enumValues = new ArrayCollection();
@@ -82,7 +93,15 @@ class CustomField
             'global' => $this->global,
             'multiple' => $this->multiple,
             'enumValues' => array_values(array_map(fn ($v) => $v->view(), $this->enumValues->toArray())),
+            'player' => $this->player?->getId(),
+            'shareable' => $this->shareable,
+            'originCustomField' => $this->originCustomField?->getId(),
         ];
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     public function getGame(): Game
@@ -90,16 +109,48 @@ class CustomField
         return $this->game;
     }
 
+    public function getPlayer(): ?Player
+    {
+        return $this->player;
+    }
+
+    public function isShareable(): bool
+    {
+        return $this->shareable;
+    }
+
+    public function setShareable(bool $shareable): void
+    {
+        if ($this->originCustomField instanceof self) {
+            throw new \DomainException('A copied custom field cannot be made shareable');
+        }
+
+        $this->shareable = $shareable;
+    }
+
+    public function getOriginCustomField(): ?self
+    {
+        return $this->originCustomField;
+    }
+
     public function setKind(CustomFieldKind $kind): void
     {
+        if ($this->originCustomField instanceof self) {
+            throw new \DomainException('A copied custom field cannot be modified');
+        }
+
         $this->kind = $kind;
     }
 
     /**
      * @param array<string> $values
      */
-    public function syncEnumValues(array $values, EntityManagerInterface $em): void
+    public function syncEnumValues(array $values, EntityManagerInterface $em, bool $fromCopy = false): void
     {
+        if (! $fromCopy && $this->originCustomField instanceof self) {
+            throw new \DomainException('A copied custom field cannot be modified');
+        }
+
         foreach ($this->enumValues as $existing) {
             if (! in_array($existing->getValue(), $values, true)) {
                 $this->enumValues->removeElement($existing);

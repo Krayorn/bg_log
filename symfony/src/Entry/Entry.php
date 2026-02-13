@@ -41,6 +41,9 @@ class Entry
     #[ORM\JoinColumn(name: 'campaign_id', referencedColumnName: 'id', nullable: true)]
     private ?Campaign $campaign = null;
 
+    #[ORM\Column(type: 'datetimetz_immutable')]
+    private DateTimeImmutable $createdAt;
+
     /**
      * @param array<array{player: Player, note: string, won: bool|null, customFields?: array<array{id: string, value: string|array<string>}>}> $players
      */
@@ -58,6 +61,7 @@ class Entry
         private ?GameOwned        $gameUsed,
     ) {
         $this->id = Uuid::uuid4();
+        $this->createdAt = new DateTimeImmutable();
 
         $this->customFields = new ArrayCollection();
         $this->playerResults = new ArrayCollection();
@@ -91,6 +95,7 @@ class Entry
             'game' => $this->game->view(),
             'note' => $this->note,
             'playedAt' => $this->playedAt,
+            'createdAt' => $this->createdAt,
             'players' => array_values(array_map(fn ($playerResult) => $playerResult->view(), $this->playerResults->toArray())),
             'gameUsed' => $this->gameUsed?->view(),
             'customFields' => array_values(array_map(fn ($customField) => $customField->view(), $this->customFields->toArray())),

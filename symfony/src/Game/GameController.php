@@ -5,6 +5,7 @@ namespace App\Game;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldKind;
 use App\Game\CustomField\CustomFieldRepository;
+use App\Game\CustomField\CustomFieldVoter;
 use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -232,6 +233,9 @@ class GameController extends AbstractController
     #[Route('api/game/{game}/customFields', methods: 'POST')]
     public function addCustomField(Request $request, Game $game, EntityManagerInterface $entityManager, CustomFieldRepository $customFieldRepository): Response
     {
+        /** @var Player $player */
+        $player = $this->getUser();
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 
@@ -243,23 +247,26 @@ class GameController extends AbstractController
         $alreadyExist = $customFieldRepository->findOneBy([
             'game' => $game,
             'name' => $name,
+            'player' => $player,
         ]);
 
         if ($alreadyExist !== null) {
             throw new \Exception('custom field with this name already exist on this game');
         }
 
-        $customField = new CustomField($game, $name, $kind, $global, $multiple);
+        $customField = new CustomField($game, $name, $kind, $global, $multiple, $player);
 
         $entityManager->persist($customField);
         $entityManager->flush();
 
-        return new JsonResponse($game->view(), Response::HTTP_OK);
+        return new JsonResponse($customField->view(), Response::HTTP_CREATED);
     }
 
     #[Route('api/customFields/{customField}', methods: 'PATCH')]
     public function updateCustomField(CustomField $customField, Request $request, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(CustomFieldVoter::CUSTOM_FIELD_EDIT, $customField);
+
         $content = $request->getContent();
         $body = json_decode($content, true);
 
@@ -301,14 +308,21 @@ class GameController extends AbstractController
             $customField->syncEnumValues($body['enumValues'], $entityManager);
         }
 
+        if (isset($body['shareable'])) {
+            $this->denyAccessUnlessGranted(CustomFieldVoter::CUSTOM_FIELD_TOGGLE_SHAREABLE, $customField);
+            $customField->setShareable((bool) $body['shareable']);
+        }
+
         $entityManager->flush();
 
-        return new JsonResponse($customField->getGame()->view(), Response::HTTP_OK);
+        return new JsonResponse($customField->view(), Response::HTTP_OK);
     }
 
     #[Route('api/customFields/{customField}', methods: 'DELETE')]
     public function deleteCustomField(CustomField $customField, EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted(CustomFieldVoter::CUSTOM_FIELD_DELETE, $customField);
+
         $entityManager->createQuery('DELETE FROM App\Entry\CustomFieldValue cfv WHERE cfv.customField = :cf')
             ->setParameter('cf', $customField->getId(), 'uuid')
             ->execute();
@@ -317,5 +331,69 @@ class GameController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('api/customFields/{customField}/copy', methods: 'POST')]
+    public function copyCustomField(CustomField $customField, EntityManagerInterface $entityManager, CustomFieldRepository $customFieldRepository): Response
+    {
+        /** @var Player $player */
+        $player = $this->getUser();
+
+        if (! $customField->isShareable()) {
+            throw new BadRequestException('This custom field is not shareable');
+        }
+
+        $alreadyExist = $customFieldRepository->findOneBy([
+            'game' => $customField->getGame(),
+            'name' => $customField->getName(),
+            'player' => $player,
+        ]);
+
+        if ($alreadyExist !== null) {
+            throw new \Exception('You already have a custom field with this name for this game');
+        }
+
+        $copy = new CustomField(
+            $customField->getGame(),
+            $customField->getName(),
+            $customField->getKind()->value,
+            $customField->isGlobal(),
+            $customField->isMultiple(),
+            $player,
+            false,
+            $customField,
+        );
+
+        $entityManager->persist($copy);
+        $entityManager->flush();
+
+        // Sync enum values if the original has any
+        // We need to read enum values from the original and set them on the copy
+        $originalView = $customField->view();
+        if ($originalView['enumValues'] !== []) {
+            $enumValues = array_map(fn ($v) => $v['value'], $originalView['enumValues']);
+            $copy->syncEnumValues($enumValues, $entityManager, true);
+            $entityManager->flush();
+        }
+
+        return new JsonResponse($copy->view(), Response::HTTP_CREATED);
+    }
+
+    #[Route('api/game/{game}/customFields', methods: 'GET')]
+    public function getCustomFields(Game $game, CustomFieldRepository $customFieldRepository): Response
+    {
+        /** @var Player $player */
+        $player = $this->getUser();
+
+        $myFields = $customFieldRepository->findBy([
+            'game' => $game,
+            'player' => $player,
+        ]);
+        $shareableFields = $customFieldRepository->findShareableForGame($game, $player);
+
+        return new JsonResponse([
+            'myFields' => array_values(array_map(fn ($cf) => $cf->view(), $myFields)),
+            'shareableFields' => array_values(array_map(fn ($cf) => $cf->view(), $shareableFields)),
+        ], Response::HTTP_OK);
     }
 }

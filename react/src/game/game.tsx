@@ -13,6 +13,11 @@ type CustomField = {
     name: string
     global: boolean
     id: string
+    multiple: boolean
+    enumValues: { id: string; value: string }[]
+    player: string | null
+    shareable: boolean
+    originCustomField: string | null
 }
 
 type CustomFieldValue = {
@@ -39,6 +44,9 @@ type Entry = {
     playedAt: {
         date: string
     }
+    createdAt: {
+        date: string
+    }
     customFields: CustomFieldValue[]
     campaign?: {
         id: string
@@ -49,7 +57,6 @@ type Entry = {
 type Game = {
     name: string
     id: string
-    customFields: CustomField[]
 }
 
 type GameStats = {
@@ -67,6 +74,8 @@ export default function Game() {
     const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
     const [showStatistics, setShowStatistics] = useState(false)
     const [showCampaigns, setShowCampaigns] = useState(false)
+    const [customFields, setCustomFields] = useState<CustomField[]>([])
+    const [shareableFields, setShareableFields] = useState<CustomField[]>([])
     const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
 
     const [searchParams] = useSearchParams();
@@ -105,6 +114,8 @@ export default function Game() {
         setEntries([])
         setGame(null)
         setGameStats(null)
+        setCustomFields([])
+        setShareableFields([])
     }, [gameId])
 
     useEffect(() => {
@@ -125,6 +136,10 @@ export default function Game() {
     useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
     useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
     useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
+    useRequest(`/game/${gameId}/customFields`, [gameId], (data: { myFields: CustomField[], shareableFields: CustomField[] }) => {
+        setCustomFields(data.myFields)
+        setShareableFields(data.shareableFields)
+    })
 
     if (game === null) {
         return (
@@ -146,7 +161,7 @@ export default function Game() {
                         >
                             <h1 className="text-lg font-semibold">{game.name}</h1>
                         </div>
-                        {game.customFields.length > 0 && (
+                        {customFields.length > 0 && (
                             <button
                                 onClick={toggleStatistics}
                                 className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showStatistics
@@ -193,11 +208,23 @@ export default function Game() {
                     {showCampaigns ? (
                         <CampaignPanel gameId={gameId} />
                     ) : showStatistics ? (
-                        <StatisticsPanel gameId={gameId} playerId={playerId} customFields={game.customFields} />
+                        <StatisticsPanel gameId={gameId} playerId={playerId} customFields={customFields} />
                     ) : selectedEntry ? (
-                        <EntryDetailPanel key={selectedEntry.id} game={game} gameId={gameId} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} />
+                        <EntryDetailPanel key={selectedEntry.id} gameId={gameId} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} customFields={customFields} />
                     ) : (
-                        <GameDetailPanel game={game} gameStats={gameStats} playerId={playerId} onEntryCreated={onEntryCreated} onGameUpdated={setGame} />
+                        <GameDetailPanel 
+                            game={game} 
+                            gameStats={gameStats} 
+                            playerId={playerId} 
+                            onEntryCreated={onEntryCreated} 
+                            onGameUpdated={setGame}
+                            customFields={customFields}
+                            shareableFields={shareableFields}
+                            onCustomFieldsChanged={(myFields: CustomField[], shareableFieldsUpdated: CustomField[]) => {
+                                setCustomFields(myFields)
+                                setShareableFields(shareableFieldsUpdated)
+                            }}
+                        />
                     )}
                 </section>
             </div>
