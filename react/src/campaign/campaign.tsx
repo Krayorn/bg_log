@@ -357,8 +357,8 @@ export default function CampaignPage() {
                     )}
                 </div>
 
-                <div className="flex gap-6">
-                    <section className="flex-1">
+                <div className="flex gap-6 items-start">
+                    <section className="flex-1 min-w-0">
                         <h2 className="text-lg font-semibold mb-4">Sessions</h2>
                         {sortedEntries.length === 0 ? (
                             <div className="border border-slate-600 rounded-lg p-8 bg-slate-900/30 text-center">
@@ -512,7 +512,7 @@ export default function CampaignPage() {
                         )}
                     </section>
 
-                    <aside className="w-72 shrink-0">
+                    <aside className="w-72 shrink-0 sticky top-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold">Campaign State</h2>
                             {selectedEntry && selectedEntry !== lastEntry?.id ? (

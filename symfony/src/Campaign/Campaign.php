@@ -59,7 +59,11 @@ class Campaign
     public function view(): array
     {
         $sortedEntries = $this->entries->toArray();
-        usort($sortedEntries, fn (Entry $a, Entry $b) => $a->getPlayedAt() <=> $b->getPlayedAt());
+        usort($sortedEntries, function (Entry $a, Entry $b) {
+            $playedAtCmp = $a->getPlayedAt() <=> $b->getPlayedAt();
+
+            return $playedAtCmp !== 0 ? $playedAtCmp : $a->getCreatedAt() <=> $b->getCreatedAt();
+        });
 
         /** @var array{campaign: array<string, mixed>, players: array<string, array{player: array<string, mixed>, state: array<string, mixed>}>} $state */
         $state = [

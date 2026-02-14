@@ -286,4 +286,9 @@ class Entry
     {
         return $this->playedAt;
     }
+
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
 }
