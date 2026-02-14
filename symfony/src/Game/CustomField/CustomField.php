@@ -40,10 +40,10 @@ class CustomField
         #[ORM\Column(type: 'boolean', options: [
             'default' => false,
         ])]
-        private readonly bool $multiple,
+        private readonly bool $multiple = false,
         #[ORM\ManyToOne(targetEntity: Player::class)]
-        #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id')]
-        private readonly Player $player,
+        #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: true)]
+        private readonly ?Player $player = null,
         #[ORM\Column(type: 'boolean', options: [
             'default' => false,
         ])]

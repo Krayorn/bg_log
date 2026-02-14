@@ -37,7 +37,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         $qb->orderBy('e.playedAt', 'DESC')
-           ->addOrderBy('e.createdAt', 'DESC');
+            ->addOrderBy('e.createdAt', 'DESC');
 
         return $qb->getQuery()
             ->getResult();

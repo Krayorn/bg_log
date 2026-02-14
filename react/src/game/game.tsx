@@ -1,6 +1,7 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react";
 import { useRequest } from '../hooks/useRequest'
+import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { StatisticsPanel } from './statistics'
 import { EntryListItem, EntryDetailPanel } from './entryPanel'
@@ -81,6 +82,16 @@ export default function Game() {
     const [searchParams] = useSearchParams();
 
     const playerId = searchParams.get('playerId')
+    const isAdmin = (() => {
+        const token = localStorage.getItem('jwt')
+        if (!token) return false
+        try {
+            const decoded = parseJwt(JSON.parse(token))
+            return Array.isArray(decoded.roles) && decoded.roles.includes('ROLE_ADMIN')
+        } catch {
+            return false
+        }
+    })()
     const entryIdFromUrl = searchParams.get('entryId')
 
     const selectedEntry = selectedEntryId ? entries.find(e => e.id === selectedEntryId) ?? null : null
@@ -224,6 +235,7 @@ export default function Game() {
                                 setCustomFields(myFields)
                                 setShareableFields(shareableFieldsUpdated)
                             }}
+                            isAdmin={isAdmin}
                         />
                     )}
                 </section>

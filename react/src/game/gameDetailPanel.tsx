@@ -96,9 +96,10 @@ type GameDetailPanelProps = {
     customFields: CustomField[]
     shareableFields: CustomField[]
     onCustomFieldsChanged: (myFields: CustomField[], shareableFields: CustomField[]) => void
+    isAdmin: boolean
 }
 
-export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, customFields, shareableFields, onCustomFieldsChanged }: GameDetailPanelProps) {
+export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, customFields, shareableFields, onCustomFieldsChanged, isAdmin }: GameDetailPanelProps) {
     const [customFieldName, setCustomFieldName] = useState<string>("")
     const [customFieldType, setCustomFieldType] = useState<CustomFieldType | string>("")
     const [entrySpecific, setEntrySpecific] = useState<boolean>(false)
@@ -209,6 +210,13 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
         const { data, ok } = await apiPost<CustomField>(`/customFields/${customFieldId}/copy`)
         if (ok && data) {
             onCustomFieldsChanged([...customFields, data], shareableFields)
+        }
+    }
+
+    const toggleShareable = async (customField: CustomField) => {
+        const { data, ok } = await apiPatch<CustomField>(`/customFields/${customField.id}`, { shareable: !customField.shareable })
+        if (ok && data) {
+            onCustomFieldsChanged(customFields.map(cf => cf.id === data.id ? data : cf), shareableFields)
         }
     }
 
@@ -817,6 +825,15 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                                             </button>
                                         )}
                                     </div>
+                                    {isAdmin && !customField.originCustomField && (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleShareable(customField)}
+                                            className={`mt-1 px-2 py-0.5 rounded text-xs transition-colors self-start ${customField.shareable ? 'bg-emerald-900/50 text-emerald-300 hover:bg-red-900/50 hover:text-red-300' : 'bg-slate-700 text-slate-400 hover:bg-emerald-900/50 hover:text-emerald-300'}`}
+                                        >
+                                            {customField.shareable ? 'Shared ✓' : 'Make shareable'}
+                                        </button>
+                                    )}
                                     {customField.kind === 'enum' && (
                                         <div className="mt-2 border-t border-slate-600 pt-2">
                                             <span className="text-slate-400 text-xs">Allowed Values</span>
