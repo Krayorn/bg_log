@@ -342,28 +342,6 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allP
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-slate-300 text-xs">Session Notes</label>
-                        {editField === 'note' ? (
-                            <textarea
-                                autoFocus
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                onBlur={handleNoteBlur}
-                                placeholder="Notes about the game session..."
-                                rows={3}
-                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                            />
-                        ) : (
-                            <div
-                                onClick={() => setEditField('note')}
-                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 min-h-[60px]"
-                            >
-                                {note || <span className="text-slate-500">No notes...</span>}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Campaign</label>
                         <select
                             className="p-2 rounded bg-slate-700 text-white border border-slate-500"
@@ -383,6 +361,28 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allP
                                 <Scroll className="w-3.5 h-3.5" />
                                 Go to campaign page
                             </Link>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-slate-300 text-xs">Session Notes</label>
+                        {editField === 'note' ? (
+                            <textarea
+                                autoFocus
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                onBlur={handleNoteBlur}
+                                placeholder="Notes about the game session..."
+                                rows={3}
+                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                            />
+                        ) : (
+                            <div
+                                onClick={() => setEditField('note')}
+                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 min-h-[60px]"
+                            >
+                                {note || <span className="text-slate-500">No notes...</span>}
+                            </div>
                         )}
                     </div>
 

@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useSearchParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
-import { apiPatch, apiPost, apiDelete } from '../hooks/useApi'
+import { apiGet, apiPatch, apiPost, apiDelete } from '../hooks/useApi'
+import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
 
@@ -36,6 +37,9 @@ type CampaignKey = {
     type: 'string' | 'number' | 'list' | 'counted_list'
     global: boolean
     scopedToCustomField: CustomField | null
+    player: string | null
+    shareable: boolean
+    originCampaignKey: string | null
 }
 
 type CampaignEvent = {
@@ -101,7 +105,7 @@ function formatEventLabel(event: CampaignEvent): string {
             return `${campaignKey.name} → ${payload.value}`
         case 'list':
             if (verb === 'add') return `${campaignKey.name}: +${(payload.values as string[]).join(', ')}`
-            return `${campaignKey.name}: -${payload.value}`
+            return `${campaignKey.name}: -${(payload.values as string[]).join(', ')}`
         case 'counted_list': {
             const items = payload.items as { item: string; quantity: number }[]
             const prefix = verb === 'add' ? '+' : '-'
@@ -189,8 +193,33 @@ export default function CampaignPage() {
     const [addingEventFor, setAddingEventFor] = useState<string | null>(null)
     const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
     const [showKeyManager, setShowKeyManager] = useState(false)
+    const [myCampaignKeys, setMyCampaignKeys] = useState<CampaignKey[]>([])
+    const [shareableCampaignKeys, setShareableCampaignKeys] = useState<CampaignKey[]>([])
+
+    const isAdmin = (() => {
+        const token = localStorage.getItem('jwt')
+        if (!token) return false
+        try {
+            const decoded = parseJwt(JSON.parse(token))
+            return Array.isArray(decoded.roles) && decoded.roles.includes('ROLE_ADMIN')
+        } catch {
+            return false
+        }
+    })()
 
     useRequest(`/campaigns/${campaignId}`, [campaignId], setCampaign)
+
+    const gameId = campaign?.game.id
+    useEffect(() => {
+        if (!gameId) return
+        apiGet<{ myKeys: CampaignKey[], shareableKeys: CampaignKey[] }>(`/game/${gameId}/campaignKeys`)
+            .then(({ data, ok }) => {
+                if (ok && data) {
+                    setMyCampaignKeys(data.myKeys)
+                    setShareableCampaignKeys(data.shareableKeys)
+                }
+            })
+    }, [gameId])
 
     const handleStartEdit = () => {
         if (!campaign) return
@@ -234,19 +263,30 @@ export default function CampaignPage() {
         if (!campaign) return
         const body: Record<string, unknown> = { name, type, global }
         if (scopedToCustomField) body.scopedToCustomField = scopedToCustomField
-        const { data, ok } = await apiPost<Campaign['game']>(`/game/${campaign.game.id}/campaignKeys`, body)
+        const { data, ok } = await apiPost<CampaignKey>(`/game/${campaign.game.id}/campaignKeys`, body)
         if (ok && data) {
-            setCampaign(prev => prev ? { ...prev, game: { ...prev.game, campaignKeys: data.campaignKeys } } : prev)
+            setMyCampaignKeys(prev => [...prev, data])
         }
     }
 
     const handleDeleteKey = async (keyId: string) => {
         const { ok } = await apiDelete(`/campaignKeys/${keyId}`)
         if (ok) {
-            setCampaign(prev => prev ? {
-                ...prev,
-                game: { ...prev.game, campaignKeys: prev.game.campaignKeys.filter(k => k.id !== keyId) },
-            } : prev)
+            setMyCampaignKeys(prev => prev.filter(k => k.id !== keyId))
+        }
+    }
+
+    const handleToggleShareable = async (key: CampaignKey) => {
+        const { data, ok } = await apiPatch<CampaignKey>(`/campaignKeys/${key.id}`, { shareable: !key.shareable })
+        if (ok && data) {
+            setMyCampaignKeys(prev => prev.map(k => k.id === data.id ? data : k))
+        }
+    }
+
+    const handleCopyCampaignKey = async (keyId: string) => {
+        const { data, ok } = await apiPost<CampaignKey>(`/campaignKeys/${keyId}/copy`)
+        if (ok && data) {
+            setMyCampaignKeys(prev => [...prev, data])
         }
     }
 
@@ -262,7 +302,7 @@ export default function CampaignPage() {
 
     const lastEntry = sortedEntries.length > 0 ? sortedEntries[sortedEntries.length - 1] : null
     const currentState: CampaignState = lastEntry?.stateAfter ?? { campaign: {}, players: {} }
-    const campaignKeys = campaign.game.campaignKeys ?? []
+    const campaignKeys = myCampaignKeys
 
     const gameUrl = `/games/${campaign.game.id}?playerId=${playerId}`
 
@@ -350,9 +390,13 @@ export default function CampaignPage() {
                     {showKeyManager && (
                         <KeyManager
                             keys={campaignKeys}
+                            shareableKeys={shareableCampaignKeys}
                             customFields={campaign.game.customFields}
                             onAdd={handleAddKey}
                             onDelete={handleDeleteKey}
+                            onToggleShareable={handleToggleShareable}
+                            onCopy={handleCopyCampaignKey}
+                            isAdmin={isAdmin}
                         />
                     )}
                 </div>
@@ -538,11 +582,15 @@ export default function CampaignPage() {
 
 const KEY_TYPES = ['string', 'number', 'list', 'counted_list'] as const
 
-function KeyManager({ keys, customFields, onAdd, onDelete }: {
+function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onToggleShareable, onCopy, isAdmin }: {
     keys: CampaignKey[]
+    shareableKeys: CampaignKey[]
     customFields: CustomField[]
     onAdd: (name: string, type: string, global: boolean, scopedToCustomField?: string) => void
     onDelete: (keyId: string) => void
+    onToggleShareable: (key: CampaignKey) => void
+    onCopy: (keyId: string) => void
+    isAdmin: boolean
 }) {
     const [name, setName] = useState('')
     const [type, setType] = useState<string>('number')
@@ -576,17 +624,63 @@ function KeyManager({ keys, customFields, onAdd, onDelete }: {
                                     <span className={`text-xs ${k.scopedToCustomField ? 'text-purple-400/60' : 'text-slate-500'}`}>
                                         {kScope}
                                     </span>
+                                    {k.originCampaignKey && (
+                                        <span className="text-xs text-cyan-400/60">copied</span>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={() => onDelete(k.id)}
-                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                                >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {isAdmin && !k.originCampaignKey && (
+                                        <button
+                                            onClick={() => onToggleShareable(k)}
+                                            className={`text-xs px-1.5 py-0.5 rounded transition-colors ${k.shareable ? 'bg-emerald-900/50 text-emerald-300 hover:bg-red-900/50 hover:text-red-300' : 'bg-slate-700 text-slate-400 hover:bg-emerald-900/50 hover:text-emerald-300'}`}
+                                        >
+                                            {k.shareable ? 'Shared ✓' : 'Share'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => onDelete(k.id)}
+                                        className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                             </div>
                         )
                     })}
                 </div>
+            )}
+
+            {shareableKeys.length > 0 && (
+                <>
+                    <hr className="border-slate-600 my-3" />
+                    <h4 className="text-xs font-semibold text-slate-400 mb-2">Available Shared Keys</h4>
+                    <div className="flex flex-col gap-1.5 mb-4">
+                        {shareableKeys.map(k => {
+                            const kScope = k.scopedToCustomField
+                                ? k.scopedToCustomField.name
+                                : k.global ? 'Entry' : 'Player'
+                            return (
+                                <div key={k.id} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="text-slate-300">{k.name}</span>
+                                        <span className="text-xs text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
+                                            {k.type.replace('_', ' ')}
+                                        </span>
+                                        <span className={`text-xs ${k.scopedToCustomField ? 'text-purple-400/60' : 'text-slate-500'}`}>
+                                            {kScope}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => onCopy(k.id)}
+                                        className="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs transition-colors"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </>
             )}
 
             <div className="flex flex-col gap-2">
@@ -652,7 +746,6 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
     const [stringValue, setStringValue] = useState('')
     const [numberAmount, setNumberAmount] = useState('')
     const [listItems, setListItems] = useState<string[]>([''])
-    const [listRemoveValue, setListRemoveValue] = useState('')
     const [countedItems, setCountedItems] = useState<{ item: string; quantity: string }[]>([{ item: '', quantity: '1' }])
 
     const handleKeyChange = (keyId: string) => {
@@ -694,15 +787,11 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
             case 'number':
                 if (!numberAmount.trim() || isNaN(Number(numberAmount))) return []
                 return [{ verb, amount: Number(numberAmount) }]
-            case 'list':
-                if (verb === 'add') {
-                    const values = listItems.map(v => v.trim()).filter(v => v !== '')
-                    if (values.length === 0) return []
-                    return [{ verb: 'add', values }]
-                } else {
-                    if (!listRemoveValue.trim()) return []
-                    return [{ verb: 'remove', value: listRemoveValue.trim() }]
-                }
+            case 'list': {
+                const values = listItems.map(v => v.trim()).filter(v => v !== '')
+                if (values.length === 0) return []
+                return [{ verb, values }]
+            }
             case 'counted_list': {
                 const filled = countedItems.filter(c => c.item.trim() !== '')
                 if (filled.length === 0) return []
@@ -725,7 +814,6 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
         setStringValue('')
         setNumberAmount('')
         setListItems([''])
-        setListRemoveValue('')
         setCountedItems([{ item: '', quantity: '1' }])
     }
 
@@ -817,13 +905,13 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
                 />
             )}
 
-            {selectedKey?.type === 'list' && verb === 'add' && (
+            {selectedKey?.type === 'list' && (
                 <div className="flex flex-col gap-1">
                     {listItems.map((item, i) => (
                         <input
                             key={i}
                             autoFocus={i === 0}
-                            placeholder={i === 0 ? "Item" : "Another item..."}
+                            placeholder={i === 0 ? (verb === 'add' ? "Item" : "Value to remove") : (verb === 'add' ? "Another item..." : "Another value to remove...")}
                             value={item}
                             onChange={e => updateListItem(i, e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter' && i === listItems.length - 1) handleSubmit() }}
@@ -831,17 +919,6 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
                         />
                     ))}
                 </div>
-            )}
-
-            {selectedKey?.type === 'list' && verb === 'remove' && (
-                <input
-                    autoFocus
-                    placeholder="Value to remove"
-                    value={listRemoveValue}
-                    onChange={e => setListRemoveValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }}
-                    className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
-                />
             )}
 
             {selectedKey?.type === 'counted_list' && verb === 'add' && (

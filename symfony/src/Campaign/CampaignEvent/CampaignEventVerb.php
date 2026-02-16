@@ -33,7 +33,7 @@ enum CampaignEventVerb: string
                 default => throw new InvalidEventPayloadException("Verb 'add' is not allowed for type '{$type->value}'"),
             },
             self::REMOVE => match ($type) {
-                CampaignKeyType::LIST => $this->requireString($payload, 'value'),
+                CampaignKeyType::LIST => $this->requireStringArray($payload, 'values'),
                 CampaignKeyType::COUNTED_LIST => $this->requireItemsArray($payload),
                 default => throw new InvalidEventPayloadException("Verb 'remove' is not allowed for type '{$type->value}'"),
             },
@@ -86,9 +86,11 @@ enum CampaignEventVerb: string
     private function removeFromList(array &$target, string $keyName, array $payload): void
     {
         $target[$keyName] ??= [];
-        $idx = array_search($payload['value'], $target[$keyName], true);
-        if ($idx !== false) {
-            array_splice($target[$keyName], (int) $idx, 1);
+        foreach ($payload['values'] as $v) {
+            $idx = array_search($v, $target[$keyName], true);
+            if ($idx !== false) {
+                array_splice($target[$keyName], (int) $idx, 1);
+            }
         }
     }
 

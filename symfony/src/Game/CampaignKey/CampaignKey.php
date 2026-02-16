@@ -4,6 +4,7 @@ namespace App\Game\CampaignKey;
 
 use App\Game\CustomField\CustomField;
 use App\Game\Game;
+use App\Player\Player;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -31,6 +32,14 @@ class CampaignKey
         #[ORM\ManyToOne(targetEntity: CustomField::class)]
         #[ORM\JoinColumn(name: 'scoped_to_custom_field_id', referencedColumnName: 'id', nullable: true)]
         private readonly ?CustomField $scopedToCustomField = null,
+        #[ORM\ManyToOne(targetEntity: Player::class)]
+        #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: true)]
+        private readonly ?Player $player = null,
+        #[ORM\Column(type: 'boolean', options: ['default' => false])]
+        private bool $shareable = false,
+        #[ORM\ManyToOne(targetEntity: self::class)]
+        #[ORM\JoinColumn(name: 'origin_campaign_key_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+        private readonly ?self $originCampaignKey = null,
     ) {
         $this->id = Uuid::uuid4();
         $typeEnum = CampaignKeyType::tryFrom($type);
@@ -70,6 +79,30 @@ class CampaignKey
         return $this->scopedToCustomField;
     }
 
+    public function getPlayer(): ?Player
+    {
+        return $this->player;
+    }
+
+    public function isShareable(): bool
+    {
+        return $this->shareable;
+    }
+
+    public function setShareable(bool $shareable): void
+    {
+        if ($this->originCampaignKey instanceof self) {
+            throw new \DomainException('A copied campaign key cannot be made shareable');
+        }
+
+        $this->shareable = $shareable;
+    }
+
+    public function getOriginCampaignKey(): ?self
+    {
+        return $this->originCampaignKey;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -81,6 +114,9 @@ class CampaignKey
             'type' => $this->type->value,
             'global' => $this->global,
             'scopedToCustomField' => $this->scopedToCustomField?->view(),
+            'player' => $this->player?->getId(),
+            'shareable' => $this->shareable,
+            'originCampaignKey' => $this->originCampaignKey?->getId(),
         ];
     }
 }
