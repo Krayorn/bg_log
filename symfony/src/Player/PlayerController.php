@@ -3,6 +3,7 @@
 namespace App\Player;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -209,7 +210,8 @@ class PlayerController extends AbstractController
         Player $guestPlayer,
         Request $request,
         EntityManagerInterface $entityManager,
-        PlayerRepository $playerRepository
+        PlayerRepository $playerRepository,
+        LoggerInterface $logger
     ): Response {
         $this->denyAccessUnlessGranted(PlayerRightVoter::GUEST_MANAGE, $guestPlayer);
 
@@ -257,8 +259,14 @@ class PlayerController extends AbstractController
             $entityManager->remove($guestPlayer);
             $entityManager->flush();
             $conn->commit();
-        } catch (\Exception) {
+        } catch (\Exception $e) {
             $conn->rollBack();
+            $logger->error('Synchronization failed', [
+                'guestPlayerId' => $guestPlayer->getId(),
+                'registeredPlayerId' => $registeredPlayerId,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return new JsonResponse([
                 'error' => 'Synchronization failed',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
