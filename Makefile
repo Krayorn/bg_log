@@ -1,4 +1,4 @@
-.PHONY: build up down symfony deploy
+.PHONY: build up down symfony deploy test
 
 build:
 	docker-compose up -d --build
@@ -19,6 +19,9 @@ backend-precommit:
 
 frontend-precommit:
 	cd react && npm run lint
+
+test:
+	docker exec bg_log-symfony-1 vendor/bin/phpunit
 
 pre-commit: backend-precommit frontend-precommit
 

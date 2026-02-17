@@ -88,17 +88,6 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
         }
     }
 
-    if (customFields.length === 0) {
-        return (
-            <div className="border border-slate-600 rounded-lg p-8 bg-slate-900/30 text-center">
-                <p className="text-slate-400">No custom fields defined for this game.</p>
-                <p className="text-slate-500 text-sm mt-2">
-                    Add custom fields in the game page to enable statistics.
-                </p>
-            </div>
-        )
-    }
-
     return (
         <div className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold text-white">Statistics</h2>

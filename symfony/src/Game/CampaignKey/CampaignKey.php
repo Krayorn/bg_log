@@ -35,7 +35,9 @@ class CampaignKey
         #[ORM\ManyToOne(targetEntity: Player::class)]
         #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id', nullable: true)]
         private readonly ?Player $player = null,
-        #[ORM\Column(type: 'boolean', options: ['default' => false])]
+        #[ORM\Column(type: 'boolean', options: [
+            'default' => false,
+        ])]
         private bool $shareable = false,
         #[ORM\ManyToOne(targetEntity: self::class)]
         #[ORM\JoinColumn(name: 'origin_campaign_key_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]

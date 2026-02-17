@@ -28,6 +28,7 @@ export default function PlayerSearchSelect({
     const [open, setOpen] = useState(false)
     const [highlightIndex, setHighlightIndex] = useState(-1)
     const [creating, setCreating] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -63,8 +64,9 @@ export default function PlayerSearchSelect({
     const handleCreate = async () => {
         if (creating || !query.trim()) return
         setCreating(true)
+        setCreateError(null)
 
-        const { data, ok } = await apiPost<Player>('/players', { name: query.trim() })
+        const { data, error, ok } = await apiPost<Player>('/players', { name: query.trim() })
 
         setCreating(false)
         if (ok && data) {
@@ -72,6 +74,8 @@ export default function PlayerSearchSelect({
             onSelect(data)
             setQuery("")
             setOpen(false)
+        } else {
+            setCreateError(error ?? 'Failed to create player')
         }
     }
 
@@ -104,7 +108,7 @@ export default function PlayerSearchSelect({
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={e => { setQuery(e.target.value); setOpen(true) }}
+                onChange={e => { setQuery(e.target.value); setOpen(true); setCreateError(null) }}
                 onFocus={() => setOpen(true)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
@@ -144,6 +148,9 @@ export default function PlayerSearchSelect({
                         </button>
                     )}
                 </div>
+            )}
+            {createError && (
+                <p className="text-red-400 text-xs mt-1">{createError}</p>
             )}
         </div>
     )

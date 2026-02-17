@@ -172,7 +172,6 @@ export default function Game() {
                         >
                             <h1 className="text-lg font-semibold">{game.name}</h1>
                         </div>
-                        {customFields.length > 0 && (
                             <button
                                 onClick={toggleStatistics}
                                 className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showStatistics
@@ -183,7 +182,6 @@ export default function Game() {
                                 <BarChart3 className="w-4 h-4" />
                                 Statistics
                             </button>
-                        )}
                         <button
                             onClick={toggleCampaigns}
                             className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showCampaigns

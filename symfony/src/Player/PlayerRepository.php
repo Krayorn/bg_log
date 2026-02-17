@@ -77,7 +77,7 @@ class PlayerRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('p');
 
-        if ($forPlayer instanceof \App\Player\Player) {
+        if ($forPlayer instanceof Player) {
             $qb->where('p.registeredOn IS NOT NULL')
                 ->orWhere('p.inPartyOf = :forPlayer')
                 ->setParameter('forPlayer', $forPlayer);

@@ -15,6 +15,21 @@
 - Frontend styling: Tailwind CSS utility classes.
 - Keep changes within the relevant app directory.
 
+## Testing
+- Run tests: `make test` (runs PHPUnit inside Docker).
+- Tests live in `symfony/tests/`, mirroring the `src/` domain structure (e.g., `tests/Player/`).
+- Unit tests with mocked repositories — no HTTP or framework concerns in tests.
+- **Be pragmatic**: only write tests for real business rules, edge cases, or bug fixes. Don't test trivial CRUD (persist + flush). If there's no logic worth validating, skip the test.
+
+## Backend Patterns
+- **Handlers**: Business logic goes in handler classes under `Action/` folders (e.g., `Player/Action/CreateGuestPlayerHandler`). Controllers are thin HTTP adapters that parse requests, call handlers, and map exceptions to responses.
+- **No Command DTO** unless the handler has 4+ parameters — pass primitives directly to `handle()`.
+- **Exceptions**: Domain exceptions go in `Exception/` folders (e.g., `Player/Exception/DuplicateGuestPlayerException`). Controllers catch them and return appropriate HTTP responses.
+- **Controllers** extend `App\Utils\BaseController`. Use `$this->getPlayer()` (returns `Player`, non-nullable) instead of `$this->getUser()`.
+- **Request parsing**: Use `JsonPayload::fromRequest($request)` with typed accessors (`getString`, `getNonEmptyString`, `getOptionalString`) instead of manual `json_decode`.
+- **Static factories**: Prefer named static factory methods on entities when construction involves related setup (e.g., `Player::newGuest(name, number, owner)`).
+- **Cross-domain utilities** live in `App\Utils\` (e.g., `BaseController`, `JsonPayload`).
+
 ## Adding a New Aggregate Root (Symfony)
 When creating a new domain directory under `symfony/src/`:
 1. **Register routes** in `symfony/config/routes.yaml`.

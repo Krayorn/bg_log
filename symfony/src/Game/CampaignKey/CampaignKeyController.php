@@ -121,30 +121,28 @@ class CampaignKeyController extends AbstractController
 
             if ($existingCopy !== null) {
                 $copiedCustomField = $existingCopy;
-            } else {
+            } elseif ($scopedToCustomField->getPlayer() instanceof Player
+                && $scopedToCustomField->getPlayer()->getId()->equals($player->getId())) {
                 // Also check if the player owns the original custom field
-                if ($scopedToCustomField->getPlayer() instanceof Player
-                    && $scopedToCustomField->getPlayer()->getId()->equals($player->getId())) {
-                    $copiedCustomField = $scopedToCustomField;
-                } else {
-                    $copiedCustomField = new CustomField(
-                        $scopedToCustomField->getGame(),
-                        $scopedToCustomField->getName(),
-                        $scopedToCustomField->getKind()->value,
-                        $scopedToCustomField->isGlobal(),
-                        $scopedToCustomField->isMultiple(),
-                        $player,
-                        false,
-                        $scopedToCustomField,
-                    );
+                $copiedCustomField = $scopedToCustomField;
+            } else {
+                $copiedCustomField = new CustomField(
+                    $scopedToCustomField->getGame(),
+                    $scopedToCustomField->getName(),
+                    $scopedToCustomField->getKind()->value,
+                    $scopedToCustomField->isGlobal(),
+                    $scopedToCustomField->isMultiple(),
+                    $player,
+                    false,
+                    $scopedToCustomField,
+                );
 
-                    $entityManager->persist($copiedCustomField);
+                $entityManager->persist($copiedCustomField);
 
-                    $originalView = $scopedToCustomField->view();
-                    if ($originalView['enumValues'] !== []) {
-                        $enumValues = array_map(fn ($v) => $v['value'], $originalView['enumValues']);
-                        $copiedCustomField->syncEnumValues($enumValues, $entityManager, true);
-                    }
+                $originalView = $scopedToCustomField->view();
+                if ($originalView['enumValues'] !== []) {
+                    $enumValues = array_map(fn ($v) => $v['value'], $originalView['enumValues']);
+                    $copiedCustomField->syncEnumValues($enumValues, $entityManager, true);
                 }
             }
         }

@@ -34,7 +34,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Player $inPartyOf = null;
 
     public function __construct(
-        #[ORM\Column(type: 'string', unique: true)]
+        #[ORM\Column(type: 'string')]
         private readonly string $name,
         #[ORM\Column(type: 'integer', unique: true)]
         private readonly int $number,
@@ -42,6 +42,14 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         private ?string $email = null,
     ) {
         $this->id = Uuid::uuid4();
+    }
+
+    public static function newGuest(string $name, int $number, self $owner): self
+    {
+        $player = new self($name, $number);
+        $player->inPartyOf = $owner;
+
+        return $player;
     }
 
     public function getId(): UuidInterface

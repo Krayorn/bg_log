@@ -10,4 +10,4 @@ docker-compose.override.yml
 !docker-compose.override.yml.example
 
 # database backup
-bg_log_backup_2025.gz
+*.gz

@@ -2,16 +2,19 @@
 
 namespace App\Player;
 
+use App\Player\Action\CreateGuestPlayerHandler;
+use App\Player\Exception\DuplicateGuestPlayerException;
+use App\Utils\BaseController;
+use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
-class PlayerController extends AbstractController
+class PlayerController extends BaseController
 {
     #[Route('api/register', methods: 'POST')]
     public function register(
@@ -89,42 +92,17 @@ class PlayerController extends AbstractController
     }
 
     #[Route('api/players', methods: 'POST')]
-    public function createPlayer(Request $request, PlayerRepository $playerRepository, EntityManagerInterface $entityManager): Response
+    public function createPlayer(Request $request, CreateGuestPlayerHandler $handler): Response
     {
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+        $payload = JsonPayload::fromRequest($request);
 
-        $name = $body['name'] ?? '';
-        if ($name === '') {
+        try {
+            $player = $handler->handle($payload->getNonEmptyString('name'), $this->getPlayer());
+        } catch (DuplicateGuestPlayerException | \InvalidArgumentException $e) {
             return new JsonResponse([
-                'errors' => ['Player Name cannot be empty'],
+                'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        $errors = [];
-
-        $playerWithSameName = $playerRepository->findOneBy([
-            'name' => $name,
-        ]);
-        if ($playerWithSameName !== null) {
-            $errors[] = 'Already a player with the same name';
-        }
-
-        if ($errors !== []) {
-            return new JsonResponse([
-                'errors' => $errors,
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $player = new Player($name, $playerRepository->findNextNumber());
-
-        $currentUser = $this->getUser();
-        if ($currentUser instanceof Player) {
-            $player->setInPartyOf($currentUser);
-        }
-
-        $entityManager->persist($player);
-        $entityManager->flush();
 
         return new JsonResponse($player->view(), Response::HTTP_OK);
     }
@@ -132,8 +110,8 @@ class PlayerController extends AbstractController
     #[Route('api/players/{player}', methods: 'GET')]
     public function player(Player $player): Response
     {
-        $currentUser = $this->getUser();
-        $isOwner = $currentUser instanceof Player && $currentUser->getId()->equals($player->getId());
+        $currentPlayer = $this->getPlayer();
+        $isOwner = $currentPlayer->getId()->equals($player->getId());
 
         return new JsonResponse(
             $player->view($isOwner),
