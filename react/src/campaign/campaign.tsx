@@ -5,6 +5,7 @@ import { apiGet, apiPatch, apiPost, apiDelete } from '../hooks/useApi'
 import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
+import { AddEntryForm } from '../components/AddEntryForm'
 
 type CustomField = {
     kind: string
@@ -12,6 +13,10 @@ type CustomField = {
     global: boolean
     id: string
     multiple: boolean
+    enumValues: { id: string; value: string }[]
+    player: string | null
+    shareable: boolean
+    originCustomField: string | null
 }
 
 type CustomFieldValue = {
@@ -195,6 +200,8 @@ export default function CampaignPage() {
     const [showKeyManager, setShowKeyManager] = useState(false)
     const [myCampaignKeys, setMyCampaignKeys] = useState<CampaignKey[]>([])
     const [shareableCampaignKeys, setShareableCampaignKeys] = useState<CampaignKey[]>([])
+    const [showAddEntry, setShowAddEntry] = useState(false)
+    const [gameCustomFields, setGameCustomFields] = useState<CustomField[]>([])
 
     const isAdmin = (() => {
         const token = localStorage.getItem('jwt')
@@ -217,6 +224,12 @@ export default function CampaignPage() {
                 if (ok && data) {
                     setMyCampaignKeys(data.myKeys)
                     setShareableCampaignKeys(data.shareableKeys)
+                }
+            })
+        apiGet<{ myFields: CustomField[], shareableFields: CustomField[] }>(`/game/${gameId}/customFields`)
+            .then(({ data, ok }) => {
+                if (ok && data) {
+                    setGameCustomFields(data.myFields)
                 }
             })
     }, [gameId])
@@ -401,18 +414,47 @@ export default function CampaignPage() {
                     )}
                 </div>
 
+                <div className="mb-6">
+                    <button
+                        onClick={() => setShowAddEntry(!showAddEntry)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showAddEntry ? 'bg-slate-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-600'}`}
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Session
+                    </button>
+                    {showAddEntry && (
+                        <div className="mt-3 border border-slate-600/30 rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm">
+                            <AddEntryForm
+                                gameId={campaign.game.id}
+                                playerId={playerId}
+                                customFields={gameCustomFields}
+                                fixedCampaignId={campaignId}
+                                onEntryCreated={(newEntry) => {
+                                    setCampaign(prev => {
+                                        if (!prev) return prev
+                                        return {
+                                            ...prev,
+                                            entries: [...prev.entries, { ...newEntry, events: [], stateAfter: prev.entries.length > 0 ? prev.entries[prev.entries.length - 1].stateAfter : { campaign: {}, players: {} } }]
+                                        }
+                                    })
+                                    setShowAddEntry(false)
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+
                 <div className="flex gap-6 items-start">
                     <section className="flex-1 min-w-0">
                         <h2 className="text-lg font-semibold mb-4">Sessions</h2>
-                        {sortedEntries.length === 0 ? (
+                        {sortedEntries.length === 0 && !showAddEntry ? (
                             <div className="border border-slate-600 rounded-lg p-8 bg-slate-900/30 text-center">
                                 <p className="text-slate-400">No sessions yet.</p>
                                 <p className="text-slate-500 text-sm mt-1">
-                                    Link entries to this campaign from the{' '}
-                                    <Link to={gameUrl} className="text-cyan-400 hover:underline">game page</Link>.
+                                    Use the "Add Session" button above to create your first session.
                                 </p>
                             </div>
-                        ) : (
+                        ) : sortedEntries.length === 0 ? null : (
                             <div className="flex flex-col gap-3">
                                 {sortedEntries.map((entry, index) => (
                                     <div

@@ -3,67 +3,41 @@
 namespace App\Player;
 
 use App\Player\Action\CreateGuestPlayerHandler;
+use App\Player\Action\RegisterPlayerHandler;
+use App\Player\Action\SynchronizeGuestPlayerHandler;
 use App\Player\Exception\DuplicateGuestPlayerException;
+use App\Player\Exception\DuplicatePlayerNameException;
+use App\Player\Exception\InvalidEmailException;
+use App\Player\Exception\PlayerNotFoundException;
+use App\Player\Exception\PlayerNotGuestException;
+use App\Player\Exception\PlayerNotRegisteredException;
+use App\Player\Exception\SynchronizationFailedException;
 use App\Utils\BaseController;
 use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class PlayerController extends BaseController
 {
     #[Route('api/register', methods: 'POST')]
-    public function register(
-        Request $request,
-        PlayerRepository $playerRepository,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
-    ): Response {
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+    public function register(Request $request, RegisterPlayerHandler $handler): Response
+    {
+        $payload = JsonPayload::fromRequest($request);
 
-        $name = $body['username'] ?? '';
-        $password = $body['password'] ?? '';
-        $email = $body['email'] ?? null;
-
-        if ($name === '') {
+        try {
+            $player = $handler->handle(
+                $payload->getNonEmptyString('username'),
+                $payload->getNonEmptyString('password'),
+                $payload->getOptionalString('email'),
+            );
+        } catch (DuplicatePlayerNameException | InvalidEmailException | \InvalidArgumentException $e) {
             return new JsonResponse([
-                'error' => 'Username cannot be empty',
+                'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        if ($password === '') {
-            return new JsonResponse([
-                'error' => 'Password cannot be empty',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            return new JsonResponse([
-                'error' => 'Invalid email format',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $existingPlayer = $playerRepository->findOneBy([
-            'name' => $name,
-        ]);
-        if ($existingPlayer !== null) {
-            return new JsonResponse([
-                'error' => 'Username already taken',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $player = new Player($name, $playerRepository->findNextNumber(), $email);
-
-        $hashedPassword = $passwordHasher->hashPassword($player, $password);
-        $player->register($hashedPassword);
-
-        $entityManager->persist($player);
-        $entityManager->flush();
 
         return new JsonResponse($player->view(), Response::HTTP_CREATED);
     }
@@ -78,7 +52,7 @@ class PlayerController extends BaseController
             $forPlayer = $playerRepository->find($forPlayerId);
             if ($forPlayer === null) {
                 return new JsonResponse([
-                    'error' => 'Player not found',
+                    'errors' => ['Player not found'],
                 ], Response::HTTP_BAD_REQUEST);
             }
         }
@@ -127,14 +101,13 @@ class PlayerController extends BaseController
     ): Response {
         $this->denyAccessUnlessGranted(PlayerRightVoter::PLAYER_EDIT, $player);
 
-        $content = $request->getContent();
-        $body = json_decode($content, true);
-        $email = $body['email'] ?? null;
+        $payload = JsonPayload::fromRequest($request);
+        $email = $payload->getOptionalString('email');
 
         if ($email !== null) {
             if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
                 return new JsonResponse([
-                    'error' => 'Invalid email format',
+                    'errors' => ['Invalid email format'],
                 ], Response::HTTP_BAD_REQUEST);
             }
             $player->setEmail($email);
@@ -187,72 +160,24 @@ class PlayerController extends BaseController
     public function synchronize(
         Player $guestPlayer,
         Request $request,
-        EntityManagerInterface $entityManager,
-        PlayerRepository $playerRepository,
-        LoggerInterface $logger
+        SynchronizeGuestPlayerHandler $handler
     ): Response {
         $this->denyAccessUnlessGranted(PlayerRightVoter::GUEST_MANAGE, $guestPlayer);
 
-        if ($guestPlayer->getRegisteredOn() instanceof \DateTimeImmutable) {
-            return new JsonResponse([
-                'error' => 'This player is not a guest',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $content = $request->getContent();
-        $body = json_decode($content, true);
-        $registeredPlayerId = $body['registeredPlayerId'] ?? null;
-
-        if ($registeredPlayerId === null) {
-            return new JsonResponse([
-                'error' => 'registeredPlayerId is required',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $registeredPlayer = $playerRepository->find($registeredPlayerId);
-        if ($registeredPlayer === null) {
-            return new JsonResponse([
-                'error' => 'Registered player not found',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        if ($registeredPlayer->getRegisteredOn() === null) {
-            return new JsonResponse([
-                'error' => 'Target player is not registered',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $conn = $entityManager->getConnection();
-        $conn->beginTransaction();
+        $payload = JsonPayload::fromRequest($request);
 
         try {
-            $movedCount = $conn->executeStatement(
-                'UPDATE player_result SET player_id = :registeredId WHERE player_id = :guestId',
-                [
-                    'registeredId' => $registeredPlayer->getId(),
-                    'guestId' => $guestPlayer->getId(),
-                ]
-            );
-
-            $entityManager->remove($guestPlayer);
-            $entityManager->flush();
-            $conn->commit();
-        } catch (\Exception $e) {
-            $conn->rollBack();
-            $logger->error('Synchronization failed', [
-                'guestPlayerId' => $guestPlayer->getId(),
-                'registeredPlayerId' => $registeredPlayerId,
-                'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            $handler->handle($guestPlayer, $payload->getNonEmptyString('registeredPlayerId'));
+        } catch (PlayerNotGuestException | PlayerNotFoundException | PlayerNotRegisteredException $e) {
             return new JsonResponse([
-                'error' => 'Synchronization failed',
+                'errors' => [$e->getMessage()],
+            ], Response::HTTP_BAD_REQUEST);
+        } catch (SynchronizationFailedException) {
+            return new JsonResponse([
+                'errors' => ['Synchronization failed'],
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        return new JsonResponse([
-            'movedResults' => $movedCount,
-            'registeredPlayer' => $registeredPlayer->view(),
-        ], Response::HTTP_OK);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }

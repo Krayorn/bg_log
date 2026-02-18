@@ -23,7 +23,7 @@ class StatisticsQueryController extends AbstractController
 
         if ($gameId === null || $playerId === null) {
             return new JsonResponse([
-                'error' => 'gameId and playerId are required',
+                'errors' => ['gameId and playerId are required'],
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -32,7 +32,7 @@ class StatisticsQueryController extends AbstractController
 
         if ($game === null || $player === null) {
             return new JsonResponse([
-                'error' => 'Game or player not found',
+                'errors' => ['Game or player not found'],
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -54,7 +54,7 @@ class StatisticsQueryController extends AbstractController
 
         if ($game === null || $player === null) {
             return new JsonResponse([
-                'error' => 'Game or player not found',
+                'errors' => ['Game or player not found'],
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -98,7 +98,7 @@ class StatisticsQueryController extends AbstractController
 
         if ($player === null) {
             return new JsonResponse([
-                'error' => 'Player not found',
+                'errors' => ['Player not found'],
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -111,7 +111,7 @@ class StatisticsQueryController extends AbstractController
             $game = $gameId !== null ? $gameRepository->find($gameId) : null;
             if ($game === null) {
                 return new JsonResponse([
-                    'error' => 'gameId is required for winrate queries',
+                    'errors' => ['gameId is required for winrate queries'],
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -122,14 +122,14 @@ class StatisticsQueryController extends AbstractController
 
         if ($customFieldId === null) {
             return new JsonResponse([
-                'error' => 'customFieldId is required',
+                'errors' => ['customFieldId is required'],
             ], Response::HTTP_BAD_REQUEST);
         }
 
         $customField = $customFieldRepository->find($customFieldId);
         if ($customField === null) {
             return new JsonResponse([
-                'error' => 'Custom field not found',
+                'errors' => ['Custom field not found'],
             ], Response::HTTP_NOT_FOUND);
         }
 

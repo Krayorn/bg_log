@@ -29,8 +29,6 @@ class CreateGuestPlayerHandlerTest extends TestCase
 
         $this->playerRepository->method('findOneBy')->willReturn(null);
         $this->playerRepository->method('findNextNumber')->willReturn(42);
-        $this->entityManager->expects($this->once())->method('persist');
-        $this->entityManager->expects($this->once())->method('flush');
 
         $guest = $this->handler->handle('Sam', $owner);
 
@@ -58,7 +56,7 @@ class CreateGuestPlayerHandlerTest extends TestCase
     public function testDuplicateGuestNameInSamePartyThrows(): void
     {
         $owner = new Player('Alice', 1);
-        $existingGuest = new Player('Sam', 10);
+        $existingGuest = Player::newGuest('Sam', 10, $owner);
 
         $this->playerRepository->method('findOneBy')->willReturn($existingGuest);
 

@@ -42,7 +42,7 @@ class JsonPayload
         return trim($value);
     }
 
-    public function getOptionalString(string $key, string $default = ''): string
+    public function getOptionalString(string $key, ?string $default = null): ?string
     {
         $value = $this->data[$key] ?? null;
 

@@ -47,10 +47,9 @@ export async function api<T = unknown>(
         const data = await response.json()
 
         if (!response.ok) {
-            const errorMsg = data.error
-                ?? (Array.isArray(data.errors) ? data.errors.join(', ') : null)
-                ?? data.message
-                ?? 'Request failed'
+            const errorMsg = Array.isArray(data.errors)
+                ? data.errors.join(', ')
+                : 'Request failed'
 
             return {
                 data: null,

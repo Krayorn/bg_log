@@ -102,7 +102,7 @@ class CampaignController extends AbstractController
 
         if (! $entry instanceof \App\Entry\Entry) {
             return new JsonResponse([
-                'error' => 'No entries found',
+                'errors' => ['No entries found'],
             ], Response::HTTP_NOT_FOUND);
         }
 
