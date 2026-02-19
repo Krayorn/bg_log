@@ -78,6 +78,7 @@ export default function Game() {
     const [customFields, setCustomFields] = useState<CustomField[]>([])
     const [shareableFields, setShareableFields] = useState<CustomField[]>([])
     const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
+    const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([])
 
     const [searchParams] = useSearchParams();
 
@@ -130,7 +131,7 @@ export default function Game() {
     }, [gameId])
 
     useEffect(() => {
-        if (entryIdFromUrl && entries.length > 0 && !selectedEntryId) {
+        if (entryIdFromUrl && entries.length > 0 && !selectedEntryId && entries.some(e => e.id === entryIdFromUrl)) {
             setSelectedEntryId(entryIdFromUrl)
         }
     }, [entryIdFromUrl, entries, selectedEntryId])
@@ -143,6 +144,11 @@ export default function Game() {
         setEntries(entries.map(e => e.id === id ? newEntry : e))
     }
 
+    const onEntryDeleted = (id: string) => {
+        setEntries(entries.filter(e => e.id !== id))
+        setSelectedEntryId(null)
+    }
+
     useRequest(`/games/${gameId}`, [gameId], setGame)
     useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
     useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
@@ -151,6 +157,7 @@ export default function Game() {
         setCustomFields(data.myFields)
         setShareableFields(data.shareableFields)
     })
+    useRequest(`/campaigns?game=${gameId}`, [gameId], setCampaigns)
 
     if (game === null) {
         return (
@@ -219,7 +226,7 @@ export default function Game() {
                     ) : showStatistics ? (
                         <StatisticsPanel gameId={gameId} playerId={playerId} customFields={customFields} />
                     ) : selectedEntry ? (
-                        <EntryDetailPanel key={selectedEntry.id} gameId={gameId} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} allPlayers={playersList} customFields={customFields} />
+                        <EntryDetailPanel key={selectedEntry.id} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} onEntryDeleted={onEntryDeleted} allPlayers={playersList} customFields={customFields} campaigns={campaigns} />
                     ) : (
                         <GameDetailPanel 
                             game={game} 

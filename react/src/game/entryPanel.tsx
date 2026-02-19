@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { apiPatch } from '../hooks/useApi'
-import { useRequest } from '../hooks/useRequest'
+import { apiPatch, apiDelete } from '../hooks/useApi'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
 import MultiEnumSelect from "../components/MultiEnumSelect"
-import { Plus, X, Scroll } from 'lucide-react'
+import { Plus, X, Scroll, Trash2 } from 'lucide-react'
 
 type CustomFieldType = 'string' | 'number' | 'enum'
 
@@ -115,27 +114,23 @@ function formatDateForInput(date: Date) {
 
 type EntryDetailPanelProps = {
     entry: Entry
-    gameId: string
     playerId: string | null
     onEntryUpdated: (id: string, newEntry: Entry) => void
+    onEntryDeleted: (id: string) => void
     allPlayers: { id: string; name: string }[]
     customFields: CustomField[]
+    campaigns: Campaign[]
 }
 
-export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allPlayers, customFields: gameCustomFields }: EntryDetailPanelProps) {
+export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDeleted, allPlayers, customFields: gameCustomFields, campaigns }: EntryDetailPanelProps) {
     const [editField, setEditField] = useState<string | null>(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
     const [players, setPlayers] = useState(entry.players.map(p => ({ ...p })))
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
-    const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [selectedCampaignId, setSelectedCampaignId] = useState<string>(entry.campaign?.id ?? '')
-
-    useRequest(`/campaigns?game=${gameId}`, [gameId], (data: unknown) => {
-        const campaignList = data as Campaign[]
-        setCampaigns(campaignList)
-    })
 
     useEffect(() => {
         setNote(entry.note)
@@ -149,6 +144,13 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allP
         const { data: updatedEntry, ok } = await apiPatch<Entry>(`/entries/${entry.id}`, payload)
         if (ok && updatedEntry) {
             onEntryUpdated(entry.id, updatedEntry)
+        }
+    }
+
+    const handleDelete = async () => {
+        const { ok } = await apiDelete(`/entries/${entry.id}`)
+        if (ok) {
+            onEntryDeleted(entry.id)
         }
     }
 
@@ -317,7 +319,34 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, allP
     return (
         <div className="m-4 overflow-y-auto h-full">
             <section className="border border-slate-600 rounded-lg p-4 mb-4">
-                <h2 className="text-white font-semibold text-lg mb-4">Entry Details</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-white font-semibold text-lg">Entry Details</h2>
+                    {showDeleteConfirm ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-red-400 text-sm">Delete this entry?</span>
+                            <button
+                                onClick={handleDelete}
+                                className="px-2 py-1 rounded text-xs bg-red-500/20 border border-red-400/50 text-red-400 hover:bg-red-500/30"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="text-slate-500 hover:text-red-400 transition-colors"
+                            title="Delete entry"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
 
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">

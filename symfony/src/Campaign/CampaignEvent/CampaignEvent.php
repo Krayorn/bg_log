@@ -31,10 +31,10 @@ class CampaignEvent
         #[ORM\JoinColumn(name: 'campaign_id', referencedColumnName: 'id')]
         private readonly Campaign $campaign,
         #[ORM\ManyToOne(targetEntity: Entry::class)]
-        #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id')]
+        #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
         private readonly Entry $entry,
         #[ORM\ManyToOne(targetEntity: PlayerResult::class)]
-        #[ORM\JoinColumn(name: 'player_result_id', referencedColumnName: 'id', nullable: true)]
+        #[ORM\JoinColumn(name: 'player_result_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
         private readonly ?PlayerResult $playerResult,
         #[ORM\ManyToOne(targetEntity: CampaignKey::class)]
         #[ORM\JoinColumn(name: 'campaign_key_id', referencedColumnName: 'id')]
@@ -42,7 +42,7 @@ class CampaignEvent
         #[ORM\Column(type: 'json')]
         private readonly array $payload,
         #[ORM\ManyToOne(targetEntity: CustomFieldValue::class)]
-        #[ORM\JoinColumn(name: 'custom_field_value_id', referencedColumnName: 'id', nullable: true)]
+        #[ORM\JoinColumn(name: 'custom_field_value_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
         private readonly ?CustomFieldValue $customFieldValue = null,
     ) {
         $this->id = Uuid::uuid4();

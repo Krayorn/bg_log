@@ -174,4 +174,17 @@ class EntryController extends AbstractController
 
         return new JsonResponse($entry->view(), Response::HTTP_CREATED);
     }
+
+    #[Route('api/entries/{entry}', name: 'delete_entry', methods: 'DELETE')]
+    public function delete(
+        Entry $entry,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $this->denyAccessUnlessGranted(EntryVoter::ENTRY_EDIT, $entry);
+
+        $entityManager->remove($entry);
+        $entityManager->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }
