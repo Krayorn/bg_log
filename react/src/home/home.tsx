@@ -4,6 +4,7 @@ import { useRequest } from '../hooks/useRequest'
 import { apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 import { Landmark, User, Check, X, Pencil, ExternalLink } from 'lucide-react'
+import { Player, GeneralStatistics, PlayerGameStats, CirclePlayer } from '../types'
 
 function Home() {
     const { playerId } = useParams() as { playerId: string }
@@ -62,15 +63,6 @@ function Box({ title, children }: {title: string, children: JSX.Element | JSX.El
             </div>
         </section>
     )
-}
-
-interface Player {
-    name: string
-    number: number
-    registeredOn: {
-        date: string
-    }|null
-    email?: string|null
 }
 
 function PlayerBox({ playerId }: {playerId: string}) {
@@ -161,14 +153,6 @@ function PlayerBox({ playerId }: {playerId: string}) {
     )
 }
 
-interface GeneralStatistics {
-    gamesOwned: number
-    entriesPlayed: number
-    gamePartners: number
-    globalWinrate: number
-    lastGameDate: Date
-}
-
 function GeneralStatistics({ playerId }: {playerId: string}) {
     const [generalStats, setGeneralStats] = useState<GeneralStatistics|null>(null)
     
@@ -205,16 +189,8 @@ function StatItem({ value, label, highlight, className }: { value: string | numb
     )
 }
 
-interface GameStats {
-    game_id: string
-    game_name: string
-    game_owned_id: string | null
-    price: number | null
-    play_count: number
-}
-
 function GameStatistics({ playerId }: {playerId: string}) {
-    const [gameStats, setGameStats] = useState<GameStats[]|null>(null)
+    const [gameStats, setGameStats] = useState<PlayerGameStats[]|null>(null)
     
     useRequest(`/players/${playerId}/games`, [playerId], setGameStats)
 
@@ -255,14 +231,6 @@ function GameStatistics({ playerId }: {playerId: string}) {
             </div>
         </div>
     )
-}
-
-interface CirclePlayer {
-    id: string
-    name: string
-    gamesPlayed: number
-    wins: number
-    losses: number
 }
 
 function PlayerStatistics({ playerId }: {playerId: string}) {

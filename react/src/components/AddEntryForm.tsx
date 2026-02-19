@@ -6,56 +6,7 @@ import PlayerSearchSelect from './PlayerSearchSelect'
 import EnumSelect from './EnumSelect'
 import MultiEnumSelect from './MultiEnumSelect'
 import { X, UserPlus, RotateCcw } from 'lucide-react'
-
-type CustomField = {
-    kind: string
-    name: string
-    global: boolean
-    id: string
-    multiple: boolean
-    enumValues: { id: string; value: string }[]
-    player: string | null
-    shareable: boolean
-    originCustomField: string | null
-}
-
-type CustomFieldValue = {
-    id: string
-    value: string | number | boolean
-    customField: CustomField
-}
-
-type PlayerResult = {
-    id: string
-    note: string
-    won: boolean | null
-    player: {
-        name: string
-        id: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type Entry = {
-    id: string
-    note: string
-    players: PlayerResult[]
-    playedAt: {
-        date: string
-    }
-    createdAt: {
-        date: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type GameOwner = {
-    id: string
-    player: {
-        id: string
-        name: string
-    }
-}
+import { CustomField, Entry, GameOwner, CampaignSummary } from '../types'
 
 type PlayerEntry = {
     genId: string
@@ -63,11 +14,6 @@ type PlayerEntry = {
     note: string
     won: boolean
     customFields: { [key: string]: string | string[] }
-}
-
-type Campaign = {
-    id: string
-    name: string
 }
 
 type AddEntryFormProps = {
@@ -88,7 +34,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
     const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string | string[] }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
-    const [campaigns, setCampaigns] = useState<Campaign[]>([])
+    const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
     const [entryCampaign, setEntryCampaign] = useState(fixedCampaignId ?? "")
 
     useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)

@@ -1,11 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { apiPost } from '../hooks/useApi'
 import { Plus } from 'lucide-react'
-
-type Player = {
-    id: string
-    name: string
-}
+import { Player } from '../types'
 
 type PlayerSearchSelectProps = {
     players: Player[]

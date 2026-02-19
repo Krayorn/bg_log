@@ -8,63 +8,7 @@ import { EntryListItem, EntryDetailPanel } from './entryPanel'
 import { GameDetailPanel } from './gameDetailPanel'
 import { BarChart3, FileText, Scroll } from 'lucide-react'
 import { CampaignPanel } from './campaignPanel'
-
-type CustomField = {
-    kind: string
-    name: string
-    global: boolean
-    id: string
-    multiple: boolean
-    enumValues: { id: string; value: string }[]
-    player: string | null
-    shareable: boolean
-    originCustomField: string | null
-}
-
-type CustomFieldValue = {
-    id: string
-    value: string | number | boolean
-    customField: CustomField
-}
-
-type PlayerResult = {
-    id: string
-    note: string
-    won: boolean | null
-    player: {
-        name: string
-        id: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type Entry = {
-    id: string
-    note: string
-    players: PlayerResult[]
-    playedAt: {
-        date: string
-    }
-    createdAt: {
-        date: string
-    }
-    customFields: CustomFieldValue[]
-    campaign?: {
-        id: string
-        name: string
-    }
-}
-
-type Game = {
-    name: string
-    id: string
-}
-
-type GameStats = {
-    entriesCount: number
-    owned: boolean
-    winrate: string
-}
+import { CustomField, Entry, Game, GameStats } from '../types'
 
 export default function Game() {
     const { gameId } = useParams() as { gameId: string }

@@ -5,25 +5,7 @@ import { apiPost } from '../hooks/useApi'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import Layout from '../Layout'
 import { UserPlus, User } from 'lucide-react'
-
-interface CirclePlayer {
-    id: string
-    name: string
-    number: number
-    registeredOn: string | null
-    isGuest: boolean
-    inPartyOf: { id: string; name: string } | null
-    gamesPlayed: number
-    wins: number
-    losses: number
-}
-
-interface Player {
-    id: string
-    name: string
-    registeredOn: { date: string } | null
-    isGuest: boolean
-}
+import { CirclePlayer, Player } from '../types'
 
 export default function Circle() {
     const { playerId } = useParams() as { playerId: string }

@@ -6,89 +6,7 @@ import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
 import { AddEntryForm } from '../components/AddEntryForm'
-
-type CustomField = {
-    kind: string
-    name: string
-    global: boolean
-    id: string
-    multiple: boolean
-    enumValues: { id: string; value: string }[]
-    player: string | null
-    shareable: boolean
-    originCustomField: string | null
-}
-
-type CustomFieldValue = {
-    id: string
-    value: string | number | boolean
-    customField: CustomField
-}
-
-type PlayerResult = {
-    id: string
-    note: string
-    won: boolean | null
-    player: {
-        name: string
-        id: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type CampaignKey = {
-    id: string
-    name: string
-    type: 'string' | 'number' | 'list' | 'counted_list'
-    global: boolean
-    scopedToCustomField: CustomField | null
-    player: string | null
-    shareable: boolean
-    originCampaignKey: string | null
-}
-
-type CampaignEvent = {
-    id: string
-    entry: string
-    playerResult: string | null
-    campaignKey: CampaignKey
-    payload: Record<string, unknown>
-    customFieldValue: CustomFieldValue | null
-    createdAt: { date: string }
-}
-
-type StateValue = string | number | string[] | Record<string, number>
-
-type ScopedState = Record<string, Record<string, StateValue>>
-
-type CampaignState = {
-    campaign: Record<string, StateValue>
-    players: Record<string, {
-        player: { id: string; name: string }
-        state: Record<string, StateValue>
-        scoped?: ScopedState
-    }>
-}
-
-type Entry = {
-    id: string
-    note: string
-    players: PlayerResult[]
-    playedAt: { date: string }
-    createdAt: { date: string }
-    events: CampaignEvent[]
-    stateAfter: CampaignState
-    customFields: CustomFieldValue[]
-}
-
-type Campaign = {
-    id: string
-    name: string
-    game: { id: string; name: string; campaignKeys: CampaignKey[]; customFields: CustomField[] }
-    createdBy: { id: string; name: string }
-    createdAt: { date: string }
-    entries: Entry[]
-}
+import { CustomField, CampaignKey, CampaignEvent, StateValue, CampaignState, CampaignEntry, Campaign } from '../types'
 
 const VERBS_BY_TYPE: Record<CampaignKey['type'], string[]> = {
     string: ['replace'],
@@ -773,7 +691,7 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
 }
 
 function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
-    entry: Entry
+    entry: CampaignEntry
     campaignKeys: CampaignKey[]
     onSubmit: (campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[], customFieldValueId: string | null) => void
     onCancel: () => void

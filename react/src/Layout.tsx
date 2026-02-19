@@ -3,15 +3,11 @@ import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRequest } from './hooks/useRequest';
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage';
 import { Landmark, Puzzle, Users, Search, X } from 'lucide-react';
+import { Game } from './types';
 
 type LayoutProps = {
   children: ReactNode;
   noNav?: boolean;
-}
-
-interface Game {
-  name: string
-  id: string
 }
 
 export default function Layout({ children, noNav = false }: LayoutProps) {

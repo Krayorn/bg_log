@@ -5,19 +5,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { apiPost, apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 import { Puzzle, ExternalLink } from 'lucide-react'
-
-interface PlayerGameStats {
-    game_id: string
-    game_name: string
-    game_owned_id: string | null
-    price: number | null
-    play_count: number
-}
-
-interface Game {
-    name: string
-    id: string
-}
+import { PlayerGameStats, Game } from '../types'
 
 export default function Games() {
     const { playerId } = useParams() as { playerId: string }

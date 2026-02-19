@@ -1,0 +1,178 @@
+export type CustomFieldType = 'string' | 'number' | 'enum'
+
+export type CustomField = {
+    id: string
+    kind: CustomFieldType
+    name: string
+    global: boolean
+    multiple: boolean
+    enumValues: { id: string; value: string }[]
+    player: string | null
+    shareable: boolean
+    originCustomField: string | null
+}
+
+export type CustomFieldValue = {
+    id: string
+    value: string | number | boolean
+    customField: CustomField
+}
+
+export type PlayerResult = {
+    id: string
+    note: string
+    won: boolean | null
+    player: {
+        name: string
+        id: string
+    }
+    customFields: CustomFieldValue[]
+}
+
+export type Game = {
+    id: string
+    name: string
+    customFields: CustomField[]
+    campaignKeys: CampaignKey[]
+}
+
+export type GameOwner = {
+    id: string
+    game: Game
+    price: number | null
+    player: {
+        id: string
+        name: string
+    }
+}
+
+export type GameStats = {
+    entriesCount: number
+    owned: boolean
+    winrate: string
+}
+
+export type CampaignSummary = {
+    id: string
+    name: string
+    createdAt: { date: string }
+}
+
+export type Entry = {
+    id: string
+    note: string
+    players: PlayerResult[]
+    playedAt: { date: string }
+    createdAt: { date: string }
+    customFields: CustomFieldValue[]
+    campaign: CampaignSummary | null
+}
+
+export type CampaignKey = {
+    id: string
+    name: string
+    type: 'string' | 'number' | 'list' | 'counted_list'
+    global: boolean
+    scopedToCustomField: CustomField | null
+    player: string | null
+    shareable: boolean
+    originCampaignKey: string | null
+}
+
+export type CampaignEvent = {
+    id: string
+    entry: string
+    playerResult: string | null
+    campaignKey: CampaignKey
+    payload: Record<string, unknown>
+    customFieldValue: CustomFieldValue | null
+    createdAt: { date: string }
+}
+
+export type StateValue = string | number | string[] | Record<string, number>
+
+export type ScopedState = Record<string, Record<string, StateValue>>
+
+export type CampaignState = {
+    campaign: Record<string, StateValue>
+    players: Record<string, {
+        player: { id: string; name: string }
+        state: Record<string, StateValue>
+        scoped?: ScopedState
+    }>
+}
+
+export type CampaignEntry = Entry & {
+    events: CampaignEvent[]
+    stateAfter: CampaignState
+}
+
+export type Campaign = {
+    id: string
+    name: string
+    game: Game
+    createdBy: { id: string; name: string }
+    createdAt: { date: string }
+    entries: CampaignEntry[]
+}
+
+export type Player = {
+    id: string
+    name: string
+    number: number
+    registeredOn: { date: string } | null
+    isGuest: boolean
+    inPartyOf: { id: string; name: string } | null
+    email?: string | null
+}
+
+export type CirclePlayer = {
+    id: string
+    name: string
+    number: number
+    registeredOn: string | null
+    isGuest: boolean
+    inPartyOf: { id: string } | null
+    gamesPlayed: number
+    wins: number
+    losses: number
+}
+
+export type PlayerGameStats = {
+    game_id: string
+    game_name: string
+    game_owned_id: string | null
+    price: number | null
+    play_count: number
+}
+
+export type GeneralStatistics = {
+    gamesOwned: number
+    entriesPlayed: number
+    gamePartners: number
+    globalWinrate: number
+    lastGameDate: Date
+}
+
+export type StatsResult =
+    | { type: 'sum' | 'avg' | 'min' | 'max'; total: number }
+    | { type: 'breakdown'; data: { value: string; count: number }[] }
+    | { type: 'grouped'; data: { label: string; total: number }[] }
+    | { type: 'stacked'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
+    | { type: 'crosstab'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
+    | { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }
+    | { type: 'winrate'; wins: number; total: number; rate: number }
+    | { type: 'winrate_by_player'; data: { label: string; player: string; wins: number; total: number; rate: number }[] }
+
+export type ChartType = 'bar' | 'pie'
+export type AggregationType = 'sum' | 'avg' | 'min' | 'max'
+
+export type SavedQuery = {
+    id: string
+    name: string
+    customFieldId: string
+    groupByFieldId: string | null
+    groupByPlayer: boolean
+    aggregation: string | null
+    metric: string | null
+}

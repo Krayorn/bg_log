@@ -2,65 +2,9 @@ import { useState } from "react"
 import { apiPost, apiDelete, apiPatch } from '../hooks/useApi'
 import { X, Trash2 } from 'lucide-react'
 import { AddEntryForm } from '../components/AddEntryForm'
+import type { CustomField, CustomFieldType, Entry, Game, GameStats } from '../types'
 
-enum CustomFieldType {
-    string = "string",
-    number = 'number',
-    enum = 'enum',
-}
-
-type CustomField = {
-    kind: CustomFieldType
-    name: string
-    global: boolean
-    id: string
-    multiple: boolean
-    enumValues: { id: string; value: string }[]
-    player: string | null
-    shareable: boolean
-    originCustomField: string | null
-}
-
-type CustomFieldValue = {
-    id: string
-    value: string | number | boolean
-    customField: CustomField
-}
-
-type PlayerResult = {
-    id: string
-    note: string
-    won: boolean | null
-    player: {
-        name: string
-        id: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type Entry = {
-    id: string
-    note: string
-    players: PlayerResult[]
-    playedAt: {
-        date: string
-    }
-    createdAt: {
-        date: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type Game = {
-    name: string
-    id: string
-}
-
-type GameStats = {
-    entriesCount: number
-    owned: boolean
-    winrate: string
-}
+const CUSTOM_FIELD_TYPES: CustomFieldType[] = ['string', 'number', 'enum']
 
 type GameDetailPanelProps = {
     game: Game
@@ -243,7 +187,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                                     onChange={e => setCustomFieldType(e.target.value)}
                                 >
                                     <option value="" disabled>Select type...</option>
-                                    {Object.values(CustomFieldType).map(opt => <option key={opt}>{opt}</option>)}
+                                    {CUSTOM_FIELD_TYPES.map(opt => <option key={opt}>{opt}</option>)}
                                 </select>
                             </div>
                             <div className="flex flex-col gap-1">

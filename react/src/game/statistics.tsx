@@ -3,36 +3,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../hooks/useApi'
 import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Legend, Rectangle, Sector } from 'recharts'
 import type { BarShapeProps, PieSectorShapeProps } from 'recharts'
-
-type CustomField = {
-    kind: string
-    name: string
-    global: boolean
-    id: string
-}
-
-type StatsResult = 
-    | { type: 'sum' | 'avg' | 'min' | 'max'; total: number }
-    | { type: 'breakdown'; data: { value: string; count: number }[] }
-    | { type: 'grouped'; data: { label: string; total: number }[] }
-    | { type: 'stacked'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
-    | { type: 'crosstab'; data: { group: string; values: Record<string, number> }[]; keys: string[] }
-    | { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }
-    | { type: 'winrate'; wins: number; total: number; rate: number }
-    | { type: 'winrate_by_player'; data: { label: string; player: string; wins: number; total: number; rate: number }[] }
-
-type ChartType = 'bar' | 'pie'
-type AggregationType = 'sum' | 'avg' | 'min' | 'max'
-
-type SavedQuery = {
-    id: string
-    name: string
-    customFieldId: string
-    groupByFieldId: string | null
-    groupByPlayer: boolean
-    aggregation: string | null
-    metric: string | null
-}
+import type { CustomField, StatsResult, ChartType, AggregationType, SavedQuery } from '../types'
 
 const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#f97316']
 

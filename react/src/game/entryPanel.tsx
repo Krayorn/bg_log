@@ -5,56 +5,7 @@ import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
 import MultiEnumSelect from "../components/MultiEnumSelect"
 import { Plus, X, Scroll, Trash2 } from 'lucide-react'
-
-type CustomFieldType = 'string' | 'number' | 'enum'
-
-type CustomField = {
-    kind: CustomFieldType
-    name: string
-    global: boolean
-    id: string
-    multiple: boolean
-    enumValues: { id: string; value: string }[]
-}
-
-type CustomFieldValue = {
-    id: string
-    value: string | number | boolean
-    customField: CustomField
-}
-
-type PlayerResult = {
-    id: string
-    note: string
-    won: boolean | null
-    player: {
-        name: string
-        id: string
-    }
-    customFields: CustomFieldValue[]
-}
-
-type Entry = {
-    id: string
-    note: string
-    players: PlayerResult[]
-    playedAt: {
-        date: string
-    }
-    createdAt: {
-        date: string
-    }
-    customFields: CustomFieldValue[]
-    campaign?: {
-        id: string
-        name: string
-    }
-}
-
-type Campaign = {
-    id: string
-    name: string
-}
+import { CustomField, Entry, CampaignSummary } from '../types'
 
 type EntryListItemProps = {
     entry: Entry
@@ -119,7 +70,7 @@ type EntryDetailPanelProps = {
     onEntryDeleted: (id: string) => void
     allPlayers: { id: string; name: string }[]
     customFields: CustomField[]
-    campaigns: Campaign[]
+    campaigns: CampaignSummary[]
 }
 
 export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDeleted, allPlayers, customFields: gameCustomFields, campaigns }: EntryDetailPanelProps) {

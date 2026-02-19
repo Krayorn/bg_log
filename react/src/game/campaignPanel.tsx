@@ -3,16 +3,7 @@ import { Link, useSearchParams } from "react-router-dom"
 import { apiPost } from '../hooks/useApi'
 import { useRequest } from '../hooks/useRequest'
 import { Plus, Scroll, ChevronRight } from 'lucide-react'
-
-type Campaign = {
-    id: string
-    name: string
-    createdAt: { date: string }
-    entries: {
-        id: string
-        playedAt: { date: string }
-    }[]
-}
+import { Campaign } from '../types'
 
 type CampaignPanelProps = {
     gameId: string
