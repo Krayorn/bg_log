@@ -14,6 +14,7 @@
 - Backend structure: DDD-inspired (group by domain, not by technical type).
 - Frontend styling: Tailwind CSS utility classes.
 - Keep changes within the relevant app directory.
+- **Frontend types**: Shared API/domain types live in `react/src/types.ts`, derived from backend `view()` method shapes. Don't redeclare types locally in components — import from `types.ts`. Component-specific prop types stay local.
 
 ## Testing
 - Run tests: `make test` (runs PHPUnit inside Docker).
