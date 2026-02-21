@@ -2,25 +2,23 @@
 
 namespace App\Entry;
 
-use App\Campaign\CampaignRepository;
+use App\Entry\Action\CreateEntryHandler;
 use App\Entry\PlayerResult\PlayerEvent;
-use App\Game\Game;
-use App\Game\GameOwnedRepository;
+use App\Game\Exception\GameNotFoundException;
 use App\Game\GameRepository;
-use App\Player\Player;
+use App\Player\Exception\PlayerNotFoundException;
 use App\Player\PlayerRepository;
-use DateTimeImmutable;
-use DateTimeInterface;
+use App\Utils\BaseController;
+use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\Uuid;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class EntryController extends AbstractController
+class EntryController extends BaseController
 {
     #[Route('api/entries', name: 'list_entries', methods: 'GET')]
     public function list(
@@ -58,93 +56,26 @@ class EntryController extends AbstractController
 
     #[Route('api/entries', name: 'create_entry', methods: 'POST')]
     public function create(
-        Request                $request,
-        EntityManagerInterface $entityManager,
-        GameRepository         $gameRepository,
-        GameOwnedRepository         $gameOwnedRepository,
-        PlayerRepository       $playerRepository,
-        CampaignRepository     $campaignRepository
+        Request $request,
+        CreateEntryHandler $handler,
     ): Response {
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+        $payload = JsonPayload::fromRequest($request);
 
-        $gameId = $body['game'];
-        $gameUsedId = $body['gameUsed'] ?? null;
-        $note = $body['note'];
-        $playedAt = $body['playedAt'];
-        $playersData = $body['players'] ?? [];
-        $customFieldsData = $body['customFields'] ?? [];
-        $campaignId = $body['campaign'] ?? null;
-
-        /** @var ?Game $game */
-        $game = $gameRepository->find($gameId);
-        $gameUsed = $gameUsedId !== null ? $gameOwnedRepository->find($gameUsedId) : null;
-
-        if ($game === null) {
+        try {
+            $entry = $handler->handle(
+                $payload->getString('game'),
+                $payload->getOptionalString('gameUsed'),
+                $payload->getString('note'),
+                $payload->getString('playedAt'),
+                $payload->getOptionalArray('players') ?? [],
+                $payload->getOptionalArray('customFields') ?? [],
+                $payload->getOptionalString('campaign'),
+            );
+        } catch (GameNotFoundException | PlayerNotFoundException | \InvalidArgumentException $e) {
             return new JsonResponse([
-                'errors' => ['No game exists with this name'],
+                'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        $players = [];
-
-        foreach ($playersData as $playerData) {
-            $playerId = $playerData['id'];
-            $playerNote = $playerData['note'] ?? '';
-            $playerWon = $playerData['won'] ?? null;
-            $playerCustomFields = $playerData['customFields'] ?? [];
-
-            /** @var ?Player $player */
-            $player = $playerRepository->find($playerId);
-            if ($player === null) {
-                return new JsonResponse([
-                    'errors' => ['Player not found'],
-                ], Response::HTTP_BAD_REQUEST);
-            }
-
-            $players[] = [
-                'player' => $player,
-                'note' => $playerNote,
-                'won' => $playerWon,
-                'customFields' => $playerCustomFields,
-            ];
-        }
-
-        $date = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $playedAt);
-        if ($date === false) {
-            return new JsonResponse([
-                'errors' => ['Wrong date format'],
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $entry = new Entry(
-            $game,
-            $note,
-            $date,
-            $players,
-            $gameUsed
-        );
-
-        foreach ($customFieldsData as $customFieldData) {
-            $value = $customFieldData['value'];
-            if (is_array($value)) {
-                foreach ($value as $singleValue) {
-                    $entry->addCustomFieldValue($customFieldData['id'], (string) $singleValue);
-                }
-            } else {
-                $entry->addCustomFieldValue($customFieldData['id'], $value);
-            }
-        }
-
-        if ($campaignId !== null) {
-            $campaign = $campaignRepository->find($campaignId);
-            if ($campaign !== null) {
-                $entry->setCampaign($campaign);
-            }
-        }
-
-        $entityManager->persist($entry);
-        $entityManager->flush();
 
         return new JsonResponse($entry->view(), Response::HTTP_CREATED);
     }
@@ -157,15 +88,14 @@ class EntryController extends AbstractController
     ): Response {
         $this->denyAccessUnlessGranted(EntryVoter::ENTRY_EDIT, $entry);
 
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+        $payload = JsonPayload::fromRequest($request);
 
-        $customFields = $body['customFields'] ?? [];
-        $note = $body['note'] ?? null;
-        $players = $body['players'];
-        $gameUsed = $body['gameUsed'] ?? null;
-        $playedAt = $body['playedDate'] ?? null;
-        $campaign = $body['campaign'] ?? null;
+        $customFields = $payload->getOptionalArray('customFields') ?? [];
+        $note = $payload->getOptionalString('note');
+        $players = $payload->getOptionalArray('players') ?? [];
+        $gameUsed = $payload->getOptionalString('gameUsed');
+        $playedAt = $payload->getOptionalString('playedDate');
+        $campaign = $payload->getOptionalString('campaign');
 
         $customFieldsEvents = array_map(fn ($customField) => new CustomFieldEvent($customField), $customFields);
         $playersEvents = array_map(fn ($player) => new PlayerEvent($player), $players);

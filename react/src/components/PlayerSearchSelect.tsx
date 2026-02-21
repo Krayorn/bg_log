@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from "react"
 import { apiPost } from '../hooks/useApi'
 import { Plus } from 'lucide-react'
-import { Player } from '../types'
+type PlayerOption = { id: string; name: string }
 
 type PlayerSearchSelectProps = {
-    players: Player[]
+    players: PlayerOption[]
     excludeIds?: string[]
-    onSelect: (player: Player) => void
-    onPlayerCreated?: (player: Player) => void
+    onSelect: (player: PlayerOption) => void
+    onPlayerCreated?: (player: PlayerOption) => void
     allowCreate?: boolean
     placeholder?: string
 }
@@ -51,7 +51,7 @@ export default function PlayerSearchSelect({
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleSelect = (player: Player) => {
+    const handleSelect = (player: PlayerOption) => {
         onSelect(player)
         setQuery("")
         setOpen(false)
@@ -62,7 +62,7 @@ export default function PlayerSearchSelect({
         setCreating(true)
         setCreateError(null)
 
-        const { data, error, ok } = await apiPost<Player>('/players', { name: query.trim() })
+        const { data, error, ok } = await apiPost<PlayerOption>('/players', { name: query.trim() })
 
         setCreating(false)
         if (ok && data) {

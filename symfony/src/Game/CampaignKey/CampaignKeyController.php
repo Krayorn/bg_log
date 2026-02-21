@@ -2,62 +2,42 @@
 
 namespace App\Game\CampaignKey;
 
+use App\Game\CampaignKey\Action\CreateCampaignKeyHandler;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldRepository;
 use App\Game\Game;
 use App\Player\Player;
+use App\Utils\BaseController;
+use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class CampaignKeyController extends AbstractController
+class CampaignKeyController extends BaseController
 {
     #[Route('api/game/{game}/campaignKeys', methods: 'POST')]
-    public function create(Request $request, Game $game, EntityManagerInterface $entityManager): Response
+    public function create(Request $request, Game $game, CreateCampaignKeyHandler $handler): Response
     {
-        /** @var Player $player */
-        $player = $this->getUser();
+        $player = $this->getPlayer();
+        $payload = JsonPayload::fromRequest($request);
 
-        $body = json_decode($request->getContent(), true);
-
-        $name = $body['name'] ?? '';
-        $type = $body['type'] ?? '';
-        $global = $body['global'] ?? true;
-
-        $errors = [];
-
-        if (trim((string) $name) === '') {
-            $errors[] = 'Name is required';
-        }
-
-        $typeEnum = CampaignKeyType::tryFrom($type);
-        if (! $typeEnum instanceof CampaignKeyType) {
-            $errors[] = 'Invalid type';
-        }
-
-        if ($errors !== []) {
+        try {
+            $campaignKey = $handler->handle(
+                $game,
+                $payload->getNonEmptyString('name'),
+                $payload->getString('type'),
+                $payload->getOptionalBool('global', true),
+                $payload->getOptionalString('scopedToCustomField'),
+                $player,
+            );
+        } catch (\InvalidArgumentException $e) {
             return new JsonResponse([
-                'errors' => $errors,
+                'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        $scopedToCustomFieldId = $body['scopedToCustomField'] ?? null;
-        $scopedToCustomField = null;
-        if ($scopedToCustomFieldId !== null) {
-            $scopedToCustomField = $game->getCustomField($scopedToCustomFieldId);
-            if (! $scopedToCustomField->isGlobal()) {
-                $global = false;
-            }
-        }
-
-        $campaignKey = new CampaignKey($game, trim((string) $name), $type, (bool) $global, $scopedToCustomField, $player);
-
-        $entityManager->persist($campaignKey);
-        $entityManager->flush();
 
         return new JsonResponse($campaignKey->view(), Response::HTTP_CREATED);
     }
@@ -76,11 +56,11 @@ class CampaignKeyController extends AbstractController
     #[Route('api/campaignKeys/{campaignKey}', methods: 'PATCH')]
     public function toggleShareable(CampaignKey $campaignKey, Request $request, EntityManagerInterface $entityManager): Response
     {
-        $body = json_decode($request->getContent(), true);
+        $payload = JsonPayload::fromRequest($request);
 
-        if (isset($body['shareable'])) {
+        if ($payload->has('shareable')) {
             $this->denyAccessUnlessGranted(CampaignKeyVoter::CAMPAIGN_KEY_TOGGLE_SHAREABLE, $campaignKey);
-            $campaignKey->setShareable((bool) $body['shareable']);
+            $campaignKey->setShareable($payload->getBool('shareable'));
         }
 
         $entityManager->flush();
@@ -91,8 +71,7 @@ class CampaignKeyController extends AbstractController
     #[Route('api/campaignKeys/{campaignKey}/copy', methods: 'POST')]
     public function copy(CampaignKey $campaignKey, EntityManagerInterface $entityManager, CampaignKeyRepository $campaignKeyRepository, CustomFieldRepository $customFieldRepository): Response
     {
-        /** @var Player $player */
-        $player = $this->getUser();
+        $player = $this->getPlayer();
 
         if (! $campaignKey->isShareable()) {
             throw new BadRequestException('This campaign key is not shareable');
@@ -167,8 +146,7 @@ class CampaignKeyController extends AbstractController
     #[Route('api/game/{game}/campaignKeys', methods: 'GET')]
     public function getCampaignKeys(Game $game, CampaignKeyRepository $campaignKeyRepository): Response
     {
-        /** @var Player $player */
-        $player = $this->getUser();
+        $player = $this->getPlayer();
 
         $myKeys = $campaignKeyRepository->findBy([
             'game' => $game,

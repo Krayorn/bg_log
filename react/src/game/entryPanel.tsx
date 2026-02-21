@@ -398,9 +398,9 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                                                         <div className="flex flex-wrap gap-2">
                                                             <MultiEnumSelect
                                                                 options={cf.enumValues.map(v => v.value)}
-                                                                selected={cfValues.map(v => v.value)}
+                                                                selected={cfValues.map(v => String(v.value))}
                                                                 onChange={async (values) => {
-                                                                    const toRemove = cfValues.filter(v => !values.includes(v.value))
+                                                                    const toRemove = cfValues.filter(v => !values.includes(String(v.value)))
                                                                     const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
                                                                     for (const cv of toRemove) {
                                                                         if (cv.id) await handleRemoveEntryCustomField(cv.id)
@@ -655,9 +655,9 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                                                             <div className="flex flex-wrap gap-2">
                                                                 <MultiEnumSelect
                                                                     options={cf.enumValues.map(v => v.value)}
-                                                                    selected={cfValues.map(v => v.value)}
+                                                                    selected={cfValues.map(v => String(v.value))}
                                                                     onChange={async (values) => {
-                                                                        const toRemove = cfValues.filter(v => !values.includes(v.value))
+                                                                        const toRemove = cfValues.filter(v => !values.includes(String(v.value)))
                                                                         const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
                                                                         for (const cv of toRemove) {
                                                                             if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)

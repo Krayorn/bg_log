@@ -30,6 +30,7 @@
 - **Controllers** extend `App\Utils\BaseController`. Use `$this->getPlayer()` (returns `Player`, non-nullable) instead of `$this->getUser()`.
 - **Request parsing**: Use `JsonPayload::fromRequest($request)` with typed accessors (`getString`, `getNonEmptyString`, `getOptionalString`) instead of manual `json_decode`. `JsonPayload` owns input shape validation (missing/empty/type); handlers own domain validation (duplicates, email format, business rules).
 - **Static factories**: Prefer named static factory methods on entities when construction involves related setup (e.g., `Player::newGuest(name, number, owner)`).
+- **Never use `view()` for internal access**: `view()` is a serialization method for HTTP responses. To read entity state in handlers or tests, use typed getters (e.g., `$game->getName()`, not `$game->view()['name']`). Add a getter if one doesn't exist.
 - **Cross-domain utilities** live in `App\Utils\` (e.g., `BaseController`, `JsonPayload`).
 
 ## Adding a New Aggregate Root (Symfony)

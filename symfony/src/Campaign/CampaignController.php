@@ -2,15 +2,17 @@
 
 namespace App\Campaign;
 
+use App\Campaign\Action\CreateCampaignHandler;
 use App\Campaign\CampaignEvent\CampaignEvent;
 use App\Campaign\CampaignEvent\CampaignEventVerb;
 use App\Campaign\CampaignEvent\InvalidEventPayloadException;
 use App\Entry\EntryRepository;
 use App\Game\CampaignKey\CampaignKey;
+use App\Game\Exception\GameNotFoundException;
 use App\Game\GameRepository;
-use App\Player\Player;
+use App\Utils\BaseController;
+use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +21,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
-class CampaignController extends AbstractController
+class CampaignController extends BaseController
 {
     #[Route('api/campaigns', methods: 'GET')]
     public function list(Request $request, CampaignRepository $campaignRepository, GameRepository $gameRepository): Response
@@ -34,53 +36,29 @@ class CampaignController extends AbstractController
             throw new BadRequestException('Game not found');
         }
 
-        $user = $this->getUser();
-        assert($user instanceof Player);
+        $player = $this->getPlayer();
 
-        $campaigns = $campaignRepository->listByGame($game, $user);
+        $campaigns = $campaignRepository->listByGame($game, $player);
 
         return new JsonResponse(array_map(fn ($campaign) => $campaign->view(), $campaigns), Response::HTTP_OK);
     }
 
     #[Route('api/campaigns', methods: 'POST')]
-    public function create(Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository): Response
+    public function create(Request $request, CreateCampaignHandler $handler): Response
     {
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+        $payload = JsonPayload::fromRequest($request);
 
-        $name = $body['name'] ?? '';
-        $gameId = $body['game'] ?? null;
-
-        $errors = [];
-
-        if ($name === '') {
-            $errors[] = 'Name can\'t be empty';
-        }
-
-        if ($gameId === null) {
-            $errors[] = 'Game is required';
-        }
-
-        $game = $gameId !== null ? $gameRepository->find($gameId) : null;
-        if ($gameId !== null && $game === null) {
-            $errors[] = 'Game not found';
-        }
-
-        if ($errors !== []) {
+        try {
+            $campaign = $handler->handle(
+                $payload->getNonEmptyString('name'),
+                $payload->getString('game'),
+                $this->getPlayer(),
+            );
+        } catch (GameNotFoundException | \InvalidArgumentException $e) {
             return new JsonResponse([
-                'errors' => $errors,
+                'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        assert($game instanceof \App\Game\Game);
-
-        $user = $this->getUser();
-        assert($user instanceof Player);
-
-        $campaign = new Campaign($game, $name, $user);
-
-        $entityManager->persist($campaign);
-        $entityManager->flush();
 
         return new JsonResponse($campaign->view(), Response::HTTP_CREATED);
     }
@@ -114,17 +92,17 @@ class CampaignController extends AbstractController
     {
         $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_EDIT, $campaign);
 
-        $content = $request->getContent();
-        $body = json_decode($content, true);
+        $payload = JsonPayload::fromRequest($request);
 
-        if (isset($body['name'])) {
-            $name = trim((string) $body['name']);
-            if ($name === '') {
+        $name = $payload->getOptionalString('name');
+        if ($name !== null) {
+            $trimmed = trim($name);
+            if ($trimmed === '') {
                 return new JsonResponse([
                     'errors' => ['Name can\'t be empty'],
                 ], Response::HTTP_BAD_REQUEST);
             }
-            $campaign->updateName($name);
+            $campaign->updateName($trimmed);
         }
 
         $entityManager->flush();
@@ -152,12 +130,12 @@ class CampaignController extends AbstractController
     ): Response {
         $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_EDIT, $campaign);
 
-        $body = json_decode($request->getContent(), true);
+        $body = JsonPayload::fromRequest($request);
 
-        $entryId = $body['entry'] ?? null;
-        $campaignKeyId = $body['campaignKey'] ?? null;
-        $payload = $body['payload'] ?? null;
-        $customFieldValueId = $body['customFieldValue'] ?? null;
+        $entryId = $body->getOptionalString('entry');
+        $campaignKeyId = $body->getOptionalString('campaignKey');
+        $eventPayload = $body->getOptionalArray('payload');
+        $customFieldValueId = $body->getOptionalString('customFieldValue');
 
         $errors = [];
 
@@ -169,7 +147,7 @@ class CampaignController extends AbstractController
             $errors[] = 'Campaign key is required';
         }
 
-        if (! is_array($payload)) {
+        if ($eventPayload === null) {
             $errors[] = 'Payload is required';
         }
 
@@ -178,6 +156,8 @@ class CampaignController extends AbstractController
                 'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);
         }
+
+        assert(is_array($eventPayload));
 
         $entry = $entryRepository->find($entryId);
         if ($entry === null) {
@@ -197,7 +177,7 @@ class CampaignController extends AbstractController
             throw new BadRequestHttpException('Campaign key does not belong to this game');
         }
 
-        $verbString = $payload['verb'] ?? null;
+        $verbString = $eventPayload['verb'] ?? null;
         $verb = $verbString !== null ? CampaignEventVerb::tryFrom($verbString) : null;
         if (! $verb instanceof CampaignEventVerb) {
             return new JsonResponse([
@@ -206,7 +186,7 @@ class CampaignController extends AbstractController
         }
 
         try {
-            $verb->validatePayload($campaignKey->getType(), $payload);
+            $verb->validatePayload($campaignKey->getType(), $eventPayload);
         } catch (InvalidEventPayloadException $e) {
             return new JsonResponse([
                 'errors' => [$e->getMessage()],
@@ -215,7 +195,7 @@ class CampaignController extends AbstractController
 
         $playerResult = null;
         if (! $campaignKey->isGlobal()) {
-            $playerResultId = $body['playerResult'] ?? null;
+            $playerResultId = $body->getOptionalString('playerResult');
             if ($playerResultId === null) {
                 return new JsonResponse([
                     'errors' => ['Player result is required for non-global keys'],
@@ -239,7 +219,7 @@ class CampaignController extends AbstractController
         if ($scopedCustomField instanceof \App\Game\CustomField\CustomField && $playerResult !== null) {
             if ($customFieldValueId !== null) {
                 foreach ($playerResult->getCustomFieldValues() as $cfv) {
-                    if ((string) $cfv->getId() === (string) $customFieldValueId) {
+                    if ((string) $cfv->getId() === $customFieldValueId) {
                         if ((string) $cfv->getCustomField()->getId() !== (string) $scopedCustomField->getId()) {
                             return new JsonResponse([
                                 'errors' => ['The provided custom field value does not belong to the expected custom field'],
@@ -269,7 +249,7 @@ class CampaignController extends AbstractController
             }
         }
 
-        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $payload, $customFieldValue);
+        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $eventPayload, $customFieldValue);
 
         $entityManager->persist($event);
         $entityManager->flush();

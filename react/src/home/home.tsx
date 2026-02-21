@@ -4,7 +4,7 @@ import { useRequest } from '../hooks/useRequest'
 import { apiPatch } from '../hooks/useApi'
 import Layout from '../Layout'
 import { Landmark, User, Check, X, Pencil, ExternalLink } from 'lucide-react'
-import { Player, GeneralStatistics, PlayerGameStats, CirclePlayer } from '../types'
+import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer } from '../types'
 
 function Home() {
     const { playerId } = useParams() as { playerId: string }
@@ -154,7 +154,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
 }
 
 function GeneralStatistics({ playerId }: {playerId: string}) {
-    const [generalStats, setGeneralStats] = useState<GeneralStatistics|null>(null)
+    const [generalStats, setGeneralStats] = useState<GeneralStatisticsType|null>(null)
     
     useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
 

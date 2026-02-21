@@ -2,6 +2,8 @@
 
 namespace App\Utils;
 
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class JsonPayload
@@ -47,6 +49,64 @@ class JsonPayload
         $value = $this->data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
+    }
+
+    public function getUuid(string $key): UuidInterface
+    {
+        $value = $this->getString($key);
+        if (! Uuid::isValid($value)) {
+            throw new \InvalidArgumentException(sprintf('Field "%s" is not a valid UUID', $key));
+        }
+
+        return Uuid::fromString($value);
+    }
+
+    public function getOptionalUuid(string $key): ?UuidInterface
+    {
+        $value = $this->getOptionalString($key);
+        if ($value === null) {
+            return null;
+        }
+        if (! Uuid::isValid($value)) {
+            throw new \InvalidArgumentException(sprintf('Field "%s" is not a valid UUID', $key));
+        }
+
+        return Uuid::fromString($value);
+    }
+
+    public function getBool(string $key): bool
+    {
+        $value = $this->data[$key] ?? null;
+        if (! is_bool($value)) {
+            throw new \InvalidArgumentException(sprintf('Missing or invalid boolean field "%s"', $key));
+        }
+
+        return $value;
+    }
+
+    public function getOptionalBool(string $key, bool $default = false): bool
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_bool($value) ? $value : $default;
+    }
+
+    public function getOptionalInt(string $key, ?int $default = null): ?int
+    {
+        $value = $this->data[$key] ?? null;
+        if ($value === null) {
+            return $default;
+        }
+        if (! is_numeric($value)) {
+            throw new \InvalidArgumentException(sprintf('Field "%s" must be a valid integer', $key));
+        }
+
+        return (int) $value;
+    }
+
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->data);
     }
 
     /**

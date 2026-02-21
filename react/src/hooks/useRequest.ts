@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 
 const host = import.meta.env.VITE_API_HOST
 
-export const useRequest = (uri: string, deps: unknown[], setFunc: (data: unknown) => void, condition: boolean = true) => {
+export const useRequest = <T,>(uri: string, deps: unknown[], setFunc: (data: T) => void, condition: boolean = true) => {
     const [token] = useLocalStorage('jwt', null)
     const navigate = useNavigate()
     

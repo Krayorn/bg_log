@@ -14,7 +14,7 @@ export type CustomField = {
 
 export type CustomFieldValue = {
     id: string
-    value: string | number | boolean
+    value: string | number
     customField: CustomField
 }
 

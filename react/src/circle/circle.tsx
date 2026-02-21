@@ -101,7 +101,7 @@ export default function Circle() {
                     <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">Guest Players</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {guests.map(player => (
-                            <div key={player.id} className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4">
+                            <div key={player.id} className={`bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4 ${syncingGuestId === player.id ? 'relative z-10' : ''}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50">

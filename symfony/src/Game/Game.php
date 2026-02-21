@@ -63,6 +63,11 @@ class Game
         $this->name = $name;
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
     public function getCustomField(string $customFieldId): CustomField
     {
         foreach ($this->customFields as $cf) {

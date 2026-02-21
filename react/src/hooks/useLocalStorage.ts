@@ -11,8 +11,8 @@ export const parseJwt = (token: string) => {
   return JSON.parse(jsonPayload);
 }
 
-export const useLocalStorage = (keyName, defaultValue) => {
-    const [storedValue, setStoredValue] = useState(() => {
+export const useLocalStorage = <T,>(keyName: string, defaultValue: T) => {
+    const [storedValue, setStoredValue] = useState<T>(() => {
       try {
         const value = window.localStorage.getItem(keyName)
   
@@ -27,7 +27,7 @@ export const useLocalStorage = (keyName, defaultValue) => {
       }
     })
   
-    const setValue = (newValue) => {
+    const setValue = (newValue: T) => {
       try {
         window.localStorage.setItem(keyName, JSON.stringify(newValue))
       } catch {
@@ -36,6 +36,6 @@ export const useLocalStorage = (keyName, defaultValue) => {
       setStoredValue(newValue)
     }
   
-    return [storedValue, setValue]
+    return [storedValue, setValue] as const
   }
   

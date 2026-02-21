@@ -108,6 +108,11 @@ class Campaign
         ];
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
     public function updateName(string $name): void
     {
         $this->name = $name;

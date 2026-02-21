@@ -12,7 +12,7 @@ type LayoutProps = {
 
 export default function Layout({ children, noNav = false }: LayoutProps) {
   const { playerId: playerIdFromParams } = useParams() as { playerId?: string };
-  const [token, setToken] = useLocalStorage('jwt', null);
+  const [token, setToken] = useLocalStorage<string | null>('jwt', null);
   const navigate = useNavigate();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const location = useLocation();

@@ -5,15 +5,16 @@ namespace App\StatisticsQuery;
 use App\Game\CustomField\CustomFieldRepository;
 use App\Game\GameRepository;
 use App\Player\PlayerRepository;
+use App\StatisticsQuery\Action\CreateStatisticsQueryHandler;
+use App\Utils\BaseController;
+use App\Utils\JsonPayload;
 use Doctrine\ORM\EntityManagerInterface;
-use Ramsey\Uuid\Uuid;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class StatisticsQueryController extends AbstractController
+class StatisticsQueryController extends BaseController
 {
     #[Route('api/statisticsQueries', methods: 'GET')]
     public function list(Request $request, StatisticsQueryRepository $repository, GameRepository $gameRepository, PlayerRepository $playerRepository): Response
@@ -45,32 +46,26 @@ class StatisticsQueryController extends AbstractController
     }
 
     #[Route('api/statisticsQueries', methods: 'POST')]
-    public function create(Request $request, EntityManagerInterface $entityManager, GameRepository $gameRepository, PlayerRepository $playerRepository): Response
+    public function create(Request $request, CreateStatisticsQueryHandler $handler): Response
     {
-        $body = json_decode($request->getContent(), true);
+        $payload = JsonPayload::fromRequest($request);
 
-        $game = $gameRepository->find($body['gameId']);
-        $player = $playerRepository->find($body['playerId']);
-
-        if ($game === null || $player === null) {
+        try {
+            $query = $handler->handle(
+                $payload->getString('gameId'),
+                $payload->getString('playerId'),
+                $payload->getNonEmptyString('name'),
+                $payload->getOptionalUuid('customFieldId'),
+                $payload->getOptionalUuid('groupByFieldId'),
+                $payload->getOptionalBool('groupByPlayer'),
+                $payload->getOptionalString('aggregation'),
+                $payload->getOptionalString('metric'),
+            );
+        } catch (\InvalidArgumentException $e) {
             return new JsonResponse([
-                'errors' => ['Game or player not found'],
-            ], Response::HTTP_NOT_FOUND);
+                'errors' => [$e->getMessage()],
+            ], Response::HTTP_BAD_REQUEST);
         }
-
-        $query = new StatisticsQuery(
-            $player,
-            $game,
-            $body['name'],
-            isset($body['customFieldId']) ? Uuid::fromString($body['customFieldId']) : null,
-            isset($body['groupByFieldId']) ? Uuid::fromString($body['groupByFieldId']) : null,
-            $body['groupByPlayer'] ?? false,
-            $body['aggregation'] ?? null,
-            $body['metric'] ?? null,
-        );
-
-        $entityManager->persist($query);
-        $entityManager->flush();
 
         return new JsonResponse($query->view(), Response::HTTP_CREATED);
     }
@@ -143,15 +138,15 @@ class StatisticsQueryController extends AbstractController
     {
         $this->denyAccessUnlessGranted(StatisticsQueryVoter::STATISTICS_QUERY_EDIT, $statisticsQuery);
 
-        $body = json_decode($request->getContent(), true);
+        $payload = JsonPayload::fromRequest($request);
 
         $statisticsQuery->update(
-            $body['name'],
-            isset($body['customFieldId']) ? Uuid::fromString($body['customFieldId']) : null,
-            isset($body['groupByFieldId']) ? Uuid::fromString($body['groupByFieldId']) : null,
-            $body['groupByPlayer'] ?? false,
-            $body['aggregation'] ?? null,
-            $body['metric'] ?? null,
+            $payload->getNonEmptyString('name'),
+            $payload->getOptionalUuid('customFieldId'),
+            $payload->getOptionalUuid('groupByFieldId'),
+            $payload->getOptionalBool('groupByPlayer'),
+            $payload->getOptionalString('aggregation'),
+            $payload->getOptionalString('metric'),
         );
 
         $entityManager->flush();

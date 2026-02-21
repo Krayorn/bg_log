@@ -55,17 +55,6 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
         const { ok } = await apiDelete(`/customFields/${customFieldId}`)
         if (ok) {
             onCustomFieldsChanged(customFields.filter(cf => cf.id !== customFieldId), shareableFields)
-
-            setEntryCustomFields(prev => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { [customFieldId]: _removed, ...rest } = prev
-                return rest
-            })
-            setEntryPlayers(prev => prev.map(p => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { [customFieldId]: _removed, ...rest } = p.customFields
-                return { ...p, customFields: rest }
-            }))
         }
     }
 

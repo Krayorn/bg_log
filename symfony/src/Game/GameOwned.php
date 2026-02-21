@@ -43,6 +43,11 @@ class GameOwned
         return $this->player;
     }
 
+    public function getPrice(): ?int
+    {
+        return $this->price;
+    }
+
     public function setPrice(?int $price): void
     {
         $this->price = $price;

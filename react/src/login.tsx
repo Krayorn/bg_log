@@ -9,7 +9,7 @@ export default function Login() {
     const [error, setError] = useState('')
     const [isRegisterMode, setIsRegisterMode] = useState(false)
     const navigate = useNavigate();
-    const [token, setToken] = useLocalStorage('jwt', null)
+    const [token, setToken] = useLocalStorage<string | null>('jwt', null)
 
     useEffect(() => {
         if (token !== null) {
@@ -22,9 +22,9 @@ export default function Login() {
         }
     }, [token, navigate])
 
-    const login = async (e) => {
+    const login = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const formData = new FormData(e.currentTarget);
         
         const { data, error: apiError, ok } = await apiPost<{ token: string }>('/login_check', Object.fromEntries(formData))
         
@@ -37,9 +37,9 @@ export default function Login() {
         }
     }
 
-    const register = async (e) => {
+    const register = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const formData = new FormData(e.currentTarget);
         const formDataObj = Object.fromEntries(formData);
 
         if (formDataObj.password !== formDataObj.confirmPassword) {

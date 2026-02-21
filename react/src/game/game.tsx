@@ -8,12 +8,12 @@ import { EntryListItem, EntryDetailPanel } from './entryPanel'
 import { GameDetailPanel } from './gameDetailPanel'
 import { BarChart3, FileText, Scroll } from 'lucide-react'
 import { CampaignPanel } from './campaignPanel'
-import { CustomField, Entry, Game, GameStats } from '../types'
+import { CustomField, Entry, Game as GameType, GameStats, CampaignSummary } from '../types'
 
 export default function Game() {
     const { gameId } = useParams() as { gameId: string }
     const navigate = useNavigate()
-    const [game, setGame] = useState<Game | null>(null)
+    const [game, setGame] = useState<GameType | null>(null)
     const [gameStats, setGameStats] = useState<GameStats | null>(null)
     const [entries, setEntries] = useState<Entry[]>([])
     const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
@@ -22,7 +22,7 @@ export default function Game() {
     const [customFields, setCustomFields] = useState<CustomField[]>([])
     const [shareableFields, setShareableFields] = useState<CustomField[]>([])
     const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
-    const [campaigns, setCampaigns] = useState<{ id: string; name: string }[]>([])
+    const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
 
     const [searchParams] = useSearchParams();
 

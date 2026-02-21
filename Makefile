@@ -18,6 +18,7 @@ backend-precommit:
 	docker exec bg_log-symfony-1 vendor/bin/phpstan analyse --memory-limit=256M
 
 frontend-precommit:
+	cd react && npx tsc --noEmit
 	cd react && npm run lint
 
 test:
