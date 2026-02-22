@@ -2,7 +2,7 @@
 
 namespace App\Entry;
 
-use App\Event;
+use App\Utils\Event;
 
 class CustomFieldEvent extends Event
 {

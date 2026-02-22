@@ -22,19 +22,14 @@ class UpdatePlayerGameHandler
         ?int $newPrice,
     ): void {
         if ($newName !== null) {
-            $trimmed = trim($newName);
-            if ($trimmed === '') {
-                throw new \InvalidArgumentException('Name can\'t be empty');
-            }
-
             $existing = $this->gameRepository->findOneBy([
-                'name' => $trimmed,
+                'name' => $newName,
             ]);
             if ($existing !== null && ! $existing->getId()->equals($gameOwned->getGame()->getId())) {
                 throw new DuplicateGameNameException('Already a game with the same name');
             }
 
-            $gameOwned->getGame()->setName($trimmed);
+            $gameOwned->getGame()->setName($newName);
         }
 
         if ($updatePrice) {

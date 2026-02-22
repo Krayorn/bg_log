@@ -401,7 +401,7 @@ export default function CampaignPage() {
                                             </Link>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                            {entry.players.map(pr => (
+                                            {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(pr => (
                                                 <div key={pr.id} className="flex flex-col gap-0.5">
                                                     <span
                                                         className={`text-xs px-2 py-1 rounded-full border ${
@@ -816,7 +816,7 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
                         }}
                         className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"
                     >
-                        {entry.players.map(pr => {
+                        {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(pr => {
                             if (selectedKey.scopedToCustomField && !selectedKey.scopedToCustomField.multiple) {
                                 const cfValue = pr.customFields.find(cf => cf.customField.id === selectedKey.scopedToCustomField!.id)?.value
                                 return <option key={pr.id} value={pr.id}>{pr.player.name} ({cfValue})</option>

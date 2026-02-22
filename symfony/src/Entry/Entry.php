@@ -3,12 +3,13 @@
 namespace App\Entry;
 
 use App\Campaign\Campaign;
+use App\Entry\Exception\CannotRemoveLastPlayerException;
 use App\Entry\PlayerResult\PlayerResult;
-use App\Event;
 use App\Game\CustomField\CustomFieldKind;
 use App\Game\Game;
 use App\Game\GameOwned;
 use App\Player\Player;
+use App\Utils\Event;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -262,6 +263,10 @@ class Entry
 
     public function removePlayer(string $playerResultId): void
     {
+        if ($this->playerResults->count() <= 1) {
+            throw new CannotRemoveLastPlayerException();
+        }
+
         foreach ($this->playerResults as $key => $pr) {
             if ((string) $pr->id === $playerResultId) {
                 $this->playerResults->remove($key);

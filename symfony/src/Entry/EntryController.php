@@ -3,6 +3,8 @@
 namespace App\Entry;
 
 use App\Entry\Action\CreateEntryHandler;
+use App\Entry\Action\UpdateEntryHandler;
+use App\Entry\Exception\CannotRemoveLastPlayerException;
 use App\Entry\PlayerResult\PlayerEvent;
 use App\Game\Exception\GameNotFoundException;
 use App\Game\GameRepository;
@@ -84,7 +86,7 @@ class EntryController extends BaseController
     public function edit(
         Entry $entry,
         Request                $request,
-        UpdateEntry $updateEntry,
+        UpdateEntryHandler $updateEntry,
     ): Response {
         $this->denyAccessUnlessGranted(EntryVoter::ENTRY_EDIT, $entry);
 
@@ -100,7 +102,13 @@ class EntryController extends BaseController
         $customFieldsEvents = array_map(fn ($customField) => new CustomFieldEvent($customField), $customFields);
         $playersEvents = array_map(fn ($player) => new PlayerEvent($player), $players);
 
-        $entry = $updateEntry->__invoke($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents, $campaign);
+        try {
+            $entry = $updateEntry->handle($entry, $note, $gameUsed, $playedAt, $customFieldsEvents, $playersEvents, $campaign);
+        } catch (CannotRemoveLastPlayerException $e) {
+            return new JsonResponse([
+                'errors' => [$e->getMessage()],
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
         return new JsonResponse($entry->view(), Response::HTTP_CREATED);
     }

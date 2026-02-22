@@ -29,7 +29,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
     const [gameOwners, setGameOwners] = useState<GameOwner[]>([])
 
     const [entryNote, setEntryNote] = useState("")
-    const [entryPlayedAt, setEntryPlayedAt] = useState("")
+    const [entryPlayedAt, setEntryPlayedAt] = useState(new Date().toISOString().split('T')[0])
     const [entryGameUsed, setEntryGameUsed] = useState("")
     const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string | string[] }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])

@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Entry;
+namespace App\Entry\Action;
 
 use App\Campaign\CampaignRepository;
+use App\Entry\CustomFieldEvent;
+use App\Entry\Entry;
 use App\Entry\PlayerResult\PlayerEvent;
-use App\Event;
 use App\Game\GameOwnedRepository;
 use App\Player\PlayerRepository;
+use App\Utils\Event;
 use Doctrine\ORM\EntityManagerInterface;
 
-class UpdateEntry
+class UpdateEntryHandler
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -23,7 +25,7 @@ class UpdateEntry
      * @param array<CustomFieldEvent> $customFieldEvents
      * @param array<PlayerEvent> $playerEvents
      */
-    public function __invoke(Entry $entry, ?string $note, ?string $gameUsed, ?string $playedAt, array $customFieldEvents, array $playerEvents, ?string $campaign = null): Entry
+    public function handle(Entry $entry, ?string $note, ?string $gameUsed, ?string $playedAt, array $customFieldEvents, array $playerEvents, ?string $campaign = null): Entry
     {
         if ($note !== null) {
             $entry->updateNote($note);

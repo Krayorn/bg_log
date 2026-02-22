@@ -80,12 +80,18 @@ export default function Game() {
         }
     }, [entryIdFromUrl, entries, selectedEntryId])
 
+    const sortEntries = (list: Entry[]) =>
+        [...list].sort((a, b) => {
+            const dateDiff = new Date(b.playedAt.date).getTime() - new Date(a.playedAt.date).getTime()
+            return dateDiff !== 0 ? dateDiff : new Date(b.createdAt.date).getTime() - new Date(a.createdAt.date).getTime()
+        })
+
     const onEntryCreated = (newEntry: Entry) => {
-        setEntries([newEntry, ...entries])
+        setEntries(sortEntries([newEntry, ...entries]))
     }
 
     const onEntryUpdated = (id: string, newEntry: Entry) => {
-        setEntries(entries.map(e => e.id === id ? newEntry : e))
+        setEntries(sortEntries(entries.map(e => e.id === id ? newEntry : e)))
     }
 
     const onEntryDeleted = (id: string) => {

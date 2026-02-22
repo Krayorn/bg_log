@@ -39,7 +39,9 @@ class CampaignEvent
         #[ORM\ManyToOne(targetEntity: CampaignKey::class)]
         #[ORM\JoinColumn(name: 'campaign_key_id', referencedColumnName: 'id')]
         private readonly CampaignKey $campaignKey,
-        #[ORM\Column(type: 'json')]
+        #[ORM\Column(type: 'json', options: [
+            'jsonb' => true,
+        ])]
         private readonly array $payload,
         #[ORM\ManyToOne(targetEntity: CustomFieldValue::class)]
         #[ORM\JoinColumn(name: 'custom_field_value_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]

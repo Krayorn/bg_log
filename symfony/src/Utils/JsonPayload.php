@@ -44,6 +44,18 @@ class JsonPayload
         return trim($value);
     }
 
+    public function getOptionalNonEmptyString(string $key): ?string
+    {
+        $value = $this->getOptionalString($key);
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
     public function getOptionalString(string $key, ?string $default = null): ?string
     {
         $value = $this->data[$key] ?? null;

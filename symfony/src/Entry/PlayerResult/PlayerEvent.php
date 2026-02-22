@@ -2,7 +2,7 @@
 
 namespace App\Entry\PlayerResult;
 
-use App\Event;
+use App\Utils\Event;
 
 class PlayerEvent extends Event
 {

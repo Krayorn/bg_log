@@ -26,7 +26,9 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var array<string>
      */
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: 'json', options: [
+        'jsonb' => true,
+    ])]
     private array $roles = [];
 
     #[ORM\ManyToOne(targetEntity: self::class)]

@@ -36,14 +36,6 @@ class UpdatePlayerGameHandlerTest extends TestCase
         $this->assertSame('Checkers', $gameOwned->getGame()->getName());
     }
 
-    public function testEmptyNameThrows(): void
-    {
-        $gameOwned = new GameOwned(new Player('Alice', 1), new Game('Chess'));
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->handler->handle($gameOwned, '   ', false, null);
-    }
-
     public function testDuplicateNameAgainstOtherGameThrows(): void
     {
         $gameOwned = new GameOwned(new Player('Alice', 1), new Game('Chess'));

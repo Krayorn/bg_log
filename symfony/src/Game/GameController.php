@@ -81,11 +81,11 @@ class GameController extends BaseController
         try {
             $handler->handle(
                 $gameOwned,
-                $payload->getOptionalString('name'),
+                $payload->getOptionalNonEmptyString('name'),
                 $payload->has('price'),
                 $payload->has('price') ? $payload->getOptionalInt('price') : null,
             );
-        } catch (DuplicateGameNameException | \InvalidArgumentException $e) {
+        } catch (DuplicateGameNameException $e) {
             return new JsonResponse([
                 'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);

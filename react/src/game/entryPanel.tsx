@@ -41,7 +41,7 @@ export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryList
                 )}
             </div>
             <div className="text-sm text-slate-300 truncate">
-                {entry.players.map(p => p.player.name).join(', ')}
+                {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(p => p.player.name).join(', ')}
             </div>
             {entry.note && (
                 <div className="text-xs text-slate-500 mt-1 truncate">
@@ -577,7 +577,7 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                 )}
 
                 <div className="flex flex-wrap gap-3">
-                    {players.sort((a, b) => a.won && !b.won ? -1 : 1).map((playerResult) => (
+                    {[...players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map((playerResult) => (
                         <div key={playerResult.id} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-white font-medium flex-1 truncate">{playerResult.player.name}</span>
