@@ -5,6 +5,7 @@ namespace App\Tests\Game;
 use App\Game\CustomField\Action\CreateCustomFieldHandler;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldRepository;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\CustomField\Exception\DuplicateCustomFieldException;
 use App\Game\Game;
 use App\Player\Player;
@@ -32,7 +33,7 @@ class CreateCustomFieldHandlerTest extends TestCase
         $game = new Game('Chess');
         $player = new Player('Alice', 1);
 
-        $customField = $this->handler->handle($game, 'Score', 'number', true, false, $player);
+        $customField = $this->handler->handle($game, 'Score', 'number', CustomFieldScope::ENTRY, false, $player);
 
         $this->assertSame('Score', $customField->getName());
     }
@@ -41,11 +42,11 @@ class CreateCustomFieldHandlerTest extends TestCase
     {
         $game = new Game('Chess');
         $player = new Player('Alice', 1);
-        $existing = new CustomField($game, 'Score', 'number', true, false, $player);
+        $existing = new CustomField($game, 'Score', 'number', CustomFieldScope::ENTRY, false, $player);
 
         $this->customFieldRepository->method('findOneBy')->willReturn($existing);
 
         $this->expectException(DuplicateCustomFieldException::class);
-        $this->handler->handle($game, 'Score', 'number', true, false, $player);
+        $this->handler->handle($game, 'Score', 'number', CustomFieldScope::ENTRY, false, $player);
     }
 }

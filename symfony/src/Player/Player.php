@@ -139,4 +139,21 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $hashedPassword;
         $this->registeredOn = new DateTimeImmutable();
     }
+
+    public function addRole(string $role): void
+    {
+        if (! in_array($role, $this->roles, true)) {
+            $this->roles[] = $role;
+        }
+    }
+
+    public function removeRole(string $role): void
+    {
+        $this->roles = array_values(array_filter($this->roles, fn (string $r) => $r !== $role));
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->roles, true);
+    }
 }

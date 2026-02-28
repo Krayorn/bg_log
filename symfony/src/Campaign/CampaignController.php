@@ -8,6 +8,7 @@ use App\Campaign\CampaignEvent\CampaignEventVerb;
 use App\Campaign\CampaignEvent\InvalidEventPayloadException;
 use App\Entry\EntryRepository;
 use App\Game\CampaignKey\CampaignKey;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\Exception\GameNotFoundException;
 use App\Game\GameRepository;
 use App\Utils\BaseController;
@@ -194,11 +195,11 @@ class CampaignController extends BaseController
         }
 
         $playerResult = null;
-        if (! $campaignKey->isGlobal()) {
+        if ($campaignKey->getScope() !== CustomFieldScope::ENTRY) {
             $playerResultId = $body->getOptionalString('playerResult');
             if ($playerResultId === null) {
                 return new JsonResponse([
-                    'errors' => ['Player result is required for non-global keys'],
+                    'errors' => ['Player result is required for player-scoped keys'],
                 ], Response::HTTP_BAD_REQUEST);
             }
 

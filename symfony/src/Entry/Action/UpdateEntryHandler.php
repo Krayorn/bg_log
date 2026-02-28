@@ -32,8 +32,12 @@ class UpdateEntryHandler
         }
 
         if ($gameUsed !== null) {
-            $gameOwned = $this->gameOwnedRepository->find($gameUsed);
-            $entry->updateGameUsed($gameOwned);
+            if ($gameUsed === 'null' || $gameUsed === '') {
+                $entry->updateGameUsed(null);
+            } else {
+                $gameOwned = $this->gameOwnedRepository->find($gameUsed);
+                $entry->updateGameUsed($gameOwned);
+            }
         }
 
         if ($playedAt !== null) {

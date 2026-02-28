@@ -33,7 +33,7 @@ class GameOwnedVoter extends Voter
 
         return match ($attribute) {
             self::GAME_OWNED_EDIT => $subject->getPlayer()->getId()->equals($user->getId()),
-            self::GAME_OWNED_ADD => $user->getId()->equals($subject->getId()),
+            self::GAME_OWNED_ADD => true,
             default => false,
         };
     }

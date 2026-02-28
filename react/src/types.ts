@@ -1,10 +1,12 @@
 export type CustomFieldType = 'string' | 'number' | 'enum'
 
+export type CustomFieldScope = 'entry' | 'playerResult'
+
 export type CustomField = {
     id: string
     kind: CustomFieldType
     name: string
-    global: boolean
+    scope: CustomFieldScope
     multiple: boolean
     enumValues: { id: string; value: string }[]
     player: string | null
@@ -66,13 +68,14 @@ export type Entry = {
     createdAt: { date: string }
     customFields: CustomFieldValue[]
     campaign: CampaignSummary | null
+    gameUsed: GameOwner | null
 }
 
 export type CampaignKey = {
     id: string
     name: string
     type: 'string' | 'number' | 'list' | 'counted_list'
-    global: boolean
+    scope: CustomFieldScope
     scopedToCustomField: CustomField | null
     player: string | null
     shareable: boolean
@@ -124,6 +127,7 @@ export type Player = {
     isGuest: boolean
     inPartyOf: { id: string; name: string } | null
     email?: string | null
+    nickname?: string | null
 }
 
 export type CirclePlayer = {
@@ -133,6 +137,7 @@ export type CirclePlayer = {
     registeredOn: string | null
     isGuest: boolean
     inPartyOf: { id: string } | null
+    nickname: string | null
     gamesPlayed: number
     wins: number
     losses: number
@@ -175,4 +180,33 @@ export type SavedQuery = {
     groupByPlayer: boolean
     aggregation: string | null
     metric: string | null
+}
+
+export type AdminStats = {
+    totalPlayers: number
+    registeredPlayers: number
+    guestPlayers: number
+    newUsersThisMonth: number
+    totalEntries: number
+    entriesThisMonth: number
+    totalGames: number
+    totalCampaigns: number
+    avgEntriesPerUser: number
+    avgPlayersPerEntry: number
+    mostPlayedGame: { name: string; play_count: number } | null
+    totalGamesOwned: number
+    recentEntries: { played_at: string; game_name: string }[]
+    topPlayers: { name: string; entries_count: number }[]
+}
+
+export type AdminUser = {
+    id: string
+    name: string
+    number: number
+    registeredOn: { date: string } | null
+    isGuest: boolean
+    inPartyOf: { id: string; name: string } | null
+    email: string | null
+    roles: string[]
+    isAdmin: boolean
 }

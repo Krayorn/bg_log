@@ -6,6 +6,7 @@ use App\Entry\CustomFieldValue;
 use App\Entry\PlayerResult\PlayerResult;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldKind;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\Game;
 use App\Player\Player;
 use Doctrine\ORM\EntityManagerInterface;
@@ -48,7 +49,7 @@ class StatisticsQueryExecutor
         ];
 
         if ($groupByField instanceof CustomField) {
-            if ($groupByField->isGlobal()) {
+            if ($groupByField->getScope() === CustomFieldScope::ENTRY) {
                 $fromSql .= ' JOIN custom_fields_values cfv ON cfv.entry_id = e.id AND cfv.custom_field_id = :groupByFieldId';
             } else {
                 $fromSql .= ' JOIN custom_fields_values cfv ON cfv.player_result_id = pr.id AND cfv.custom_field_id = :groupByFieldId';
@@ -117,7 +118,7 @@ class StatisticsQueryExecutor
             ->where('cfv.customField = :customField')
             ->setParameter('customField', $customField);
 
-        if ($customField->isGlobal()) {
+        if ($customField->getScope() === CustomFieldScope::ENTRY) {
             $qb->join('cfv.entry', 'e');
         } else {
             $qb->join('cfv.playerResult', 'pr')
@@ -248,7 +249,7 @@ class StatisticsQueryExecutor
 
     private function applyGroupByPlayer(QueryBuilder $qb, CustomField $mainField): void
     {
-        if ($mainField->isGlobal()) {
+        if ($mainField->getScope() === CustomFieldScope::ENTRY) {
             $qb->join('e.playerResults', 'prPlayer')
                 ->join('prPlayer.player', 'p');
         } else {
@@ -258,9 +259,9 @@ class StatisticsQueryExecutor
 
     private function applyGroupByField(QueryBuilder $qb, CustomField $mainField, CustomField $groupByField): void
     {
-        if ($groupByField->isGlobal()) {
+        if ($groupByField->getScope() === CustomFieldScope::ENTRY) {
             $qb->join(CustomFieldValue::class, 'cfvGroup', 'WITH', 'cfvGroup.entry = e AND cfvGroup.customField = :groupByField');
-        } elseif ($mainField->isGlobal()) {
+        } elseif ($mainField->getScope() === CustomFieldScope::ENTRY) {
             $qb->join('e.playerResults', 'prGroup')
                 ->join(CustomFieldValue::class, 'cfvGroup', 'WITH', 'cfvGroup.playerResult = prGroup AND cfvGroup.customField = :groupByField');
         } else {

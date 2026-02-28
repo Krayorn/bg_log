@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck — recharts types are incompatible with React 19's stricter JSX types
 import { useState, useEffect, useCallback } from "react"
-import { apiGet, apiPost, apiPut, apiDelete } from '../hooks/useApi'
+import { getSavedQueries, createSavedQuery, updateSavedQuery, deleteSavedQuery, executeStatsQuery } from '../api/statistics'
 import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Legend, Rectangle, Sector } from 'recharts'
 import type { BarShapeProps, PieSectorShapeProps } from 'recharts'
@@ -29,7 +29,7 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
 
     const loadSavedQueries = useCallback(async () => {
         if (!playerId) return
-        const { data, ok } = await apiGet<SavedQuery[]>(`/statisticsQueries?gameId=${gameId}&playerId=${playerId}`)
+        const { data, ok } = await getSavedQueries(gameId, playerId)
         if (ok && data) {
             setSavedQueries(data)
         }
@@ -41,21 +41,21 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
 
     const handleSave = async (query: Omit<SavedQuery, 'id'>) => {
         if (!playerId) return
-        const { data, ok } = await apiPost<SavedQuery>(`/statisticsQueries`, { ...query, gameId, playerId })
+        const { data, ok } = await createSavedQuery({ ...query, gameId, playerId })
         if (ok && data) {
             setSavedQueries(prev => [...prev, data])
         }
     }
 
     const handleUpdate = async (id: string, query: Omit<SavedQuery, 'id'>) => {
-        const { data, ok } = await apiPut<SavedQuery>(`/statisticsQueries/${id}`, query)
+        const { data, ok } = await updateSavedQuery(id, query)
         if (ok && data) {
             setSavedQueries(prev => prev.map(q => q.id === id ? data : q))
         }
     }
 
     const handleDelete = async (id: string) => {
-        const { ok } = await apiDelete(`/statisticsQueries/${id}`)
+        const { ok } = await deleteSavedQuery(id)
         if (ok) {
             setSavedQueries(prev => prev.filter(q => q.id !== id))
         }
@@ -138,7 +138,7 @@ function SavedQueryCard({
         if (savedQuery.groupByPlayer) params.set('groupByPlayer', 'true')
         if (savedQuery.aggregation) params.set('aggregation', savedQuery.aggregation)
 
-        const { data, ok } = await apiGet<StatsResult>(`/statisticsQueries/execute?${params.toString()}`)
+        const { data, ok } = await executeStatsQuery(params)
         if (ok && data) setStatsResult(data)
         setLoading(false)
     }, [gameId, playerId, savedQuery])
@@ -362,7 +362,7 @@ function QueryExplorer({
             params.set('aggregation', aggregation)
         }
         
-        const { data, ok } = await apiGet<StatsResult>(`/statisticsQueries/execute?${params.toString()}`)
+        const { data, ok } = await executeStatsQuery(params)
         
         if (ok && data) {
             setStatsResult(data)
@@ -393,8 +393,8 @@ function QueryExplorer({
         }))
     }
 
-    const entryFields = customFields.filter(cf => cf.global)
-    const playerFields = customFields.filter(cf => !cf.global)
+    const entryFields = customFields.filter(cf => cf.scope === 'entry')
+    const playerFields = customFields.filter(cf => cf.scope === 'playerResult')
 
     return (
         <div className="border border-slate-600 rounded-lg p-6 bg-slate-900/30 backdrop-blur-sm">
@@ -428,6 +428,8 @@ function QueryExplorer({
                             onClick={() => {
                                 if (metric === 'winrate') {
                                     setMetric(null)
+                                    setGroupByFieldId(null)
+                                    setGroupByPlayer(false)
                                     setStatsResult(null)
                                 } else {
                                     setMetric('winrate')

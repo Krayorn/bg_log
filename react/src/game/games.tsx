@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import { useDebounce } from '../hooks/useDebounce'
-import { apiPost, apiPatch } from '../hooks/useApi'
+import { createGame, addGameToLibrary, updateOwnedGame } from '../api/games'
 import Layout from '../Layout'
 import { Puzzle, ExternalLink } from 'lucide-react'
 import { PlayerGameStats, Game } from '../types'
@@ -65,13 +65,13 @@ export default function Games() {
         return () => document.removeEventListener('keydown', handleKeyDown)
     }, [selected, searchResults])
 
-    const addGameToLibrary = async (gameId: string) => {
+    const addGame = async (gameId: string) => {
         const body: { gameId: string; price?: number } = { gameId }
         if (price !== "") {
             body.price = parseInt(price)
         }
 
-        const { data, error, ok } = await apiPost<PlayerGameStats>(`/players/${playerId}/games`, body)
+        const { data, error, ok } = await addGameToLibrary(playerId, body)
 
         if (ok && data) {
             setGames(prev => {
@@ -97,7 +97,7 @@ export default function Games() {
 
         if (query.trim() === "") return
 
-        const { error, ok } = await apiPost<Game>('/games', { name: query.trim() })
+        const { error, ok } = await createGame(query.trim())
         if (ok) {
             setMessage("Game created in the database")
             setQuery("")
@@ -115,12 +115,12 @@ export default function Games() {
         }
 
         if (selected) {
-            await addGameToLibrary(selected.id)
+            await addGame(selected.id)
         } else if (query.trim() !== "") {
-            const { data: newGame, error, ok } = await apiPost<Game>('/games', { name: query.trim() })
+            const { data: newGame, error, ok } = await createGame(query.trim())
 
             if (ok && newGame) {
-                await addGameToLibrary(newGame.id)
+                await addGame(newGame.id)
             } else {
                 setMessage(error || "Error creating game")
             }
@@ -152,7 +152,7 @@ export default function Games() {
 
         if (Object.keys(body).length === 0) return
 
-        const { data, ok, error } = await apiPatch<PlayerGameStats>(`/players/${playerId}/games/${game.game_owned_id}`, body)
+        const { data, ok, error } = await updateOwnedGame(playerId, game.game_owned_id!, body)
         if (ok && data) {
             setGames(prev => prev.map(g => g.game_id === data.game_id ? data : g))
         } else {
@@ -254,7 +254,12 @@ export default function Games() {
                 <section className="mb-6">
                     <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">My Collection</h2>
                     {owned.length === 0 ? (
-                        <div className="text-slate-500 text-sm">No games in your collection yet</div>
+                        <div className="border border-dashed border-cyan-400/20 rounded-lg p-4 bg-slate-900/30">
+                            <p className="text-slate-400 font-mono text-sm">
+                                <span className="text-cyan-400/60 mr-2">▸</span>
+                                No games in your collection yet. Use the search above to find and add your first board game.
+                            </p>
+                        </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {owned.map(game => (

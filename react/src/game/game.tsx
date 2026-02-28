@@ -21,7 +21,6 @@ export default function Game() {
     const [showCampaigns, setShowCampaigns] = useState(false)
     const [customFields, setCustomFields] = useState<CustomField[]>([])
     const [shareableFields, setShareableFields] = useState<CustomField[]>([])
-    const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
     const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
 
     const [searchParams] = useSearchParams();
@@ -102,7 +101,6 @@ export default function Game() {
     useRequest(`/games/${gameId}`, [gameId], setGame)
     useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
     useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
-    useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
     useRequest(`/game/${gameId}/customFields`, [gameId], (data: { myFields: CustomField[], shareableFields: CustomField[] }) => {
         setCustomFields(data.myFields)
         setShareableFields(data.shareableFields)
@@ -152,10 +150,15 @@ export default function Game() {
                     </div>
                     <div className="overflow-y-auto flex-1">
                         {entries.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                            <div className="flex flex-col items-center justify-center h-full p-6 text-center relative overflow-hidden">
+                                <div className="absolute inset-0 pointer-events-none">
+                                    <div className="absolute left-0 right-0 h-px bg-cyan-400/20 animate-scan" />
+                                </div>
                                 <FileText className="w-12 h-12 text-slate-600 mb-3" strokeWidth={1} />
-                                <span className="text-slate-500 text-sm">No entries yet</span>
-                                <span className="text-slate-600 text-xs mt-1">Add your first game session</span>
+                                <span className="text-slate-400 text-sm font-mono">No entries yet</span>
+                                <span className="text-slate-600 text-xs mt-2 font-mono leading-relaxed max-w-[200px]">
+                                    Select the game name above to log your first play session with date, players, and results.
+                                </span>
                             </div>
                         ) : (
                             entries.map(entry => (
@@ -176,7 +179,7 @@ export default function Game() {
                     ) : showStatistics ? (
                         <StatisticsPanel gameId={gameId} playerId={playerId} customFields={customFields} />
                     ) : selectedEntry ? (
-                        <EntryDetailPanel key={selectedEntry.id} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} onEntryDeleted={onEntryDeleted} allPlayers={playersList} customFields={customFields} campaigns={campaigns} />
+                        <EntryDetailPanel key={selectedEntry.id} gameId={gameId} playerId={playerId} entry={selectedEntry} onEntryUpdated={onEntryUpdated} onEntryDeleted={onEntryDeleted} customFields={customFields} campaigns={campaigns} />
                     ) : (
                         <GameDetailPanel 
                             game={game} 

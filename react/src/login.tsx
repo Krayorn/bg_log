@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
-import { apiPost } from './hooks/useApi'
+import { login as apiLogin, register as apiRegister } from './api/auth'
 import Layout from './Layout'
 import { User } from 'lucide-react'
 
@@ -26,7 +26,7 @@ export default function Login() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
-        const { data, error: apiError, ok } = await apiPost<{ token: string }>('/login_check', Object.fromEntries(formData))
+        const { data, error: apiError, ok } = await apiLogin(Object.fromEntries(formData))
         
         if (!ok || !data) {
             setError(apiError ?? 'Login failed')
@@ -47,7 +47,7 @@ export default function Login() {
             return
         }
         
-        const { error: apiError, ok } = await apiPost('/register', {
+        const { error: apiError, ok } = await apiRegister({
             username: formDataObj.username,
             password: formDataObj.password
         })

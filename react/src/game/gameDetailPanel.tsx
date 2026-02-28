@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { apiPost, apiDelete, apiPatch } from '../hooks/useApi'
+import { createCustomField, deleteCustomField as apiDeleteCustomField, updateCustomFieldEnumValues, updateCustomFieldKind, copyCustomField, toggleCustomFieldShareable } from '../api/customFields'
 import { X, Trash2 } from 'lucide-react'
 import { AddEntryForm } from '../components/AddEntryForm'
 import type { CustomField, CustomFieldType, Entry, Game, GameStats } from '../types'
@@ -34,10 +34,10 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
             return
         }
 
-        const { data, error, ok } = await apiPost<CustomField>(`/game/${game.id}/customFields`, {
+        const { data, error, ok } = await createCustomField(game.id, {
             name: customFieldName,
-            kind: customFieldType,
-            global: entrySpecific,
+            kind: customFieldType as CustomFieldType,
+            scope: entrySpecific ? 'entry' : 'playerResult',
             multiple: customFieldMultiple
         })
 
@@ -52,7 +52,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
     }
 
     const deleteCustomField = async (customFieldId: string) => {
-        const { ok } = await apiDelete(`/customFields/${customFieldId}`)
+        const { ok } = await apiDeleteCustomField(customFieldId)
         if (ok) {
             onCustomFieldsChanged(customFields.filter(cf => cf.id !== customFieldId), shareableFields)
         }
@@ -62,7 +62,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
         const val = (newEnumValues[customField.id] || '').trim()
         if (!val) return
         const newValues = [...customField.enumValues.map(v => v.value), val]
-        const { data, ok } = await apiPatch<CustomField>(`/customFields/${customField.id}`, { enumValues: newValues })
+        const { data, ok } = await updateCustomFieldEnumValues(customField.id, newValues)
         if (ok && data) {
             onCustomFieldsChanged(customFields.map(cf => cf.id === data.id ? data : cf), shareableFields)
             setNewEnumValues(prev => ({ ...prev, [customField.id]: '' }))
@@ -71,28 +71,28 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
 
     const removeEnumValue = async (customField: CustomField, enumValueId: string) => {
         const newValues = customField.enumValues.filter(v => v.id !== enumValueId).map(v => v.value)
-        const { data, ok } = await apiPatch<CustomField>(`/customFields/${customField.id}`, { enumValues: newValues })
+        const { data, ok } = await updateCustomFieldEnumValues(customField.id, newValues)
         if (ok && data) {
             onCustomFieldsChanged(customFields.map(cf => cf.id === data.id ? data : cf), shareableFields)
         }
     }
 
     const convertCustomFieldKind = async (customField: CustomField, newKind: 'string' | 'enum') => {
-        const { data, ok } = await apiPatch<CustomField>(`/customFields/${customField.id}`, { kind: newKind })
+        const { data, ok } = await updateCustomFieldKind(customField.id, newKind)
         if (ok && data) {
             onCustomFieldsChanged(customFields.map(cf => cf.id === data.id ? data : cf), shareableFields)
         }
     }
 
-    const copyCustomField = async (customFieldId: string) => {
-        const { data, ok } = await apiPost<CustomField>(`/customFields/${customFieldId}/copy`)
+    const copyCustomFieldAction = async (customFieldId: string) => {
+        const { data, ok } = await copyCustomField(customFieldId)
         if (ok && data) {
             onCustomFieldsChanged([...customFields, data], shareableFields)
         }
     }
 
     const toggleShareable = async (customField: CustomField) => {
-        const { data, ok } = await apiPatch<CustomField>(`/customFields/${customField.id}`, { shareable: !customField.shareable })
+        const { data, ok } = await toggleCustomFieldShareable(customField)
         if (ok && data) {
             onCustomFieldsChanged(customFields.map(cf => cf.id === data.id ? data : cf), shareableFields)
         }
@@ -226,8 +226,8 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                                     </div>
                                     <div className="flex gap-2 text-xs">
                                         <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300">{customField.kind}</span>
-                                        <span className={`px-2 py-0.5 rounded ${customField.global ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
-                                            {customField.global ? 'Entry' : 'Player'}
+                                        <span className={`px-2 py-0.5 rounded ${customField.scope === 'entry' ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
+                                            {customField.scope === 'entry' ? 'Entry' : 'Player'}
                                         </span>
                                         {customField.multiple && (
                                             <span className="px-2 py-0.5 rounded bg-amber-900/50 text-amber-300">list</span>
@@ -315,7 +315,7 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                                         <span className="text-white font-medium">{customField.name}</span>
                                         <button
                                             type="button"
-                                            onClick={() => copyCustomField(customField.id)}
+                                            onClick={() => copyCustomFieldAction(customField.id)}
                                             className="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs transition-colors"
                                         >
                                             Copy
@@ -323,8 +323,8 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                                     </div>
                                     <div className="flex gap-2 text-xs">
                                         <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300">{customField.kind}</span>
-                                        <span className={`px-2 py-0.5 rounded ${customField.global ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
-                                            {customField.global ? 'Entry' : 'Player'}
+                                        <span className={`px-2 py-0.5 rounded ${customField.scope === 'entry' ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>
+                                            {customField.scope === 'entry' ? 'Entry' : 'Player'}
                                         </span>
                                         {customField.multiple && (
                                             <span className="px-2 py-0.5 rounded bg-amber-900/50 text-amber-300">list</span>

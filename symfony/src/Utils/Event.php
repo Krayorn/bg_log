@@ -4,11 +4,11 @@ namespace App\Utils;
 
 class Event
 {
-    public const ADD = 'add';
+    final public const ADD = 'add';
 
-    public const REMOVE = 'remove';
+    final public const REMOVE = 'remove';
 
-    public const UPDATE = 'update';
+    final public const UPDATE = 'update';
 
     private readonly string $kind;
 

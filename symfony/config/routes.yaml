@@ -1,3 +1,9 @@
+admin:
+    resource:
+        path: ../src/Admin/
+        namespace: App\Admin
+    type: attribute
+
 campaign:
     resource:
         path: ../src/Campaign/

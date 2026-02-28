@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRequest } from './hooks/useRequest';
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage';
-import { Landmark, Puzzle, Users, Search, X } from 'lucide-react';
+import { Landmark, Puzzle, Users, Search, X, Shield } from 'lucide-react';
 import { Game } from './types';
 
 type LayoutProps = {
@@ -26,6 +26,8 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
       // Invalid token
     }
   }
+
+  const isAdmin = token ? (parseJwt(token).roles || []).includes('ROLE_ADMIN') : false;
 
   const isActive = (path: string) => {
     if (path === `/players/${playerId}`) {
@@ -84,6 +86,15 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
             </button>
           </div>
           <div className="absolute bottom-2 right-3 flex gap-3">
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="text-slate-500 text-xs hover:text-cyan-400 transition-colors flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3" />
+                admin
+              </Link>
+            )}
             <Link
               to="/about"
               className="text-slate-500 text-xs hover:text-slate-300 transition-colors"

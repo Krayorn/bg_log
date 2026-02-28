@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react"
 import { useParams, useSearchParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
-import { apiGet, apiPatch, apiPost, apiDelete } from '../hooks/useApi'
+import { useCircle } from '../contexts/CircleContext'
+import { updateCampaignName, addCampaignEvent, deleteCampaignEvent, getCampaignKeys, createCampaignKey, deleteCampaignKey, toggleCampaignKeyShareable, copyCampaignKey } from '../api/campaigns'
+import { getGameCustomFields } from '../api/customFields'
 import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
@@ -120,6 +122,7 @@ export default function CampaignPage() {
     const [shareableCampaignKeys, setShareableCampaignKeys] = useState<CampaignKey[]>([])
     const [showAddEntry, setShowAddEntry] = useState(false)
     const [gameCustomFields, setGameCustomFields] = useState<CustomField[]>([])
+    const { displayName } = useCircle()
 
     const isAdmin = (() => {
         const token = localStorage.getItem('jwt')
@@ -137,14 +140,14 @@ export default function CampaignPage() {
     const gameId = campaign?.game.id
     useEffect(() => {
         if (!gameId) return
-        apiGet<{ myKeys: CampaignKey[], shareableKeys: CampaignKey[] }>(`/game/${gameId}/campaignKeys`)
+        getCampaignKeys(gameId)
             .then(({ data, ok }) => {
                 if (ok && data) {
                     setMyCampaignKeys(data.myKeys)
                     setShareableCampaignKeys(data.shareableKeys)
                 }
             })
-        apiGet<{ myFields: CustomField[], shareableFields: CustomField[] }>(`/game/${gameId}/customFields`)
+        getGameCustomFields(gameId)
             .then(({ data, ok }) => {
                 if (ok && data) {
                     setGameCustomFields(data.myFields)
@@ -160,7 +163,7 @@ export default function CampaignPage() {
 
     const handleSaveName = async () => {
         if (!campaign || !nameInput.trim()) return
-        const { data, ok } = await apiPatch<Campaign>(`/campaigns/${campaignId}`, { name: nameInput })
+        const { data, ok } = await updateCampaignName(campaignId, nameInput)
         if (ok && data) {
             setCampaign(data)
         }
@@ -170,7 +173,7 @@ export default function CampaignPage() {
     const handleAddEvent = async (entryId: string, campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[], customFieldValueId: string | null = null) => {
         let lastResult: { data: Campaign | null; ok: boolean } = { data: null, ok: false }
         for (const payload of payloads) {
-            lastResult = await apiPost<Campaign>(`/campaigns/${campaignId}/events`, {
+            lastResult = await addCampaignEvent(campaignId, {
                 entry: entryId,
                 campaignKey: campaignKeyId,
                 playerResult: playerResultId,
@@ -184,38 +187,38 @@ export default function CampaignPage() {
     }
 
     const handleDeleteEvent = async (eventId: string) => {
-        const { data, ok } = await apiDelete<Campaign>(`/campaigns/${campaignId}/events/${eventId}`)
+        const { data, ok } = await deleteCampaignEvent(campaignId, eventId)
         if (ok && data) {
             setCampaign(data)
         }
     }
 
-    const handleAddKey = async (name: string, type: string, global: boolean, scopedToCustomField?: string) => {
+    const handleAddKey = async (name: string, type: string, scope: string, scopedToCustomField?: string) => {
         if (!campaign) return
-        const body: Record<string, unknown> = { name, type, global }
+        const body: Record<string, unknown> = { name, type, scope }
         if (scopedToCustomField) body.scopedToCustomField = scopedToCustomField
-        const { data, ok } = await apiPost<CampaignKey>(`/game/${campaign.game.id}/campaignKeys`, body)
+        const { data, ok } = await createCampaignKey(campaign.game.id, body)
         if (ok && data) {
             setMyCampaignKeys(prev => [...prev, data])
         }
     }
 
     const handleDeleteKey = async (keyId: string) => {
-        const { ok } = await apiDelete(`/campaignKeys/${keyId}`)
+        const { ok } = await deleteCampaignKey(keyId)
         if (ok) {
             setMyCampaignKeys(prev => prev.filter(k => k.id !== keyId))
         }
     }
 
     const handleToggleShareable = async (key: CampaignKey) => {
-        const { data, ok } = await apiPatch<CampaignKey>(`/campaignKeys/${key.id}`, { shareable: !key.shareable })
+        const { data, ok } = await toggleCampaignKeyShareable(key)
         if (ok && data) {
             setMyCampaignKeys(prev => prev.map(k => k.id === data.id ? data : k))
         }
     }
 
     const handleCopyCampaignKey = async (keyId: string) => {
-        const { data, ok } = await apiPost<CampaignKey>(`/campaignKeys/${keyId}/copy`)
+        const { data, ok } = await copyCampaignKey(keyId)
         if (ok && data) {
             setMyCampaignKeys(prev => [...prev, data])
         }
@@ -308,7 +311,7 @@ export default function CampaignPage() {
                                     {k.name}
                                     <span className="text-slate-500">{k.type.replace('_', ' ')}</span>
                                     <span className={k.scopedToCustomField ? 'text-purple-400/60' : 'text-slate-500'}>
-                                        {k.scopedToCustomField ? k.scopedToCustomField.name : k.global ? 'entry' : 'player'}
+                                        {k.scopedToCustomField ? k.scopedToCustomField.name : k.scope === 'entry' ? 'entry' : 'player'}
                                     </span>
                                 </span>
                             ))}
@@ -412,7 +415,7 @@ export default function CampaignPage() {
                                                                     : 'bg-slate-700 text-slate-300 border-slate-600'
                                                         }`}
                                                     >
-                                                        {pr.player.name}
+                                                        {displayName(pr.player.id, pr.player.name)}
                                                         {pr.won === true && ' ✓'}
                                                         {pr.won === false && ' ✗'}
                                                     </span>
@@ -546,7 +549,7 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
     keys: CampaignKey[]
     shareableKeys: CampaignKey[]
     customFields: CustomField[]
-    onAdd: (name: string, type: string, global: boolean, scopedToCustomField?: string) => void
+    onAdd: (name: string, type: string, scope: string, scopedToCustomField?: string) => void
     onDelete: (keyId: string) => void
     onToggleShareable: (key: CampaignKey) => void
     onCopy: (keyId: string) => void
@@ -558,9 +561,9 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
 
     const handleSubmit = () => {
         if (!name.trim()) return
-        const isGlobal = scope === 'entry'
+        const resolvedScope = scope === 'entry' ? 'entry' : 'playerResult'
         const scopedTo = scope !== 'entry' && scope !== 'player' ? scope : undefined
-        onAdd(name.trim(), type, isGlobal, scopedTo)
+        onAdd(name.trim(), type, resolvedScope, scopedTo)
         setName('')
     }
 
@@ -573,7 +576,7 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
                     {keys.map(k => {
                         const kScope = k.scopedToCustomField
                             ? k.scopedToCustomField.name
-                            : k.global ? 'Entry' : 'Player'
+                            : k.scope === 'entry' ? 'Entry' : 'Player'
                         return (
                             <div key={k.id} className="flex items-center justify-between group">
                                 <div className="flex items-center gap-2 text-sm">
@@ -618,7 +621,7 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
                         {shareableKeys.map(k => {
                             const kScope = k.scopedToCustomField
                                 ? k.scopedToCustomField.name
-                                : k.global ? 'Entry' : 'Player'
+                                : k.scope === 'entry' ? 'Entry' : 'Player'
                             return (
                                 <div key={k.id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-sm">
@@ -673,7 +676,7 @@ function KeyManager({ keys, shareableKeys, customFields, onAdd, onDelete, onTogg
                             <option value="entry">Entry</option>
                             <option value="player">Player</option>
                             {customFields.map(cf => (
-                                <option key={cf.id} value={cf.id}>{cf.name} (Custom field scoped by {cf.global ? 'Entry' : 'Player'})</option>
+                                <option key={cf.id} value={cf.id}>{cf.name} (Custom field scoped by {cf.scope === 'entry' ? 'Entry' : 'Player'})</option>
                             ))}
                         </select>
                     </div>
@@ -768,7 +771,7 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
     const handleSubmit = () => {
         const payloads = buildPayloads()
         if (payloads.length === 0) return
-        const prId = selectedKey && !selectedKey.global ? playerResultId : null
+        const prId = selectedKey && selectedKey.scope !== 'entry' ? playerResultId : null
         const cfvId = selectedKey?.scopedToCustomField?.multiple ? (customFieldValueId || null) : null
         onSubmit(selectedKeyId, prId, payloads, cfvId)
         setStringValue('')
@@ -802,7 +805,7 @@ function AddEventForm({ entry, campaignKeys, onSubmit, onCancel }: {
                 )}
             </div>
 
-            {selectedKey && !selectedKey.global && (
+            {selectedKey && selectedKey.scope !== 'entry' && (
                 <>
                     <select
                         value={playerResultId}

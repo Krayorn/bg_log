@@ -71,29 +71,51 @@ class PlayerRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return Player[]
+     * @return array<array<string, mixed>>
      */
-    public function findVisibleFor(?Player $forPlayer): array
+    public function searchAll(Player $currentPlayer, ?string $query = null): array
     {
-        $qb = $this->createQueryBuilder('p');
+        $conn = $this->getEntityManager()->getConnection();
 
-        if ($forPlayer instanceof Player) {
-            $qb->where('p.registeredOn IS NOT NULL')
-                ->orWhere('p.inPartyOf = :forPlayer')
-                ->setParameter('forPlayer', $forPlayer);
-        } else {
-            $qb->where('p.registeredOn IS NOT NULL');
+        $params = [
+            'currentPlayerId' => $currentPlayer->getId(),
+        ];
+        $conditions = ['(p.registered_on IS NOT NULL OR p.in_party_of_id = :currentPlayerId)'];
+
+        if ($query !== null && $query !== '') {
+            if (str_starts_with($query, '#')) {
+                $numberStr = ltrim(substr($query, 1), '0');
+                if ($numberStr !== '' && ctype_digit($numberStr)) {
+                    $conditions[] = 'p.number = :number';
+                    $params['number'] = (int) $numberStr;
+                }
+            } else {
+                $conditions[] = '(LOWER(p.name) LIKE LOWER(:query) OR LOWER(pn.nickname) LIKE LOWER(:query))';
+                $params['query'] = '%' . $query . '%';
+            }
         }
 
-        $qb->orderBy('p.name', 'ASC');
+        $where = implode(' AND ', $conditions);
 
-        return $qb->getQuery()->getResult();
+        $sql = "
+            SELECT DISTINCT p.id, p.name, p.number, p.registered_on, p.in_party_of_id,
+                   (p.registered_on IS NULL) as is_guest,
+                   pn.nickname
+            FROM player p
+            LEFT JOIN player_nickname pn ON pn.target_player_id = p.id AND pn.owner_id = :currentPlayerId
+            WHERE {$where}
+            ORDER BY p.name ASC
+        ";
+
+        $result = $conn->executeQuery($sql, $params);
+
+        return $result->fetchAllAssociative();
     }
 
     /**
      * @return array<array<string, mixed>>
      */
-    public function getCircle(Player $player): array
+    public function getCircle(Player $player, bool $includeSelf = false): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -105,23 +127,65 @@ class PlayerRepository extends ServiceEntityRepository
                 p.registered_on,
                 p.in_party_of_id,
                 (p.registered_on IS NULL) as is_guest,
+                pn.nickname,
                 COUNT(*) as games_played,
                 SUM(CASE WHEN opr.won = true AND pr.won = false THEN 1 ELSE 0 END) as losses,
                 SUM(CASE WHEN opr.won = false AND pr.won = true THEN 1 ELSE 0 END) as wins
             FROM player_result pr
             JOIN player_result opr ON opr.entry_id = pr.entry_id
             JOIN player p ON p.id = opr.player_id
+            LEFT JOIN player_nickname pn ON pn.target_player_id = p.id AND pn.owner_id = :playerId
             WHERE pr.player_id = :playerId AND opr.player_id != :playerId
-            GROUP BY p.id, p.name, p.number, p.registered_on, p.in_party_of_id
-            ORDER BY is_guest DESC, p.name ASC
+            GROUP BY p.id, p.name, p.number, p.registered_on, p.in_party_of_id, pn.nickname
         ';
 
-        $conn->prepare($sql);
+        if ($includeSelf) {
+            $sql .= '
+                UNION ALL
+                SELECT p.id, p.name, p.number, p.registered_on, p.in_party_of_id,
+                       (p.registered_on IS NULL) as is_guest,
+                       pn.nickname,
+                       0 as games_played, 0 as losses, 0 as wins
+                FROM player p
+                LEFT JOIN player_nickname pn ON pn.target_player_id = p.id AND pn.owner_id = :playerId
+                WHERE p.id = :playerId
+
+                UNION ALL
+                SELECT p.id, p.name, p.number, p.registered_on, p.in_party_of_id,
+                       true as is_guest,
+                       pn.nickname,
+                       0 as games_played, 0 as losses, 0 as wins
+                FROM player p
+                LEFT JOIN player_nickname pn ON pn.target_player_id = p.id AND pn.owner_id = :playerId
+                WHERE p.in_party_of_id = :playerId
+                  AND p.id NOT IN (
+                    SELECT DISTINCT opr2.player_id
+                    FROM player_result pr2
+                    JOIN player_result opr2 ON opr2.entry_id = pr2.entry_id
+                    WHERE pr2.player_id = :playerId AND opr2.player_id != :playerId
+                  )
+            ';
+        }
+
+        $sql .= ' ORDER BY is_guest DESC, name ASC';
+
         $result = $conn->executeQuery($sql, [
             'playerId' => $player->getId(),
         ]);
 
         return $result->fetchAllAssociative();
+    }
+
+    /**
+     * @return Player[]
+     */
+    public function findRegistered(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.registeredOn IS NOT NULL')
+            ->orderBy('p.name', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     public function findNextNumber(): int

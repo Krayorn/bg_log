@@ -5,13 +5,16 @@ namespace App\Game;
 use App\Game\Action\AddGameToCollectionHandler;
 use App\Game\Action\CreateGameHandler;
 use App\Game\Action\UpdatePlayerGameHandler;
+use App\Game\CustomField\Action\CopyCustomFieldHandler;
 use App\Game\CustomField\Action\CreateCustomFieldHandler;
 use App\Game\CustomField\Action\UpdateCustomFieldHandler;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldRepository;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\CustomField\CustomFieldVoter;
 use App\Game\CustomField\Exception\DuplicateCustomFieldException;
 use App\Game\CustomField\Exception\InvalidKindConversionException;
+use App\Game\CustomField\Exception\NotShareableCustomFieldException;
 use App\Game\Exception\DuplicateGameNameException;
 use App\Game\Exception\GameAlreadyOwnedException;
 use App\Game\Exception\GameNotFoundException;
@@ -175,12 +178,19 @@ class GameController extends BaseController
 
         $payload = JsonPayload::fromRequest($request);
 
+        $scope = CustomFieldScope::tryFrom($payload->getString('scope'));
+        if (! $scope instanceof CustomFieldScope) {
+            return new JsonResponse([
+                'errors' => ['Invalid scope'],
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         try {
             $customField = $handler->handle(
                 $game,
                 $payload->getString('name'),
                 $payload->getString('kind'),
-                $payload->getBool('global'),
+                $scope,
                 $payload->getOptionalBool('multiple'),
                 $player,
             );
@@ -238,45 +248,16 @@ class GameController extends BaseController
     }
 
     #[Route('api/customFields/{customField}/copy', methods: 'POST')]
-    public function copyCustomField(CustomField $customField, EntityManagerInterface $entityManager, CustomFieldRepository $customFieldRepository): Response
+    public function copyCustomField(CustomField $customField, CopyCustomFieldHandler $handler): Response
     {
         $player = $this->getPlayer();
 
-        if (! $customField->isShareable()) {
-            throw new BadRequestException('This custom field is not shareable');
-        }
-
-        $alreadyExist = $customFieldRepository->findOneBy([
-            'game' => $customField->getGame(),
-            'name' => $customField->getName(),
-            'player' => $player,
-        ]);
-
-        if ($alreadyExist !== null) {
-            throw new \Exception('You already have a custom field with this name for this game');
-        }
-
-        $copy = new CustomField(
-            $customField->getGame(),
-            $customField->getName(),
-            $customField->getKind()->value,
-            $customField->isGlobal(),
-            $customField->isMultiple(),
-            $player,
-            false,
-            $customField,
-        );
-
-        $entityManager->persist($copy);
-        $entityManager->flush();
-
-        // Sync enum values if the original has any
-        // We need to read enum values from the original and set them on the copy
-        $originalView = $customField->view();
-        if ($originalView['enumValues'] !== []) {
-            $enumValues = array_map(fn ($v) => $v['value'], $originalView['enumValues']);
-            $copy->syncEnumValues($enumValues, $entityManager, true);
-            $entityManager->flush();
+        try {
+            $copy = $handler->handle($customField, $player);
+        } catch (NotShareableCustomFieldException|DuplicateCustomFieldException $e) {
+            return new JsonResponse([
+                'errors' => [$e->getMessage()],
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         return new JsonResponse($copy->view(), Response::HTTP_CREATED);

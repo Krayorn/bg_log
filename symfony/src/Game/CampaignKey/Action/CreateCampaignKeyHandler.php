@@ -4,6 +4,7 @@ namespace App\Game\CampaignKey\Action;
 
 use App\Game\CampaignKey\CampaignKey;
 use App\Game\CampaignKey\CampaignKeyType;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\Game;
 use App\Player\Player;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,7 +20,7 @@ class CreateCampaignKeyHandler
         Game $game,
         string $name,
         string $type,
-        bool $global,
+        CustomFieldScope $scope,
         ?string $scopedToCustomFieldId,
         Player $player,
     ): CampaignKey {
@@ -31,12 +32,12 @@ class CreateCampaignKeyHandler
         $scopedToCustomField = null;
         if ($scopedToCustomFieldId !== null) {
             $scopedToCustomField = $game->getCustomField($scopedToCustomFieldId);
-            if (! $scopedToCustomField->isGlobal()) {
-                $global = false;
+            if ($scopedToCustomField->getScope() !== CustomFieldScope::ENTRY) {
+                $scope = CustomFieldScope::PLAYER_RESULT;
             }
         }
 
-        $campaignKey = new CampaignKey($game, $name, $type, $global, $scopedToCustomField, $player);
+        $campaignKey = new CampaignKey($game, $name, $type, $scope, $scopedToCustomField, $player);
 
         $this->entityManager->persist($campaignKey);
         $this->entityManager->flush();

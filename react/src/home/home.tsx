@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
-import { apiPatch } from '../hooks/useApi'
+import { updatePlayerEmail } from '../api/players'
 import Layout from '../Layout'
 import { Landmark, User, Check, X, Pencil, ExternalLink } from 'lucide-react'
 import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer } from '../types'
+import { MissionBriefing } from '../components/MissionBriefing'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 function Home() {
     const { playerId } = useParams() as { playerId: string }
+    const [generalStats, setGeneralStats] = useState<GeneralStatisticsType | null>(null)
+    const [tutorialDismissed, setTutorialDismissed] = useLocalStorage('tutorial_dismissed', false)
+
+    useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
+
+    const showTutorial = generalStats !== null && !tutorialDismissed && (
+        generalStats.gamesOwned === 0 ||
+        generalStats.entriesPlayed === 0 ||
+        generalStats.gamePartners === 0
+    )
 
     return (
         <Layout> 
@@ -35,15 +47,25 @@ function Home() {
                 <Box title="Personal details">
                     <PlayerBox playerId={playerId} />
                 </Box>
-                <Box title="General Statistics">
-                    <GeneralStatistics playerId={playerId}/>
-                </Box>
-                <Box title="Games Statistics">
-                    <GameStatistics playerId={playerId}/>
-                </Box>
-                <Box title="Players Statistics">
-                    <PlayerStatistics playerId={playerId}/>
-                </Box>
+                {showTutorial ? (
+                    <MissionBriefing
+                        playerId={playerId}
+                        stats={generalStats}
+                        onDismiss={() => setTutorialDismissed(true)}
+                    />
+                ) : (
+                    <>
+                        <Box title="General Statistics">
+                            <GeneralStatisticsPanel stats={generalStats}/>
+                        </Box>
+                        <Box title="Games Statistics">
+                            <GameStatistics playerId={playerId}/>
+                        </Box>
+                        <Box title="Players Statistics">
+                            <PlayerStatistics playerId={playerId}/>
+                        </Box>
+                    </>
+                )}
             </div>
         </Layout>
   )
@@ -84,7 +106,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
     }
 
     const handleSaveEmail = async () => {
-        const { data, error, ok } = await apiPatch<Player>(`/players/${playerId}`, { email: emailInput })
+        const { data, error, ok } = await updatePlayerEmail(playerId, emailInput)
         if (!ok) {
             setEmailError(error ?? 'Failed to update email')
             return
@@ -153,28 +175,24 @@ function PlayerBox({ playerId }: {playerId: string}) {
     )
 }
 
-function GeneralStatistics({ playerId }: {playerId: string}) {
-    const [generalStats, setGeneralStats] = useState<GeneralStatisticsType|null>(null)
-    
-    useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
-
-    if (generalStats === null) {
+function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null }) {
+    if (stats === null) {
         return <div className="text-slate-500">Loading...</div>
     }
 
     let daysSinceLastGame: number | string = '—'
-    if (generalStats.lastGameDate) {
+    if (stats.lastGameDate) {
         const dateNow = new Date()
-        const lastGameDate = new Date(generalStats.lastGameDate)
+        const lastGameDate = new Date(stats.lastGameDate)
         daysSinceLastGame = Math.ceil(Math.abs(dateNow.getTime() - lastGameDate.getTime()) / (1000 * 60 * 60 * 24))
     }
 
     return (
         <div className="grid grid-cols-2 gap-4">
-            <StatItem value={generalStats.gamesOwned} label="Games owned" />
-            <StatItem value={generalStats.entriesPlayed} label="Total plays" />
-            <StatItem value={generalStats.gamePartners} label="Play partners" />
-            <StatItem value={`${generalStats.globalWinrate ?? 0}%`} label="Win rate" highlight />
+            <StatItem value={stats.gamesOwned} label="Games owned" />
+            <StatItem value={stats.entriesPlayed} label="Total plays" />
+            <StatItem value={stats.gamePartners} label="Play partners" />
+            <StatItem value={`${stats.globalWinrate ?? 0}%`} label="Win rate" highlight />
             <StatItem value={daysSinceLastGame} label="Days since last game" className="col-span-2" />
         </div>
     )

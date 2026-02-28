@@ -5,6 +5,7 @@ namespace App\Tests\Game;
 use App\Game\CustomField\Action\UpdateCustomFieldHandler;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldKind;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\CustomField\Exception\InvalidKindConversionException;
 use App\Game\Game;
 use App\Player\Player;
@@ -34,7 +35,7 @@ class UpdateCustomFieldHandlerTest extends TestCase
 
     public function testInvalidKindThrows(): void
     {
-        $cf = new CustomField(new Game('Chess'), 'field', 'string', true, false, new Player('Alice', 1));
+        $cf = new CustomField(new Game('Chess'), 'field', 'string', CustomFieldScope::ENTRY, false, new Player('Alice', 1));
 
         $this->expectException(\InvalidArgumentException::class);
         $this->handler->handle($cf, 'invalid', null);
@@ -42,7 +43,7 @@ class UpdateCustomFieldHandlerTest extends TestCase
 
     public function testDisallowedConversionThrows(): void
     {
-        $cf = new CustomField(new Game('Chess'), 'field', 'number', true, false, new Player('Alice', 1));
+        $cf = new CustomField(new Game('Chess'), 'field', 'number', CustomFieldScope::ENTRY, false, new Player('Alice', 1));
 
         $this->expectException(InvalidKindConversionException::class);
         $this->handler->handle($cf, 'string', null);
@@ -50,7 +51,7 @@ class UpdateCustomFieldHandlerTest extends TestCase
 
     public function testStringToEnumConversion(): void
     {
-        $cf = new CustomField(new Game('Chess'), 'field', 'string', true, false, new Player('Alice', 1));
+        $cf = new CustomField(new Game('Chess'), 'field', 'string', CustomFieldScope::ENTRY, false, new Player('Alice', 1));
 
         $this->handler->handle($cf, 'enum', null);
 
@@ -59,7 +60,7 @@ class UpdateCustomFieldHandlerTest extends TestCase
 
     public function testEnumToStringConversion(): void
     {
-        $cf = new CustomField(new Game('Chess'), 'field', 'enum', true, false, new Player('Alice', 1));
+        $cf = new CustomField(new Game('Chess'), 'field', 'enum', CustomFieldScope::ENTRY, false, new Player('Alice', 1));
 
         $this->handler->handle($cf, 'string', null);
 
@@ -68,7 +69,7 @@ class UpdateCustomFieldHandlerTest extends TestCase
 
     public function testNumberToEnumDisallowed(): void
     {
-        $cf = new CustomField(new Game('Chess'), 'field', 'number', true, false, new Player('Alice', 1));
+        $cf = new CustomField(new Game('Chess'), 'field', 'number', CustomFieldScope::ENTRY, false, new Player('Alice', 1));
 
         $this->expectException(InvalidKindConversionException::class);
         $this->handler->handle($cf, 'enum', null);

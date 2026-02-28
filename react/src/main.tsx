@@ -7,6 +7,8 @@ import Games from './game/games.tsx'
 import Login from './login.tsx'
 import Circle from './circle/circle.tsx'
 import CampaignPage from './campaign/campaign.tsx'
+import AdminDashboard from './admin/dashboard.tsx'
+import AdminUsers from './admin/users.tsx'
 import './index.css'
 import {
   createBrowserRouter,
@@ -15,6 +17,7 @@ import {
   useNavigate
 } from "react-router-dom"
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { CircleProvider } from './contexts/CircleContext'
 
 const router = createBrowserRouter([
   {
@@ -67,6 +70,21 @@ const router = createBrowserRouter([
       }
     ]
   },
+  {
+    path: "/admin",
+    element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        element: <AdminDashboard />,
+      },
+      {
+        path: "/admin/users",
+        element: <AdminUsers />,
+      }
+    ]
+  },
 ])
 
 
@@ -87,7 +105,7 @@ export function ProtectedRoute() {
   }, [token, navigate])
 
   return (<div>
-    {token !== null && <Outlet />}
+    {token !== null && <CircleProvider><Outlet /></CircleProvider>}
   </div>)
 }
 

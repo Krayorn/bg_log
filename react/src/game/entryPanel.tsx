@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { apiPatch, apiDelete } from '../hooks/useApi'
+import { useCircle } from '../contexts/CircleContext'
+import { patchEntry as apiPatchEntry, deleteEntry } from '../api/entries'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
 import MultiEnumSelect from "../components/MultiEnumSelect"
 import { Plus, X, Scroll, Trash2 } from 'lucide-react'
+import GameOwnerSearchSelect from '../components/GameOwnerSearchSelect'
 import { CustomField, Entry, CampaignSummary } from '../types'
 
 type EntryListItemProps = {
@@ -15,6 +17,7 @@ type EntryListItemProps = {
 }
 
 export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryListItemProps) {
+    const { displayName } = useCircle()
     const playedAt = new Date(entry.playedAt.date)
     const playerResult = playerId ? entry.players.find(p => p.player.id === playerId) : null
     const won = playerResult?.won
@@ -41,7 +44,7 @@ export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryList
                 )}
             </div>
             <div className="text-sm text-slate-300 truncate">
-                {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(p => p.player.name).join(', ')}
+                {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(p => displayName(p.player.id, p.player.name)).join(', ')}
             </div>
             {entry.note && (
                 <div className="text-xs text-slate-500 mt-1 truncate">
@@ -65,15 +68,16 @@ function formatDateForInput(date: Date) {
 
 type EntryDetailPanelProps = {
     entry: Entry
+    gameId: string
     playerId: string | null
     onEntryUpdated: (id: string, newEntry: Entry) => void
     onEntryDeleted: (id: string) => void
-    allPlayers: { id: string; name: string }[]
     customFields: CustomField[]
     campaigns: CampaignSummary[]
 }
 
-export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDeleted, allPlayers, customFields: gameCustomFields, campaigns }: EntryDetailPanelProps) {
+export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEntryDeleted, customFields: gameCustomFields, campaigns }: EntryDetailPanelProps) {
+    const { players: circlePlayers, displayName } = useCircle()
     const [editField, setEditField] = useState<string | null>(null)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [note, setNote] = useState(entry.note)
@@ -82,6 +86,7 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
     const [selectedCampaignId, setSelectedCampaignId] = useState<string>(entry.campaign?.id ?? '')
+    const [selectedGameUsed, setSelectedGameUsed] = useState<string>(entry.gameUsed?.id ?? '')
 
     useEffect(() => {
         setNote(entry.note)
@@ -89,17 +94,18 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
         setPlayers(entry.players.map(p => ({ ...p })))
         setCustomFields(entry.customFields.map(c => ({ ...c })))
         setSelectedCampaignId(entry.campaign?.id ?? '')
+        setSelectedGameUsed(entry.gameUsed?.id ?? '')
     }, [entry])
 
     const patchEntry = async (payload: Record<string, unknown>) => {
-        const { data: updatedEntry, ok } = await apiPatch<Entry>(`/entries/${entry.id}`, payload)
+        const { data: updatedEntry, ok } = await apiPatchEntry(entry.id, payload)
         if (ok && updatedEntry) {
             onEntryUpdated(entry.id, updatedEntry)
         }
     }
 
     const handleDelete = async () => {
-        const { ok } = await apiDelete(`/entries/${entry.id}`)
+        const { ok } = await deleteEntry(entry.id)
         if (ok) {
             onEntryDeleted(entry.id)
         }
@@ -264,8 +270,8 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
         })
     }
 
-    const globalCustomFields = gameCustomFields.filter(c => c.global)
-    const playerCustomFields = gameCustomFields.filter(c => !c.global)
+    const globalCustomFields = gameCustomFields.filter(c => c.scope === 'entry')
+    const playerCustomFields = gameCustomFields.filter(c => c.scope === 'playerResult')
 
     return (
         <div className="m-4 overflow-y-auto h-full">
@@ -342,6 +348,20 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                                 Go to campaign page
                             </Link>
                         )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-slate-300 text-xs">Game Copy Used</label>
+                        <GameOwnerSearchSelect
+                            gameId={gameId}
+                            playerId={playerId}
+                            value={selectedGameUsed}
+                            initialOwnerPlayerName={entry.gameUsed?.player.name}
+                            onChange={async (v) => {
+                                setSelectedGameUsed(v)
+                                await patchEntry({ gameUsed: v || 'null', customFields: [], players: [] })
+                            }}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-1">
@@ -545,7 +565,7 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                         <div className="flex-1">
                             <label className="text-slate-300 text-xs block mb-1">Search Player</label>
                             <PlayerSearchSelect
-                                players={allPlayers}
+                                players={circlePlayers}
                                 excludeIds={players.map(p => p.player.id)}
                                 onSelect={async (p) => {
                                     await patchEntry({
@@ -580,7 +600,9 @@ export function EntryDetailPanel({ entry, playerId, onEntryUpdated, onEntryDelet
                     {[...players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map((playerResult) => (
                         <div key={playerResult.id} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="text-white font-medium flex-1 truncate">{playerResult.player.name}</span>
+                                <span className="text-white font-medium flex-1 truncate">
+                                    {displayName(playerResult.player.id, playerResult.player.name)}
+                                </span>
                                 <button
                                     onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
                                     className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${playerResult.won === true

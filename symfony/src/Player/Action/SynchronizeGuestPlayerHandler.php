@@ -7,6 +7,8 @@ use App\Player\Exception\PlayerNotGuestException;
 use App\Player\Exception\PlayerNotRegisteredException;
 use App\Player\Exception\SynchronizationFailedException;
 use App\Player\Player;
+use App\Player\PlayerNickname;
+use App\Player\PlayerNicknameRepository;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -15,6 +17,7 @@ class SynchronizeGuestPlayerHandler
 {
     public function __construct(
         private readonly PlayerRepository $playerRepository,
+        private readonly PlayerNicknameRepository $nicknameRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {
@@ -34,6 +37,9 @@ class SynchronizeGuestPlayerHandler
         if ($registeredPlayer->getRegisteredOn() === null) {
             throw new PlayerNotRegisteredException('Target player is not registered');
         }
+
+        $guestName = $guestPlayer->getName();
+        $guestOwner = $guestPlayer->getInPartyOf();
 
         $conn = $this->entityManager->getConnection();
         $conn->beginTransaction();
@@ -60,6 +66,15 @@ class SynchronizeGuestPlayerHandler
             ]);
 
             throw new SynchronizationFailedException('Synchronization failed', $e);
+        }
+
+        if ($guestOwner instanceof Player && $guestName !== $registeredPlayer->getName()) {
+            $existingNickname = $this->nicknameRepository->findByOwnerAndTarget($guestOwner, $registeredPlayer);
+            if (! $existingNickname instanceof PlayerNickname) {
+                $nickname = new PlayerNickname($guestOwner, $registeredPlayer, $guestName);
+                $this->entityManager->persist($nickname);
+                $this->entityManager->flush();
+            }
         }
     }
 }

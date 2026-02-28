@@ -3,6 +3,7 @@
 namespace App\Game\CampaignKey;
 
 use App\Game\CustomField\CustomField;
+use App\Game\CustomField\CustomFieldScope;
 use App\Game\Game;
 use App\Player\Player;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,8 +28,8 @@ class CampaignKey
         #[ORM\Column(type: 'text')]
         private readonly string $name,
         string $type,
-        #[ORM\Column(type: 'boolean')]
-        private readonly bool $global,
+        #[ORM\Column(enumType: CustomFieldScope::class)]
+        private readonly CustomFieldScope $scope,
         #[ORM\ManyToOne(targetEntity: CustomField::class)]
         #[ORM\JoinColumn(name: 'scoped_to_custom_field_id', referencedColumnName: 'id', nullable: true)]
         private readonly ?CustomField $scopedToCustomField = null,
@@ -61,9 +62,9 @@ class CampaignKey
         return $this->type;
     }
 
-    public function isGlobal(): bool
+    public function getScope(): CustomFieldScope
     {
-        return $this->global;
+        return $this->scope;
     }
 
     public function getGame(): Game
@@ -114,7 +115,7 @@ class CampaignKey
             'id' => $this->id,
             'name' => $this->name,
             'type' => $this->type->value,
-            'global' => $this->global,
+            'scope' => $this->scope->value,
             'scopedToCustomField' => $this->scopedToCustomField?->view(),
             'player' => $this->player?->getId(),
             'shareable' => $this->shareable,

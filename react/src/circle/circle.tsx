@@ -1,16 +1,17 @@
 import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
-import { apiPost } from '../hooks/useApi'
+import { createPlayer, synchronizePlayer, setNickname, removeNickname } from '../api/players'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import Layout from '../Layout'
 import { UserPlus, User } from 'lucide-react'
-import { CirclePlayer, Player } from '../types'
+import { CirclePlayer } from '../types'
+import { useCircle } from '../contexts/CircleContext'
 
 export default function Circle() {
     const { playerId } = useParams() as { playerId: string }
     const [circlePlayers, setCirclePlayers] = useState<CirclePlayer[]>([])
-    const [allPlayers, setAllPlayers] = useState<Player[]>([])
+    const { players: contextPlayers } = useCircle()
     const [syncingGuestId, setSyncingGuestId] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [newGuestName, setNewGuestName] = useState("")
@@ -18,19 +19,17 @@ export default function Circle() {
     const [createError, setCreateError] = useState<string | null>(null)
 
     useRequest(`/players/${playerId}/circle`, [playerId], setCirclePlayers)
-    useRequest(`/players?forPlayer=${playerId}`, [playerId], setAllPlayers)
 
-    const registeredPlayers = allPlayers.filter(p => !p.isGuest)
+    const registeredPlayers = contextPlayers.filter(p => !p.isGuest)
 
     const handleCreateGuest = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newGuestName.trim()) return
         setCreateError(null)
 
-        const { data, ok, error: apiError } = await apiPost<Player>('/players', { name: newGuestName.trim() })
+        const { data, ok, error: apiError } = await createPlayer(newGuestName.trim())
 
         if (ok && data) {
-            setAllPlayers(prev => [...prev, data])
             setNewGuestName("")
             setShowCreateGuest(false)
         } else {
@@ -110,6 +109,13 @@ export default function Circle() {
                                         <div>
                                             <Link to={`/players/${player.id}`} className="text-white font-medium hover:text-cyan-400 transition-colors">{player.name}</Link>
                                             <div className="text-xs text-slate-500">#{player.number.toString().padStart(4, '0')}</div>
+                                            <NicknameEditor
+                                                playerId={player.id}
+                                                currentNickname={player.nickname}
+                                                onUpdate={(nickname) => {
+                                                    setCirclePlayers(prev => prev.map(p => p.id === player.id ? { ...p, nickname } : p))
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -132,12 +138,9 @@ export default function Circle() {
                                                 players={registeredPlayers}
                                                 onSelect={async (p) => {
                                                     setError(null)
-                                                    const { ok, error: apiError } = await apiPost(`/players/${player.id}/synchronize`, {
-                                                        registeredPlayerId: p.id,
-                                                    })
+                                                    const { ok, error: apiError } = await synchronizePlayer(player.id, p.id)
                                                     if (ok) {
                                                          setCirclePlayers(prev => prev.filter(cp => cp.id !== player.id))
-                                                         setAllPlayers(prev => prev.filter(ap => ap.id !== player.id))
                                                          setSyncingGuestId(null)
                                                      } else {
                                                         setError(apiError ?? 'Synchronization failed')
@@ -176,6 +179,13 @@ export default function Circle() {
                                         <div>
                                             <Link to={`/players/${player.id}`} className="text-white font-medium hover:text-cyan-400 transition-colors">{player.name}</Link>
                                             <div className="text-xs text-slate-500">#{player.number.toString().padStart(4, '0')}</div>
+                                            <NicknameEditor
+                                                playerId={player.id}
+                                                currentNickname={player.nickname}
+                                                onUpdate={(nickname) => {
+                                                    setCirclePlayers(prev => prev.map(p => p.id === player.id ? { ...p, nickname } : p))
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                     <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Registered</span>
@@ -187,6 +197,55 @@ export default function Circle() {
                 )}
             </section>
         </Layout>
+    )
+}
+
+function NicknameEditor({ playerId, currentNickname, onUpdate }: {
+    playerId: string
+    currentNickname: string | null
+    onUpdate: (nickname: string | null) => void
+}) {
+    const [editing, setEditing] = useState(false)
+    const [value, setValue] = useState(currentNickname ?? '')
+
+    const save = async () => {
+        const trimmed = value.trim()
+        if (trimmed === '') {
+            if (currentNickname) {
+                await removeNickname(playerId)
+                onUpdate(null)
+            }
+        } else if (trimmed !== currentNickname) {
+            await setNickname(playerId, trimmed)
+            onUpdate(trimmed)
+        }
+        setEditing(false)
+    }
+
+    if (!editing) {
+        return (
+            <button
+                onClick={() => { setValue(currentNickname ?? ''); setEditing(true) }}
+                className="text-xs text-slate-500 hover:text-cyan-400 transition-colors"
+            >
+                {currentNickname ? `aka "${currentNickname}"` : '+ Add nickname'}
+            </button>
+        )
+    }
+
+    return (
+        <input
+            autoFocus
+            className="text-xs p-1 rounded bg-slate-700 text-white border border-slate-500 w-24"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onBlur={save}
+            onKeyDown={e => {
+                if (e.key === 'Enter') save()
+                if (e.key === 'Escape') setEditing(false)
+            }}
+            placeholder="Nickname..."
+        />
     )
 }
 

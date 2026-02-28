@@ -28,6 +28,7 @@ services:
             - '../src/Campaign/Campaign.php'
             - '../src/Campaign/CampaignEvent/CampaignEvent.php'
             - '../src/Player/Player.php'
+            - '../src/Player/PlayerNickname.php'
             - '../src/StatisticsQuery/StatisticsQuery.php'
             - '../src/Kernel.php'
 

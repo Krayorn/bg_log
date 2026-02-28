@@ -4,6 +4,7 @@ namespace App\Player;
 
 use App\Player\Action\CreateGuestPlayerHandler;
 use App\Player\Action\RegisterPlayerHandler;
+use App\Player\Action\SetNicknameHandler;
 use App\Player\Action\SynchronizeGuestPlayerHandler;
 use App\Player\Exception\DuplicateGuestPlayerException;
 use App\Player\Exception\DuplicatePlayerNameException;
@@ -45,24 +46,22 @@ class PlayerController extends BaseController
     #[Route('api/players', methods: 'GET')]
     public function players(Request $request, PlayerRepository $playerRepository): Response
     {
-        $forPlayerId = $request->query->get('forPlayer');
-        $forPlayer = null;
+        $query = $request->query->get('q');
+        $rows = $playerRepository->searchAll($this->getPlayer(), $query);
 
-        if ($forPlayerId !== null) {
-            $forPlayer = $playerRepository->find($forPlayerId);
-            if ($forPlayer === null) {
-                return new JsonResponse([
-                    'errors' => ['Player not found'],
-                ], Response::HTTP_BAD_REQUEST);
-            }
-        }
+        $players = array_map(fn (array $row): array => [
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'number' => $row['number'],
+            'registeredOn' => $row['registered_on'],
+            'isGuest' => $row['registered_on'] === null,
+            'inPartyOf' => $row['in_party_of_id'] !== null ? [
+                'id' => $row['in_party_of_id'],
+            ] : null,
+            'nickname' => $row['nickname'],
+        ], $rows);
 
-        $players = $playerRepository->findVisibleFor($forPlayer);
-
-        return new JsonResponse(
-            array_map(fn ($player): array => $player->view(), $players),
-            Response::HTTP_OK
-        );
+        return new JsonResponse($players, Response::HTTP_OK);
     }
 
     #[Route('api/players', methods: 'POST')]
@@ -135,9 +134,10 @@ class PlayerController extends BaseController
     }
 
     #[Route('api/players/{player}/circle', methods: 'GET')]
-    public function circle(Player $player, PlayerRepository $playerRepository): Response
+    public function circle(Player $player, Request $request, PlayerRepository $playerRepository): Response
     {
-        $rows = $playerRepository->getCircle($player);
+        $includeSelf = $request->query->getBoolean('includeSelf', false);
+        $rows = $playerRepository->getCircle($player, $includeSelf);
 
         $circle = array_map(fn (array $row): array => [
             'id' => $row['id'],
@@ -148,6 +148,7 @@ class PlayerController extends BaseController
             'inPartyOf' => $row['in_party_of_id'] !== null ? [
                 'id' => $row['in_party_of_id'],
             ] : null,
+            'nickname' => $row['nickname'],
             'gamesPlayed' => (int) $row['games_played'],
             'wins' => (int) $row['wins'],
             'losses' => (int) $row['losses'],
@@ -176,6 +177,40 @@ class PlayerController extends BaseController
             return new JsonResponse([
                 'errors' => ['Synchronization failed'],
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('api/players/{targetPlayer}/nickname', methods: 'PUT')]
+    public function setNickname(
+        Player $targetPlayer,
+        Request $request,
+        SetNicknameHandler $handler
+    ): Response {
+        $payload = JsonPayload::fromRequest($request);
+        $nickname = $handler->handle(
+            $this->getPlayer(),
+            $targetPlayer,
+            $payload->getNonEmptyString('nickname'),
+        );
+
+        return new JsonResponse([
+            'nickname' => $nickname->getNickname(),
+        ], Response::HTTP_OK);
+    }
+
+    #[Route('api/players/{targetPlayer}/nickname', methods: 'DELETE')]
+    public function removeNickname(
+        Player $targetPlayer,
+        PlayerNicknameRepository $nicknameRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $nickname = $nicknameRepository->findByOwnerAndTarget($this->getPlayer(), $targetPlayer);
+
+        if ($nickname instanceof \App\Player\PlayerNickname) {
+            $entityManager->remove($nickname);
+            $entityManager->flush();
         }
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);

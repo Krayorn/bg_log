@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { apiPost } from '../hooks/useApi'
+import { createCampaign as apiCreateCampaign } from '../api/campaigns'
 import { useRequest } from '../hooks/useRequest'
 import { Plus, Scroll, ChevronRight } from 'lucide-react'
 import { Campaign } from '../types'
@@ -28,7 +28,7 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
             return
         }
 
-        const { data, error: apiError, ok } = await apiPost<Campaign>('/campaigns', {
+        const { data, error: apiError, ok } = await apiCreateCampaign({
             name: newCampaignName,
             game: gameId,
         })

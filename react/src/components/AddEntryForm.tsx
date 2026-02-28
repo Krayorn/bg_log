@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react"
 import { useRequest } from '../hooks/useRequest'
-import { apiPost, apiGet } from '../hooks/useApi'
+import { createEntry } from '../api/entries'
+import { getLastCampaignEntry } from '../api/campaigns'
+import { useCircle } from '../contexts/CircleContext'
 import { v4 as uuidv4 } from 'uuid'
 import PlayerSearchSelect from './PlayerSearchSelect'
 import EnumSelect from './EnumSelect'
 import MultiEnumSelect from './MultiEnumSelect'
 import { X, UserPlus, RotateCcw } from 'lucide-react'
-import { CustomField, Entry, GameOwner, CampaignSummary } from '../types'
+import GameOwnerSearchSelect from './GameOwnerSearchSelect'
+import { CustomField, Entry, CampaignSummary } from '../types'
 
 type PlayerEntry = {
     genId: string
@@ -25,8 +28,7 @@ type AddEntryFormProps = {
 }
 
 export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, fixedCampaignId }: AddEntryFormProps) {
-    const [playersList, setPlayersList] = useState<{ id: string, name: string }[]>([])
-    const [gameOwners, setGameOwners] = useState<GameOwner[]>([])
+    const { players: circlePlayers, addPlayer, displayName } = useCircle()
 
     const [entryNote, setEntryNote] = useState("")
     const [entryPlayedAt, setEntryPlayedAt] = useState(new Date().toISOString().split('T')[0])
@@ -37,20 +39,18 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
     const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
     const [entryCampaign, setEntryCampaign] = useState(fixedCampaignId ?? "")
 
-    useRequest(`/players?forPlayer=${playerId}`, [playerId], setPlayersList, !!playerId)
-    useRequest(`/games/${gameId}/owners`, [gameId], setGameOwners)
     useRequest(`/campaigns?game=${gameId}`, [gameId], setCampaigns, !fixedCampaignId)
 
     const [initialPlayerSet, setInitialPlayerSet] = useState(false)
     useEffect(() => {
-        if (playerId && playersList.length > 0 && !initialPlayerSet) {
-            const currentPlayer = playersList.find(p => p.id === playerId)
+        if (playerId && circlePlayers.length > 0 && !initialPlayerSet) {
+            const currentPlayer = circlePlayers.find(p => p.id === playerId)
             if (currentPlayer) {
                 setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
             }
             setInitialPlayerSet(true)
         }
-    }, [playersList, playerId, initialPlayerSet])
+    }, [circlePlayers, playerId, initialPlayerSet])
 
     useEffect(() => {
         if (fixedCampaignId) {
@@ -59,12 +59,9 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fixedCampaignId])
 
-    const currentPlayerOwnership = gameOwners.find(go => go.player.id === playerId)
-    const defaultGameUsed = currentPlayerOwnership?.id || ""
-
     const sortedCustomFields = [...customFields].sort((a, b) => a.name.localeCompare(b.name))
-    const globalCustomFields = sortedCustomFields.filter(c => c.global)
-    const playerCustomFields = sortedCustomFields.filter(c => !c.global)
+    const globalCustomFields = sortedCustomFields.filter(c => c.scope === 'entry')
+    const playerCustomFields = sortedCustomFields.filter(c => c.scope === 'playerResult')
 
     const addPlayerToEntry = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -95,7 +92,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
 
     const loadFromLastGame = async (campaignId: string) => {
         if (!campaignId) return
-        const { data, ok } = await apiGet<Entry>(`/campaigns/${campaignId}/last-entry`)
+        const { data, ok } = await getLastCampaignEntry(campaignId)
         if (!ok || !data) return
 
         const newPlayers: PlayerEntry[] = data.players.map(p => ({
@@ -133,12 +130,12 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             return grouped
         })())
 
-        const existingIds = new Set(playersList.map(p => p.id))
+        const existingIds = new Set(circlePlayers.map(p => p.id))
         const missingPlayers = data.players
             .filter(p => !existingIds.has(p.player.id))
             .map(p => ({ id: p.player.id, name: p.player.name }))
-        if (missingPlayers.length > 0) {
-            setPlayersList(prev => [...prev, ...missingPlayers])
+        for (const mp of missingPlayers) {
+            addPlayer(mp)
         }
 
         if (data.playedAt?.date) {
@@ -173,7 +170,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             game: gameId,
             note: entryNote,
             playedAt: entryPlayedAt + 'T12:00:00+02:00',
-            gameUsed: entryGameUsed || defaultGameUsed || null,
+            gameUsed: entryGameUsed || null,
             campaign: campaignId || null,
             customFields: Object.entries(entryCustomFields)
                 .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== '')
@@ -188,7 +185,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             }))
         }
 
-        const { data, error, ok } = await apiPost<Entry>('/entries', payload)
+        const { data, error, ok } = await createEntry(payload)
 
         if (!ok || !data) {
             setEntryErrors([error ?? 'Failed to create entry.'])
@@ -198,7 +195,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             setEntryGameUsed("")
             setEntryCustomFields({})
             setEntryCampaign(fixedCampaignId ?? "")
-            const currentPlayer = playerId ? playersList.find(p => p.id === playerId) : null
+            const currentPlayer = playerId ? circlePlayers.find(p => p.id === playerId) : null
             if (currentPlayer) {
                 setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
             } else {
@@ -222,23 +219,16 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                         onChange={e => setEntryPlayedAt(e.target.value)}
                     />
                 </div>
-                {gameOwners.length > 0 && (
-                    <div className="flex flex-col gap-1">
-                        <label className="text-white text-sm font-medium">Game Copy Used</label>
-                        <select
-                            className="p-2 rounded bg-slate-700 text-white border border-slate-500"
-                            value={entryGameUsed || defaultGameUsed}
-                            onChange={e => setEntryGameUsed(e.target.value)}
-                        >
-                            <option value="">No specific copy used</option>
-                            {gameOwners.map(go => (
-                                <option key={go.id} value={go.id}>
-                                    {go.player.name}'s copy {go.player.id === playerId ? '(yours)' : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                <div className="flex flex-col gap-1">
+                    <label className="text-white text-sm font-medium">Game Copy Used</label>
+                    <GameOwnerSearchSelect
+                        gameId={gameId}
+                        playerId={playerId}
+                        value={entryGameUsed}
+                        onChange={v => setEntryGameUsed(v)}
+                        autoSelectOwner
+                    />
+                </div>
                 {!fixedCampaignId && campaigns.length > 0 && (
                     <div className="flex flex-col gap-1">
                         <label className="text-white text-sm font-medium">Campaign</label>
@@ -369,7 +359,9 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             </div>
 
             <div className="mb-6">
-                <h2 className="text-white font-medium mb-3">Players</h2>
+                <div className="flex items-center gap-3 mb-3">
+                    <h2 className="text-white font-medium">Players</h2>
+                </div>
                 <div className="flex flex-wrap gap-3">
                     {entryPlayers.map(player => (
                         <div key={player.genId} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
@@ -384,14 +376,14 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                 <label className="text-slate-300 text-xs">Player</label>
                                 {player.id ? (
                                     <div className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm">
-                                        {playersList.find(p => p.id === player.id)?.name ?? player.id}
+                                        {displayName(player.id, circlePlayers.find(p => p.id === player.id)?.name)}
                                     </div>
                                 ) : (
                                     <PlayerSearchSelect
-                                        players={playersList}
+                                        players={circlePlayers}
                                         excludeIds={entryPlayers.filter(p => p.id).map(p => p.id)}
                                         onSelect={p => updatePlayer(player.genId, 'id', p.id)}
-                                        onPlayerCreated={p => setPlayersList(prev => [...prev, { id: p.id, name: p.name }])}
+                                        onPlayerCreated={p => addPlayer({ id: p.id, name: p.name })}
                                         allowCreate
                                         placeholder="Search player..."
                                     />

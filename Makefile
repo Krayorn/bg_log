@@ -12,7 +12,7 @@ down:
 symfony:
 	docker exec -it bg_log-symfony-1 bash
 
-backend-precommit:
+backend-precommit: test
 	docker exec bg_log-symfony-1 vendor/bin/rector
 	docker exec bg_log-symfony-1 vendor/bin/ecs --fix
 	docker exec bg_log-symfony-1 vendor/bin/phpstan analyse --memory-limit=256M

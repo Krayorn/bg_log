@@ -35,8 +35,8 @@ class CustomField
         #[ORM\Column(type: 'text')]
         private readonly string $name,
         string $kind,
-        #[ORM\Column(type: 'boolean')]
-        private readonly bool $global,
+        #[ORM\Column(enumType: CustomFieldScope::class)]
+        private readonly CustomFieldScope $scope,
         #[ORM\Column(type: 'boolean', options: [
             'default' => false,
         ])]
@@ -71,9 +71,9 @@ class CustomField
         return $this->kind;
     }
 
-    public function isGlobal(): bool
+    public function getScope(): CustomFieldScope
     {
-        return $this->global;
+        return $this->scope;
     }
 
     public function isMultiple(): bool
@@ -90,7 +90,7 @@ class CustomField
             'id' => $this->id,
             'kind' => $this->kind,
             'name' => $this->name,
-            'global' => $this->global,
+            'scope' => $this->scope->value,
             'multiple' => $this->multiple,
             'enumValues' => array_values(array_map(fn ($v) => $v->view(), $this->enumValues->toArray())),
             'player' => $this->player?->getId(),

@@ -15,6 +15,7 @@
 - Frontend styling: Tailwind CSS utility classes.
 - Keep changes within the relevant app directory.
 - **Frontend types**: Shared API/domain types live in `react/src/types.ts`, derived from backend `view()` method shapes. Don't redeclare types locally in components — import from `types.ts`. Component-specific prop types stay local.
+- **Frontend API calls**: Typed API functions live in `react/src/api/`, grouped by domain (e.g., `entries.ts`, `campaigns.ts`, `players.ts`). Don't call `apiGet`/`apiPost`/etc. directly from components — import named functions from `api/`. The low-level helpers in `react/src/hooks/useApi.ts` are only used by the `api/` layer.
 
 ## Testing
 - Run tests: `make test` (runs PHPUnit inside Docker).
