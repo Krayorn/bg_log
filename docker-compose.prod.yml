@@ -5,6 +5,7 @@ services:
     volumes: []
     environment:
       APP_ENV: prod
+      DATABASE_URL: ${DATABASE_URL}
 
   nginx:
     ports:
