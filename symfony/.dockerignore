@@ -3,3 +3,5 @@ vendor
 var
 tests
 *.md
+docker-compose*
+Dockerfile

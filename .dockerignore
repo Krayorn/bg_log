@@ -1,0 +1,7 @@
+.git
+*.gz
+*.sql
+symfony/vendor
+symfony/var
+react/node_modules
+react/dist

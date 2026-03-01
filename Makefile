@@ -47,7 +47,5 @@ deploy:
 	sed -i "s/^VITE_APP_VERSION=.*/VITE_APP_VERSION=$$new_version/" react/.env; \
 	sed -i "s/^VITE_RELEASE_DATE=.*/VITE_RELEASE_DATE=$$today/" react/.env; \
 	echo "Updated to version $$new_version (released $$today)"
-	docker-compose down
-	cd react && npm i
-	cd react && npm run build
-	docker-compose up -d --build
+	docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build

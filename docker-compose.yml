@@ -5,6 +5,7 @@ services:
   symfony:
     build:
       context: ./symfony
+      target: dev
     restart: unless-stopped
     volumes:
       - ./symfony:/var/www/html/symfony
@@ -15,10 +16,9 @@ services:
 
   nginx:
     build:
-      context: ./nginx
+      context: .
+      dockerfile: nginx/Dockerfile
     restart: unless-stopped
-    volumes:
-      - ./react/dist/:/usr/share/nginx/html
     ports:
       - "82:80"
     depends_on:
