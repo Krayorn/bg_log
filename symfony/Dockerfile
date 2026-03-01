@@ -23,6 +23,8 @@ CMD ["php-fpm"]
 # Production stage
 FROM base AS prod
 
+ENV APP_ENV=prod
+
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
