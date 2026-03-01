@@ -1,4 +1,4 @@
-FROM php:8.1-fpm-bookworm
+FROM php:8.3-fpm-bookworm
 
 WORKDIR /var/www/html/symfony
 
@@ -12,9 +12,7 @@ RUN apt update \
 
 RUN docker-php-ext-install pdo pdo_pgsql
 
-# install Composer
-RUN export COMPOSER_VERSION=2.3.10 \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=${COMPOSER_VERSION}
-
+# install Composer (latest 2.x)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --2
 
 CMD ["php-fpm"]

@@ -53,10 +53,10 @@ class PlayerController extends BaseController
             'id' => $row['id'],
             'name' => $row['name'],
             'number' => $row['number'],
-            'registeredOn' => $row['registered_on'],
-            'isGuest' => $row['registered_on'] === null,
-            'inPartyOf' => $row['in_party_of_id'] !== null ? [
-                'id' => $row['in_party_of_id'],
+            'registeredOn' => $row['registeredOn'],
+            'isGuest' => $row['registeredOn'] === null,
+            'inPartyOf' => $row['inPartyOfId'] !== null ? [
+                'id' => $row['inPartyOfId'],
             ] : null,
             'nickname' => $row['nickname'],
         ], $rows);

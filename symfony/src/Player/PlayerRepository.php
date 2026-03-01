@@ -75,41 +75,28 @@ class PlayerRepository extends ServiceEntityRepository
      */
     public function searchAll(Player $currentPlayer, ?string $query = null): array
     {
-        $conn = $this->getEntityManager()->getConnection();
-
-        $params = [
-            'currentPlayerId' => $currentPlayer->getId(),
-        ];
-        $conditions = ['(p.registered_on IS NOT NULL OR p.in_party_of_id = :currentPlayerId)'];
+        $qb = $this->createQueryBuilder('p')
+            ->select('p.id', 'p.name', 'p.number', 'p.registeredOn', 'IDENTITY(p.inPartyOf) as inPartyOfId', 'pn.nickname')
+            ->distinct()
+            ->leftJoin(PlayerNickname::class, 'pn', 'WITH', 'pn.targetPlayer = p AND pn.owner = :currentPlayer')
+            ->where('p.registeredOn IS NOT NULL OR p.inPartyOf = :currentPlayer')
+            ->setParameter('currentPlayer', $currentPlayer)
+            ->orderBy('p.name', 'ASC');
 
         if ($query !== null && $query !== '') {
             if (str_starts_with($query, '#')) {
                 $numberStr = ltrim(substr($query, 1), '0');
                 if ($numberStr !== '' && ctype_digit($numberStr)) {
-                    $conditions[] = 'p.number = :number';
-                    $params['number'] = (int) $numberStr;
+                    $qb->andWhere('p.number = :number')
+                        ->setParameter('number', (int) $numberStr);
                 }
             } else {
-                $conditions[] = '(LOWER(p.name) LIKE LOWER(:query) OR LOWER(pn.nickname) LIKE LOWER(:query))';
-                $params['query'] = '%' . $query . '%';
+                $qb->andWhere('LOWER(p.name) LIKE LOWER(:query) OR LOWER(pn.nickname) LIKE LOWER(:query)')
+                    ->setParameter('query', '%' . $query . '%');
             }
         }
 
-        $where = implode(' AND ', $conditions);
-
-        $sql = "
-            SELECT DISTINCT p.id, p.name, p.number, p.registered_on, p.in_party_of_id,
-                   (p.registered_on IS NULL) as is_guest,
-                   pn.nickname
-            FROM player p
-            LEFT JOIN player_nickname pn ON pn.target_player_id = p.id AND pn.owner_id = :currentPlayerId
-            WHERE {$where}
-            ORDER BY p.name ASC
-        ";
-
-        $result = $conn->executeQuery($sql, $params);
-
-        return $result->fetchAllAssociative();
+        return $qb->getQuery()->getResult();
     }
 
     /**

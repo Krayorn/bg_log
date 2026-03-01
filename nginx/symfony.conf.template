@@ -6,22 +6,16 @@ server {
   server_name ${HOSTNAME_PUBLIC_BACKEND} ${HOSTNAME_INTERNAL_NGINX};
   root /var/www/html/symfony/public;
 
-  add_header 'Access-Control-Allow-Origin' '*' always;
+  add_header 'Access-Control-Allow-Origin' '${CORS_ALLOW_ORIGIN}' always;
   add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, PUT, OPTIONS, PATCH';
-  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,If-None-Match,Cache-Control,Content-Type,Range,Authorization,x-blackfire-query,X-SWITCH-HEADER';
-  add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range,X-Debug-Token,X-Debug-Token-Link';
+  add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,If-None-Match,Cache-Control,Content-Type,Range,Authorization';
+  add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
 
   location /api {
     if ($request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Origin' '${CORS_ALLOW_ORIGIN}' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, PUT, OPTIONS, PATCH';
-        #
-        # Custom headers and headers various browsers *should* be OK with but aren't
-        #
-        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,If-None-Match,Cache-Control,Content-Type,Range,Authorization,x-blackfire-query,X-SWITCH-HEADER';
-        #
-        # Tell client that this pre-flight info is valid for 20 days
-        #
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,If-None-Match,Cache-Control,Content-Type,Range,Authorization';
         add_header 'Access-Control-Max-Age' 1728000;
         add_header 'Content-Type' 'text/plain; charset=utf-8';
         add_header 'Content-Length' 0;
@@ -43,7 +37,7 @@ server {
     include       fastcgi_params;
     fastcgi_pass  php-upstream;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    fastcgi_read_timeout 900s;
+    fastcgi_read_timeout 30s;
 
     fastcgi_request_buffering off;
     fastcgi_param PHP_VALUE "auto_prepend_file=\n allow_url_include=Off";

@@ -24,6 +24,11 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class CampaignController extends BaseController
 {
+    public function __construct(
+        private readonly CampaignStateCalculator $stateCalculator,
+    ) {
+    }
+
     #[Route('api/campaigns', methods: 'GET')]
     public function list(Request $request, CampaignRepository $campaignRepository, GameRepository $gameRepository): Response
     {
@@ -41,7 +46,7 @@ class CampaignController extends BaseController
 
         $campaigns = $campaignRepository->listByGame($game, $player);
 
-        return new JsonResponse(array_map(fn ($campaign) => $campaign->view(), $campaigns), Response::HTTP_OK);
+        return new JsonResponse(array_map(fn ($campaign) => $this->campaignView($campaign), $campaigns), Response::HTTP_OK);
     }
 
     #[Route('api/campaigns', methods: 'POST')]
@@ -61,7 +66,7 @@ class CampaignController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse($campaign->view(), Response::HTTP_CREATED);
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_CREATED);
     }
 
     #[Route('api/campaigns/{campaign}', methods: 'GET')]
@@ -69,7 +74,7 @@ class CampaignController extends BaseController
     {
         $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_VIEW, $campaign);
 
-        return new JsonResponse($campaign->view(), Response::HTTP_OK);
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_OK);
     }
 
     #[Route('api/campaigns/{campaign}/last-entry', methods: 'GET')]
@@ -108,7 +113,7 @@ class CampaignController extends BaseController
 
         $entityManager->flush();
 
-        return new JsonResponse($campaign->view(), Response::HTTP_OK);
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_OK);
     }
 
     #[Route('api/campaigns/{campaign}', methods: 'DELETE')]
@@ -255,7 +260,7 @@ class CampaignController extends BaseController
         $entityManager->persist($event);
         $entityManager->flush();
 
-        return new JsonResponse($campaign->view(), Response::HTTP_CREATED);
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_CREATED);
     }
 
     #[Route('api/campaigns/{campaign}/events/{eventId}', methods: 'DELETE')]
@@ -275,6 +280,19 @@ class CampaignController extends BaseController
         $entityManager->remove($event);
         $entityManager->flush();
 
-        return new JsonResponse($campaign->view(), Response::HTTP_OK);
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_OK);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function campaignView(Campaign $campaign): array
+    {
+        $entryStates = $this->stateCalculator->computeEntryStates(
+            $campaign->getSortedEntries(),
+            $campaign->getEvents()->toArray(),
+        );
+
+        return $campaign->view($entryStates);
     }
 }

@@ -94,16 +94,14 @@ export type CampaignEvent = {
 
 export type StateValue = string | number | string[] | Record<string, number>
 
-export type ScopedState = Record<string, Record<string, StateValue>>
-
-export type CampaignState = {
-    campaign: Record<string, StateValue>
-    players: Record<string, {
-        player: { id: string; name: string }
-        state: Record<string, StateValue>
-        scoped?: ScopedState
-    }>
+export type StateSection = {
+    label: string
+    playerId: string | null
+    entries: Record<string, StateValue>
+    scoped: { label: string; entries: Record<string, StateValue> }[]
 }
+
+export type CampaignState = StateSection[]
 
 export type CampaignEntry = Entry & {
     events: CampaignEvent[]

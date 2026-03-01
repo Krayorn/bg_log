@@ -46,10 +46,7 @@ function verbColor(verb: string): string {
 }
 
 function StateDisplay({ state }: { state: CampaignState }) {
-    const hasCampaignState = Object.keys(state.campaign).length > 0
-    const hasPlayerState = Object.keys(state.players).length > 0
-
-    if (!hasCampaignState && !hasPlayerState) {
+    if (state.length === 0) {
         return (
             <div className="border border-slate-600 rounded-lg p-4 bg-slate-900/30 text-center">
                 <p className="text-slate-500 text-sm">No events recorded yet.</p>
@@ -60,22 +57,18 @@ function StateDisplay({ state }: { state: CampaignState }) {
 
     return (
         <div className="flex flex-col gap-3">
-            {hasCampaignState && (
-                <div className="border border-slate-600 rounded-lg p-3 bg-slate-900/30">
-                    <p className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider">Global</p>
-                    <StateEntries entries={state.campaign} />
-                </div>
-            )}
-            {Object.entries(state.players).map(([playerId, { player, state: playerState, scoped }]) => (
-                <div key={playerId} className="border border-slate-600 rounded-lg p-3 bg-slate-900/30">
-                    <p className="text-xs text-cyan-400 font-semibold mb-2">{player.name}</p>
-                    {Object.keys(playerState).length > 0 && (
-                        <StateEntries entries={playerState} />
+            {state.map((section) => (
+                <div key={section.playerId ?? 'global'} className="border border-slate-600 rounded-lg p-3 bg-slate-900/30">
+                    <p className={`text-xs font-semibold mb-2 ${section.playerId ? 'text-cyan-400' : 'text-slate-400 uppercase tracking-wider'}`}>
+                        {section.label}
+                    </p>
+                    {Object.keys(section.entries).length > 0 && (
+                        <StateEntries entries={section.entries} />
                     )}
-                    {scoped && Object.entries(scoped).map(([scopeLabel, scopeState]) => (
-                        <div key={scopeLabel} className="mt-2 ml-2 border-l-2 border-purple-500/30 pl-2">
-                            <p className="text-xs text-purple-400 font-semibold mb-1">{scopeLabel}</p>
-                            <StateEntries entries={scopeState} />
+                    {section.scoped.map((sub) => (
+                        <div key={sub.label} className="mt-2 ml-2 border-l-2 border-purple-500/30 pl-2">
+                            <p className="text-xs text-purple-400 font-semibold mb-1">{sub.label}</p>
+                            <StateEntries entries={sub.entries} />
                         </div>
                     ))}
                 </div>
@@ -235,7 +228,7 @@ export default function CampaignPage() {
     })
 
     const lastEntry = sortedEntries.length > 0 ? sortedEntries[sortedEntries.length - 1] : null
-    const currentState: CampaignState = lastEntry?.stateAfter ?? { campaign: {}, players: {} }
+    const currentState: CampaignState = lastEntry?.stateAfter ?? []
     const campaignKeys = myCampaignKeys
 
     const gameUrl = `/games/${campaign.game.id}?playerId=${playerId}`
@@ -355,7 +348,7 @@ export default function CampaignPage() {
                                         if (!prev) return prev
                                         return {
                                             ...prev,
-                                            entries: [...prev.entries, { ...newEntry, events: [], stateAfter: prev.entries.length > 0 ? prev.entries[prev.entries.length - 1].stateAfter : { campaign: {}, players: {} } }]
+                                            entries: [...prev.entries, { ...newEntry, events: [], stateAfter: prev.entries.length > 0 ? prev.entries[prev.entries.length - 1].stateAfter : [] }]
                                         }
                                     })
                                     setShowAddEntry(false)

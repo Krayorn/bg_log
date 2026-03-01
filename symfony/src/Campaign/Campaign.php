@@ -3,7 +3,6 @@
 namespace App\Campaign;
 
 use App\Campaign\CampaignEvent\CampaignEvent;
-use App\Campaign\CampaignEvent\CampaignEventVerb;
 use App\Entry\Entry;
 use App\Game\Game;
 use App\Player\Player;
@@ -54,35 +53,26 @@ class Campaign
     }
 
     /**
+     * @param array<string, list<array{label: string, playerId: string|null, entries: array<string, mixed>, scoped: list<array{label: string, entries: array<string, mixed>}>}>>|null $entryStates pre-computed states from CampaignStateCalculator
+     *
      * @return array{id: UuidInterface, name: string, game: array<string, mixed>, createdBy: array<string, mixed>, createdAt: DateTimeImmutable, entries: array<int, array<string, mixed>>}
      */
-    public function view(): array
+    public function view(?array $entryStates = null): array
     {
-        $sortedEntries = $this->entries->toArray();
-        usort($sortedEntries, function (Entry $a, Entry $b) {
-            $playedAtCmp = $a->getPlayedAt() <=> $b->getPlayedAt();
-
-            return $playedAtCmp !== 0 ? $playedAtCmp : $a->getCreatedAt() <=> $b->getCreatedAt();
-        });
-
-        /** @var array{campaign: array<string, mixed>, players: array<string, array{player: array<string, mixed>, state: array<string, mixed>}>} $state */
-        $state = [
-            'campaign' => [],
-            'players' => [],
-        ];
+        $sortedEntries = $this->getSortedEntries();
         $entriesView = [];
 
         foreach ($sortedEntries as $entry) {
             $entryEvents = $this->events->filter(fn (CampaignEvent $e) => $e->getEntry()->id->equals($entry->id))->toArray();
             usort($entryEvents, fn (CampaignEvent $a, CampaignEvent $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
-            foreach ($entryEvents as $event) {
-                $this->applyEvent($state, $event);
-            }
-
             $entryView = $entry->view();
             $entryView['events'] = array_values(array_map(fn (CampaignEvent $e) => $e->view(), $entryEvents));
-            $entryView['stateAfter'] = json_decode((string) json_encode($state), true);
+
+            if ($entryStates !== null) {
+                $entryView['stateAfter'] = $entryStates[(string) $entry->id] ?? [];
+            }
+
             $entriesView[] = $entryView;
         }
 
@@ -134,41 +124,25 @@ class Campaign
     }
 
     /**
-     * @param array{campaign: array<string, mixed>, players: array<string, array{player: array<string, mixed>, state: array<string, mixed>, scoped: array<string, array<string, array<string, mixed>>>}>} $state
+     * @return Entry[]
      */
-    private function applyEvent(array &$state, CampaignEvent $event): void
+    public function getSortedEntries(): array
     {
-        $playerResult = $event->getPlayerResult();
+        $entries = $this->entries->toArray();
+        usort($entries, function (Entry $a, Entry $b) {
+            $playedAtCmp = $a->getPlayedAt() <=> $b->getPlayedAt();
 
-        if ($playerResult instanceof \App\Entry\PlayerResult\PlayerResult) {
-            $playerId = (string) $playerResult->getPlayer()->getId();
-            if (! isset($state['players'][$playerId])) {
-                $state['players'][$playerId] = [
-                    'player' => $playerResult->getPlayer()->view(),
-                    'state' => [],
-                    'scoped' => [],
-                ];
-            }
+            return $playedAtCmp !== 0 ? $playedAtCmp : $a->getCreatedAt() <=> $b->getCreatedAt();
+        });
 
-            $customFieldValue = $event->getCustomFieldValue();
-            if ($customFieldValue instanceof \App\Entry\CustomFieldValue) {
-                $scopeLabel = (string) $customFieldValue->getDisplayValue();
-                if (! isset($state['players'][$playerId]['scoped'][$scopeLabel])) {
-                    $state['players'][$playerId]['scoped'][$scopeLabel] = [];
-                }
-                $target = &$state['players'][$playerId]['scoped'][$scopeLabel];
-            } else {
-                $target = &$state['players'][$playerId]['state'];
-            }
-        } else {
-            $target = &$state['campaign'];
-        }
+        return $entries;
+    }
 
-        $payload = $event->getPayload();
-        $verb = CampaignEventVerb::tryFrom($payload['verb'] ?? '');
-
-        if ($verb instanceof CampaignEventVerb) {
-            $verb->apply($event->getCampaignKey()->getType(), $target, $event->getCampaignKey()->getName(), $payload);
-        }
+    /**
+     * @return Collection<int, CampaignEvent>
+     */
+    public function getEvents(): Collection
+    {
+        return $this->events;
     }
 }
