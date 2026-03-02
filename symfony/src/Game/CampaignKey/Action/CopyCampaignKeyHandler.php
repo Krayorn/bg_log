@@ -76,7 +76,7 @@ class CopyCampaignKeyHandler
         $copy = new CampaignKey(
             $campaignKey->getGame(),
             $campaignKey->getName(),
-            $campaignKey->getType()->value,
+            $campaignKey->getType(),
             $campaignKey->getScope(),
             $copiedCustomField,
             $player,

@@ -18,16 +18,14 @@ class CampaignKey
     #[ORM\Column(type: 'uuid', unique: true)]
     public UuidInterface $id;
 
-    #[ORM\Column(enumType: CampaignKeyType::class)]
-    private CampaignKeyType $type;
-
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id')]
         private readonly Game $game,
         #[ORM\Column(type: 'text')]
         private readonly string $name,
-        string $type,
+        #[ORM\Column(enumType: CampaignKeyType::class)]
+        private readonly CampaignKeyType $type,
         #[ORM\Column(enumType: CustomFieldScope::class)]
         private readonly CustomFieldScope $scope,
         #[ORM\ManyToOne(targetEntity: CustomField::class)]
@@ -45,11 +43,6 @@ class CampaignKey
         private readonly ?self $originCampaignKey = null,
     ) {
         $this->id = Uuid::uuid4();
-        $typeEnum = CampaignKeyType::tryFrom($type);
-        if (! $typeEnum instanceof \App\Game\CampaignKey\CampaignKeyType) {
-            throw new \InvalidArgumentException("Invalid campaign key type: {$type}");
-        }
-        $this->type = $typeEnum;
     }
 
     public function getId(): UuidInterface

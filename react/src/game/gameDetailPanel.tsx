@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { createCustomField, deleteCustomField as apiDeleteCustomField, updateCustomFieldEnumValues, updateCustomFieldKind, copyCustomField, toggleCustomFieldShareable } from '../api/customFields'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, Activity, Trophy, Library } from 'lucide-react'
 import { AddEntryForm } from '../components/AddEntryForm'
 import type { CustomField, CustomFieldType, Entry, Game, GameStats } from '../types'
+import { MetricCard } from '../components/SciFi'
 
 const CUSTOM_FIELD_TYPES: CustomFieldType[] = ['string', 'number', 'enum']
 
@@ -103,25 +104,17 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
     }
 
     return (
-        <div className="flex flex-col">
-            <section className="flex gap-6 mb-6 p-4 bg-slate-900/30 backdrop-blur-sm rounded-lg border border-slate-600/30">
-                <div className="flex flex-col items-center">
-                    <span className="text-2xl font-bold text-cyan-400">{gameStats.entriesCount}</span>
-                    <span className="text-xs text-slate-400">Games played</span>
-                </div>
-                <div className="flex flex-col items-center">
-                    <span className="text-2xl font-bold text-cyan-400">{gameStats.winrate}%</span>
-                    <span className="text-xs text-slate-400">Winrate</span>
-                </div>
+        <div className="flex flex-col gap-4">
+            <div className={`grid gap-4 ${gameStats.owned ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                <MetricCard icon={<Activity className="w-5 h-5" />} label="Games Played" value={gameStats.entriesCount} accent="cyan" noScanLine />
+                <MetricCard icon={<Trophy className="w-5 h-5" />} label="Winrate" value={`${gameStats.winrate}%`} accent="cyan" />
                 {gameStats.owned && (
-                    <div className="flex items-center">
-                        <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">In Library</span>
-                    </div>
+                    <MetricCard icon={<Library className="w-5 h-5" />} label="Collection" value="Owned" accent="purple" noScanLine />
                 )}
-            </section>
+            </div>
 
             <section className="flex flex-col border border-slate-600/30 rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm">
-                <h1 className="text-center text-xl font-semibold mb-6 text-white" >Add New Entry</h1>
+                <h1 className="text-center text-xl font-semibold mb-6 text-white">Add New Entry</h1>
                 <AddEntryForm
                     gameId={game.id}
                     playerId={playerId}
@@ -130,8 +123,8 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
                 />
             </section>
 
-            <section className="flex flex-col mt-6 border border-slate-600 rounded-lg p-4" >
-                <h1 className="text-center text-xl font-semibold mb-6 text-white" >Custom Fields</h1>
+            <section className="flex flex-col border border-slate-600/30 rounded-lg p-4 bg-slate-900/30 backdrop-blur-sm">
+                <h1 className="text-center text-xl font-semibold mb-6 text-white">Custom Fields</h1>
 
                 <form className="flex flex-col mb-6" onSubmit={addCustomField} >
                     <div className="flex flex-col gap-4">

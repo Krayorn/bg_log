@@ -115,38 +115,42 @@ export default function Game() {
 
     return (
         <Layout>
-            <div className='flex text-white h-[calc(100vh-7rem)] gap-4'>
-                <section className="w-80 shrink-0 flex flex-col bg-slate-900/30 backdrop-blur-sm rounded-lg border border-slate-600/30 overflow-hidden">
-                    <div className="shrink-0 border-b border-slate-600/30">
+            <div className='flex text-white h-[calc(100vh-7rem)]'>
+                <aside className="w-80 shrink-0 flex flex-col bg-slate-950/60 backdrop-blur-md rounded-l-lg border border-cyan-400/20 border-r-0">
+                    <div className="shrink-0 border-b border-cyan-400/20">
                         <div
                             onClick={() => selectEntry(null)}
-                            className={`p-4 flex items-center justify-center cursor-pointer transition-all ${!selectedEntry && !showStatistics && !showCampaigns
-                                ? 'bg-cyan-500/20 text-cyan-400'
+                            className={`p-4 cursor-pointer transition-all ${!selectedEntry && !showStatistics && !showCampaigns
+                                ? 'bg-cyan-500/10'
                                 : 'hover:bg-slate-800/50'
                                 }`}
                         >
-                            <h1 className="text-lg font-semibold">{game.name}</h1>
+                            <h1 className="text-sm font-bold tracking-[0.2em] text-cyan-400 uppercase text-center">{game.name}</h1>
+                            <div className="text-[10px] text-slate-500 mt-1 font-mono text-center">{entries.length} {entries.length === 1 ? 'ENTRY' : 'ENTRIES'} LOGGED</div>
                         </div>
+                        <div className="flex border-t border-cyan-400/10">
                             <button
                                 onClick={toggleStatistics}
-                                className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showStatistics
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm transition-all ${showStatistics
+                                    ? 'bg-cyan-500/15 text-cyan-400 shadow-[inset_0_-2px_0_rgba(34,211,238,0.4)]'
+                                    : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
                                     }`}
                             >
-                                <BarChart3 className="w-4 h-4" />
-                                Statistics
+                                <BarChart3 className="w-3.5 h-3.5" />
+                                <span className="text-xs tracking-wider">Statistics</span>
                             </button>
-                        <button
-                            onClick={toggleCampaigns}
-                            className={`w-full flex items-center justify-center gap-2 py-2 text-sm transition-colors ${showCampaigns
-                                ? 'bg-cyan-500/20 text-cyan-400'
-                                : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50'
-                                }`}
-                        >
-                            <Scroll className="w-4 h-4" />
-                            Campaigns
-                        </button>
+                            <div className="w-px bg-cyan-400/10" />
+                            <button
+                                onClick={toggleCampaigns}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm transition-all ${showCampaigns
+                                    ? 'bg-cyan-500/15 text-cyan-400 shadow-[inset_0_-2px_0_rgba(34,211,238,0.4)]'
+                                    : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                                    }`}
+                            >
+                                <Scroll className="w-3.5 h-3.5" />
+                                <span className="text-xs tracking-wider">Campaigns</span>
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-y-auto flex-1">
                         {entries.length === 0 ? (
@@ -172,8 +176,8 @@ export default function Game() {
                             ))
                         )}
                     </div>
-                </section>
-                <section className="flex-1 overflow-y-auto">
+                </aside>
+                <section className="flex-1 overflow-y-auto rounded-r-lg border border-slate-600/30 border-l-cyan-400/20 p-4">
                     {showCampaigns ? (
                         <CampaignPanel gameId={gameId} />
                     ) : showStatistics ? (

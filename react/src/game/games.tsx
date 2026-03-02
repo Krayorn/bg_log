@@ -172,7 +172,7 @@ export default function Games() {
                     </div>
                     <div>
                         <h1 className="text-xl font-semibold">My Games</h1>
-                        <span className="text-sm text-slate-400">{owned.length} owned · {played.length} played</span>
+                        <span className="text-sm text-slate-500 font-mono">{owned.length} owned · {played.length} played</span>
                     </div>
                 </header>
 
@@ -252,7 +252,10 @@ export default function Games() {
                 </section>
 
                 <section className="mb-6">
-                    <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">My Collection</h2>
+                    <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60" />
+                        My Collection
+                    </h2>
                     {owned.length === 0 ? (
                         <div className="border border-dashed border-cyan-400/20 rounded-lg p-4 bg-slate-900/30">
                             <p className="text-slate-400 font-mono text-sm">
@@ -281,7 +284,10 @@ export default function Games() {
 
                 {played.length > 0 && (
                     <section>
-                        <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">Played</h2>
+                        <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-500/60" />
+                            Played
+                        </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {played.map(game => (
                                 <GameCard
@@ -320,7 +326,7 @@ function GameCard({ game, playerId, editingField, editValue, setEditValue, start
     const isEditingPrice = editingField?.id === game.game_owned_id && editingField?.field === 'price'
 
     return (
-        <div className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4">
+        <div className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4 hover:border-cyan-400/40 transition-colors duration-300">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50">
@@ -374,12 +380,12 @@ function GameCard({ game, playerId, editingField, editValue, setEditValue, start
             <div className="mt-3 pt-3 border-t border-slate-600/30">
                 <div className="flex gap-4 text-sm">
                     <div className="flex flex-col">
-                        <span className="text-white font-medium">{game.play_count}</span>
+                        <span className="text-white font-medium font-mono">{game.play_count}</span>
                         <span className="text-xs text-slate-500">Plays</span>
                     </div>
                     {game.game_owned_id && game.price !== null && game.play_count > 0 && (
                         <div className="flex flex-col">
-                            <span className="text-cyan-400 font-medium">{((game.price / game.play_count) / 100).toFixed(2)}€</span>
+                            <span className="text-cyan-400 font-medium font-mono">{((game.price / game.play_count) / 100).toFixed(2)}€</span>
                             <span className="text-xs text-slate-500">Per play</span>
                         </div>
                     )}

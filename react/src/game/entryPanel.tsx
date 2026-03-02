@@ -25,13 +25,13 @@ export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryList
     return (
         <div
             onClick={onClick}
-            className={`p-3 cursor-pointer transition-all border-b border-slate-600/30 ${isCurrent
-                ? 'bg-cyan-500/20 border-l-2 border-l-cyan-400'
-                : 'hover:bg-slate-800/50'
+            className={`p-3 cursor-pointer transition-all border-b border-cyan-400/10 ${isCurrent
+                ? 'bg-gradient-to-r from-cyan-500/15 to-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.2),2px_0_8px_-2px_rgba(34,211,238,0.3)]'
+                : 'hover:bg-slate-800/30'
                 }`}
         >
             <div className="flex items-center justify-between mb-2">
-                <span className="text-slate-400 text-sm">
+                <span className={`text-sm font-mono ${isCurrent ? 'text-cyan-400' : 'text-slate-500'}`}>
                     {playedAt.toLocaleDateString('fr-FR')}
                 </span>
                 {won !== null && (
@@ -274,36 +274,40 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     const playerCustomFields = gameCustomFields.filter(c => c.scope === 'playerResult')
 
     return (
-        <div className="m-4 overflow-y-auto h-full">
-            <section className="border border-slate-600 rounded-lg p-4 mb-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-white font-semibold text-lg">Entry Details</h2>
-                    {showDeleteConfirm ? (
-                        <div className="flex items-center gap-2">
-                            <span className="text-red-400 text-sm">Delete this entry?</span>
-                            <button
-                                onClick={handleDelete}
-                                className="px-2 py-1 rounded text-xs bg-red-500/20 border border-red-400/50 text-red-400 hover:bg-red-500/30"
-                            >
-                                Confirm
-                            </button>
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            className="text-slate-500 hover:text-red-400 transition-colors"
-                            title="Delete entry"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    )}
+        <div className="overflow-y-auto h-full space-y-6">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-pulse-glow" />
+                    <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">Entry Details</span>
                 </div>
+                {showDeleteConfirm ? (
+                    <div className="flex items-center gap-2">
+                        <span className="text-red-400 text-sm">Delete?</span>
+                        <button
+                            onClick={handleDelete}
+                            className="px-2 py-1 rounded text-xs bg-red-500/20 border border-red-400/50 text-red-400 hover:bg-red-500/30"
+                        >
+                            Confirm
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-slate-500 hover:text-red-400 transition-colors"
+                        title="Delete entry"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
+            </div>
+
+            <div className="border-b border-slate-600/30 pb-6">
 
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
@@ -546,11 +550,14 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                         </div>
                     )}
                 </div>
-            </section>
+            </div>
 
-            <section className="border border-slate-600 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-white font-semibold text-lg">Players</h2>
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-pulse-glow" />
+                        <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">Players</span>
+                    </div>
                     <button
                         onClick={() => setShowAddPlayer(!showAddPlayer)}
                         className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
@@ -825,7 +832,7 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                         </div>
                     ))}
                 </div>
-            </section>
+            </div>
         </div>
     )
 }

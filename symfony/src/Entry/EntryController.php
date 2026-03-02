@@ -85,7 +85,7 @@ class EntryController extends BaseController
     #[Route('api/entries/{entry}', name: 'edit_entry', methods: 'PATCH')]
     public function edit(
         Entry $entry,
-        Request                $request,
+        Request $request,
         UpdateEntryHandler $updateEntry,
     ): Response {
         $this->denyAccessUnlessGranted(EntryVoter::ENTRY_EDIT, $entry);

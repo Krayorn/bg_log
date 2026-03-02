@@ -8,6 +8,7 @@ use App\Campaign\CampaignStateCalculator;
 use App\Entry\CustomFieldValue;
 use App\Entry\Entry;
 use App\Game\CampaignKey\CampaignKey;
+use App\Game\CampaignKey\CampaignKeyType;
 use App\Game\CustomField\CustomField;
 use App\Game\CustomField\CustomFieldScope;
 use App\Game\Game;
@@ -43,7 +44,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testGlobalReplaceString(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Location', 'string', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Location', CampaignKeyType::STRING, CustomFieldScope::ENTRY);
         $event = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'replace', 'value' => 'Gloomhaven City']);
 
         $result = $this->calculator->computeEntryStates([$entry], [$event]);
@@ -59,7 +60,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testGlobalReplaceNumber(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Reputation', 'number', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Reputation', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY);
         $event = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'replace', 'amount' => 5]);
 
         $result = $this->calculator->computeEntryStates([$entry], [$event]);
@@ -70,7 +71,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testGlobalIncreaseAndDecrease(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Gold', 'number', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Gold', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'increase', 'amount' => 100]);
         $e2 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'decrease', 'amount' => 30]);
 
@@ -82,7 +83,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testGlobalListAddAndRemove(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Achievements', 'list', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Achievements', CampaignKeyType::LIST, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'add', 'values' => ['First Blood', 'Town Guard']]);
         $e2 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'remove', 'values' => ['First Blood']]);
 
@@ -94,7 +95,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testGlobalCountedListAddAndRemove(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Inventory', 'counted_list', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Inventory', CampaignKeyType::COUNTED_LIST, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'add', 'items' => [
             ['item' => 'Sword', 'quantity' => 2],
             ['item' => 'Shield', 'quantity' => 1],
@@ -111,7 +112,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testCountedListRemoveToZeroRemovesItem(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Items', 'counted_list', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Items', CampaignKeyType::COUNTED_LIST, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'add', 'items' => [
             ['item' => 'Potion', 'quantity' => 1],
         ]]);
@@ -129,7 +130,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testPlayerScopedEvent(): void
     {
         $entry = $this->createEntry([$this->alice, $this->bob]);
-        $key = new CampaignKey($this->game, 'HP', 'number', CustomFieldScope::PLAYER_RESULT);
+        $key = new CampaignKey($this->game, 'HP', CampaignKeyType::NUMBER, CustomFieldScope::PLAYER_RESULT);
         $aliceResult = $this->findPlayerResult($entry, $this->alice);
         $bobResult = $this->findPlayerResult($entry, $this->bob);
 
@@ -161,7 +162,7 @@ class CampaignStateCalculatorTest extends TestCase
         $cfv = $aliceResult->getCustomFieldValues()->first();
         $this->assertInstanceOf(CustomFieldValue::class, $cfv);
 
-        $key = new CampaignKey($this->game, 'XP', 'number', CustomFieldScope::PLAYER_RESULT, $customField);
+        $key = new CampaignKey($this->game, 'XP', CampaignKeyType::NUMBER, CustomFieldScope::PLAYER_RESULT, $customField);
         $event = new CampaignEvent($this->campaign, $entry, $aliceResult, $key, ['verb' => 'increase', 'amount' => 10], $cfv);
 
         $result = $this->calculator->computeEntryStates([$entry], [$event]);
@@ -180,7 +181,7 @@ class CampaignStateCalculatorTest extends TestCase
         $entry1 = $this->createEntry([$this->alice]);
         $entry2 = $this->createEntry([$this->alice]);
 
-        $key = new CampaignKey($this->game, 'Gold', 'number', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Gold', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry1, null, $key, ['verb' => 'increase', 'amount' => 50]);
         $e2 = new CampaignEvent($this->campaign, $entry2, null, $key, ['verb' => 'increase', 'amount' => 30]);
 
@@ -193,8 +194,8 @@ class CampaignStateCalculatorTest extends TestCase
     public function testMixedGlobalAndPlayerState(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $globalKey = new CampaignKey($this->game, 'Scenario', 'string', CustomFieldScope::ENTRY);
-        $playerKey = new CampaignKey($this->game, 'Level', 'number', CustomFieldScope::PLAYER_RESULT);
+        $globalKey = new CampaignKey($this->game, 'Scenario', CampaignKeyType::STRING, CustomFieldScope::ENTRY);
+        $playerKey = new CampaignKey($this->game, 'Level', CampaignKeyType::NUMBER, CustomFieldScope::PLAYER_RESULT);
         $aliceResult = $this->findPlayerResult($entry, $this->alice);
 
         $e1 = new CampaignEvent($this->campaign, $entry, null, $globalKey, ['verb' => 'replace', 'value' => 'Black Barrow']);
@@ -215,7 +216,7 @@ class CampaignStateCalculatorTest extends TestCase
         $entry1 = $this->createEntry([$this->alice]);
         $entry2 = $this->createEntry([$this->alice]);
 
-        $key = new CampaignKey($this->game, 'Status', 'string', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Status', CampaignKeyType::STRING, CustomFieldScope::ENTRY);
         $e1 = new CampaignEvent($this->campaign, $entry1, null, $key, ['verb' => 'replace', 'value' => 'Active']);
         $e2 = new CampaignEvent($this->campaign, $entry2, null, $key, ['verb' => 'replace', 'value' => 'Retired']);
 
@@ -228,7 +229,7 @@ class CampaignStateCalculatorTest extends TestCase
     public function testInvalidVerbIsIgnored(): void
     {
         $entry = $this->createEntry([$this->alice]);
-        $key = new CampaignKey($this->game, 'Gold', 'number', CustomFieldScope::ENTRY);
+        $key = new CampaignKey($this->game, 'Gold', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY);
         $event = new CampaignEvent($this->campaign, $entry, null, $key, ['verb' => 'invalid_verb', 'amount' => 10]);
 
         $result = $this->calculator->computeEntryStates([$entry], [$event]);

@@ -42,9 +42,14 @@ export default function Circle() {
 
     return (
         <Layout>
-            <header className="border-b border-slate-500/50 pb-4 mb-8">
-                <h1 className="text-xl font-semibold text-white">Your Circle</h1>
-                <p className="text-sm text-slate-400">All players you've played with</p>
+            <header className="border-b border-slate-500/50 pb-4 flex items-center mb-8">
+                <div className="rounded-full border-cyan-400/50 border-2 p-2 bg-cyan-500/10 mr-4">
+                    <User className="w-8 h-8 text-cyan-400" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-semibold text-white">Your Circle</h1>
+                    <span className="text-sm text-slate-500 font-mono">{circlePlayers.length} players</span>
+                </div>
             </header>
 
             {error && (
@@ -97,10 +102,13 @@ export default function Circle() {
 
             {guests.length > 0 && (
                 <section className="mb-6">
-                    <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">Guest Players</h2>
+                    <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400/60" />
+                        Guest Players
+                    </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {guests.map(player => (
-                            <div key={player.id} className={`bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4 ${syncingGuestId === player.id ? 'relative z-10' : ''}`}>
+                            <div key={player.id} className={`bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4 hover:border-cyan-400/40 transition-colors duration-300 ${syncingGuestId === player.id ? 'relative z-10' : ''}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50">
@@ -164,13 +172,16 @@ export default function Circle() {
             )}
 
             <section>
-                <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3">Registered Players</h2>
+                <h2 className="text-xs uppercase text-slate-500 font-medium tracking-wider mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60" />
+                    Registered Players
+                </h2>
                 {registered.length === 0 ? (
                     <div className="text-slate-500 text-sm">No registered players in your circle yet</div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {registered.map(player => (
-                            <div key={player.id} className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4">
+                            <div key={player.id} className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 p-4 hover:border-cyan-400/40 transition-colors duration-300">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50">
@@ -255,15 +266,15 @@ function PlayerStats({ player }: { player: CirclePlayer }) {
             <span className="text-xs text-slate-500 mb-2 block">Together</span>
             <div className="flex gap-4 text-sm">
                 <div className="flex flex-col">
-                    <span className="text-white font-medium">{player.gamesPlayed}</span>
+                    <span className="text-white font-medium font-mono">{player.gamesPlayed}</span>
                     <span className="text-xs text-slate-500">Games</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-emerald-400 font-medium">{player.wins}</span>
+                    <span className="text-emerald-400 font-medium font-mono">{player.wins}</span>
                     <span className="text-xs text-slate-500">Your wins</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-red-400 font-medium">{player.losses}</span>
+                    <span className="text-red-400 font-medium font-mono">{player.losses}</span>
                     <span className="text-xs text-slate-500">Their wins</span>
                 </div>
             </div>

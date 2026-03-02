@@ -25,15 +25,15 @@ class PlayerResult
      * @var Collection<int, CustomFieldValue>
      */
     #[ORM\OneToMany(mappedBy: 'playerResult', indexBy: 'id', targetEntity: CustomFieldValue::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection   $customFields;
+    private Collection $customFields;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Entry::class)]
         #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id')]
-        private readonly Entry   $entry,
+        private readonly Entry $entry,
         #[ORM\ManyToOne(targetEntity: Player::class)]
         #[ORM\JoinColumn(name: 'player_id', referencedColumnName: 'id')]
-        private readonly Player   $player,
+        private readonly Player $player,
         #[ORM\Column(type: 'text')]
         private string $note = '',
         #[ORM\Column(type: 'boolean', nullable: true)]

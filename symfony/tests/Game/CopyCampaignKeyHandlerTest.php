@@ -5,6 +5,7 @@ namespace App\Tests\Game;
 use App\Game\CampaignKey\Action\CopyCampaignKeyHandler;
 use App\Game\CampaignKey\CampaignKey;
 use App\Game\CampaignKey\CampaignKeyRepository;
+use App\Game\CampaignKey\CampaignKeyType;
 use App\Game\CampaignKey\Exception\DuplicateCampaignKeyException;
 use App\Game\CampaignKey\Exception\NotShareableCampaignKeyException;
 use App\Game\CustomField\CustomField;
@@ -39,7 +40,7 @@ class CopyCampaignKeyHandlerTest extends TestCase
     {
         $game = new Game('Chess');
         $owner = new Player('Bob', 2);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, null, $owner);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, null, $owner);
 
         $player = new Player('Alice', 1);
 
@@ -51,10 +52,10 @@ class CopyCampaignKeyHandlerTest extends TestCase
     {
         $game = new Game('Chess');
         $owner = new Player('Bob', 2);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, null, $owner, true);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, null, $owner, true);
 
         $player = new Player('Alice', 1);
-        $existing = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, null, $player);
+        $existing = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, null, $player);
 
         $this->campaignKeyRepository->method('findOneBy')->willReturn($existing);
 
@@ -66,7 +67,7 @@ class CopyCampaignKeyHandlerTest extends TestCase
     {
         $game = new Game('Chess');
         $owner = new Player('Bob', 2);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, null, $owner, true);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, null, $owner, true);
 
         $player = new Player('Alice', 1);
 
@@ -87,7 +88,7 @@ class CopyCampaignKeyHandlerTest extends TestCase
         $game = new Game('Chess');
         $owner = new Player('Bob', 2);
         $scopedField = new CustomField($game, 'Difficulty', 'string', CustomFieldScope::ENTRY, false, $owner, true);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, $scopedField, $owner, true);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, $scopedField, $owner, true);
 
         $player = new Player('Alice', 1);
         $existingCopy = new CustomField($game, 'Difficulty', 'string', CustomFieldScope::ENTRY, false, $player, false, $scopedField);
@@ -107,7 +108,7 @@ class CopyCampaignKeyHandlerTest extends TestCase
         $scopedField = new CustomField($game, 'Difficulty', 'string', CustomFieldScope::ENTRY, false, $player, true);
 
         $otherOwner = new Player('Bob', 2);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, $scopedField, $otherOwner, true);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, $scopedField, $otherOwner, true);
 
         $this->campaignKeyRepository->method('findOneBy')->willReturn(null);
         $this->customFieldRepository->method('findOneBy')->willReturn(null);
@@ -122,7 +123,7 @@ class CopyCampaignKeyHandlerTest extends TestCase
         $game = new Game('Chess');
         $owner = new Player('Bob', 2);
         $scopedField = new CustomField($game, 'Difficulty', 'string', CustomFieldScope::ENTRY, false, $owner, true);
-        $campaignKey = new CampaignKey($game, 'Wins', 'number', CustomFieldScope::ENTRY, $scopedField, $owner, true);
+        $campaignKey = new CampaignKey($game, 'Wins', CampaignKeyType::NUMBER, CustomFieldScope::ENTRY, $scopedField, $owner, true);
 
         $player = new Player('Alice', 1);
 

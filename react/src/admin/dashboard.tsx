@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import type { AdminStats } from '../types'
 import type { ReactNode } from 'react'
+import { ScanLine } from '../components/SciFi'
 
 function AdminLayout({ children }: { children: ReactNode }) {
     const location = useLocation()
@@ -271,12 +272,7 @@ function MetricCard({ icon, label, value, accent }: {
                 ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                 : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
         }`}>
-            {/* Scan line effect */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className={`absolute left-0 right-0 h-px animate-scan ${
-                    isCyan ? 'bg-cyan-400/20' : 'bg-purple-400/20'
-                }`} />
-            </div>
+            <ScanLine accent={accent} />
 
             <div className="p-4 relative">
                 <div className="flex items-center gap-2 mb-3">

@@ -37,7 +37,7 @@ class CreateCampaignKeyHandler
             }
         }
 
-        $campaignKey = new CampaignKey($game, $name, $type, $scope, $scopedToCustomField, $player);
+        $campaignKey = new CampaignKey($game, $name, $typeEnum, $scope, $scopedToCustomField, $player);
 
         $this->entityManager->persist($campaignKey);
         $this->entityManager->flush();

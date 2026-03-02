@@ -3,9 +3,10 @@ import { useParams, Link } from "react-router-dom"
 import { useRequest } from '../hooks/useRequest'
 import { updatePlayerEmail } from '../api/players'
 import Layout from '../Layout'
-import { Landmark, User, Check, X, Pencil, ExternalLink } from 'lucide-react'
+import { Landmark, User, Check, X, Pencil, ExternalLink, Gamepad2, Activity, Users, Trophy, Calendar } from 'lucide-react'
 import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer } from '../types'
 import { MissionBriefing } from '../components/MissionBriefing'
+import { SciFiPanel, MetricCard } from '../components/SciFi'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
 function Home() {
@@ -43,49 +44,40 @@ function Home() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-2 gap-4">
-                <Box title="Personal details">
-                    <PlayerBox playerId={playerId} />
-                </Box>
-                {showTutorial ? (
+            {showTutorial ? (
+                <div className="grid grid-cols-2 gap-4">
+                    <SciFiPanel title="Personal details" className="min-h-[180px]">
+                        <PlayerBox playerId={playerId} />
+                    </SciFiPanel>
                     <MissionBriefing
                         playerId={playerId}
                         stats={generalStats}
                         onDismiss={() => setTutorialDismissed(true)}
                     />
-                ) : (
-                    <>
-                        <Box title="General Statistics">
-                            <GeneralStatisticsPanel stats={generalStats}/>
-                        </Box>
-                        <Box title="Games Statistics">
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    <GeneralStatisticsPanel stats={generalStats}/>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <SciFiPanel title="Personal details" className="min-h-[180px]">
+                            <PlayerBox playerId={playerId} />
+                        </SciFiPanel>
+                        <SciFiPanel title="Games Statistics" className="min-h-[180px]">
                             <GameStatistics playerId={playerId}/>
-                        </Box>
-                        <Box title="Players Statistics">
+                        </SciFiPanel>
+                        <SciFiPanel title="Players Statistics" className="min-h-[180px]">
                             <PlayerStatistics playerId={playerId}/>
-                        </Box>
-                    </>
-                )}
-            </div>
+                        </SciFiPanel>
+                    </div>
+                </div>
+            )}
         </Layout>
   )
 }
 
 export default Home
 
-
-function Box({ title, children }: {title: string, children: JSX.Element | JSX.Element[]}) {
-    return (
-        <section className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden">
-            <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70">
-                <span className="uppercase text-xs font-medium text-slate-300 tracking-wider">{title}</span>
-            </header>
-            <div className="p-4 text-white min-h-[180px]">
-                {children}
-            </div>
-        </section>
-    )
-}
 
 function PlayerBox({ playerId }: {playerId: string}) {
     const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
@@ -177,7 +169,13 @@ function PlayerBox({ playerId }: {playerId: string}) {
 
 function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null }) {
     if (stats === null) {
-        return <div className="text-slate-500">Loading...</div>
+        return (
+            <div className="grid grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-24 rounded-lg border border-slate-700/50 bg-slate-900/30 animate-pulse" />
+                ))}
+            </div>
+        )
     }
 
     let daysSinceLastGame: number | string = '—'
@@ -188,21 +186,12 @@ function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null
     }
 
     return (
-        <div className="grid grid-cols-2 gap-4">
-            <StatItem value={stats.gamesOwned} label="Games owned" />
-            <StatItem value={stats.entriesPlayed} label="Total plays" />
-            <StatItem value={stats.gamePartners} label="Play partners" />
-            <StatItem value={`${stats.globalWinrate ?? 0}%`} label="Win rate" highlight />
-            <StatItem value={daysSinceLastGame} label="Days since last game" className="col-span-2" />
-        </div>
-    )
-}
-
-function StatItem({ value, label, highlight, className }: { value: string | number, label: string, highlight?: boolean, className?: string }) {
-    return (
-        <div className={`flex flex-col ${className || ''}`}>
-            <span className={`text-2xl font-bold ${highlight ? 'text-cyan-400' : 'text-white'}`}>{value}</span>
-            <span className="text-xs text-slate-500">{label}</span>
+        <div className="grid grid-cols-5 gap-4">
+            <MetricCard icon={<Gamepad2 className="w-5 h-5" />} label="Games Owned" value={stats.gamesOwned} accent="cyan" noScanLine />
+            <MetricCard icon={<Activity className="w-5 h-5" />} label="Total Plays" value={stats.entriesPlayed} accent="cyan" delay={0.6} />
+            <MetricCard icon={<Users className="w-5 h-5" />} label="Partners" value={stats.gamePartners} accent="purple" noScanLine />
+            <MetricCard icon={<Trophy className="w-5 h-5" />} label="Win Rate" value={`${stats.globalWinrate ?? 0}%`} accent="cyan" delay={1.8} />
+            <MetricCard icon={<Calendar className="w-5 h-5" />} label="Days Idle" value={daysSinceLastGame} accent="purple" noScanLine />
         </div>
     )
 }

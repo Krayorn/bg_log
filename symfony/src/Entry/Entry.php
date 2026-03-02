@@ -30,13 +30,13 @@ class Entry
      * @var Collection<int, PlayerResult>
      */
     #[ORM\OneToMany(mappedBy: 'entry', targetEntity: PlayerResult::class, cascade: ['persist', 'remove'], orphanRemoval: true, indexBy: 'id')]
-    private Collection   $playerResults;
+    private Collection $playerResults;
 
     /**
      * @var Collection<int, CustomFieldValue>
      */
     #[ORM\OneToMany(mappedBy: 'entry', targetEntity: CustomFieldValue::class, cascade: ['persist', 'remove'], orphanRemoval: true, indexBy: 'id')]
-    private Collection   $customFields;
+    private Collection $customFields;
 
     #[ORM\ManyToOne(targetEntity: Campaign::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'campaign_id', referencedColumnName: 'id', nullable: true)]
@@ -51,15 +51,15 @@ class Entry
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Game::class)]
         #[ORM\JoinColumn(name: 'game_id', referencedColumnName: 'id')]
-        private readonly Game              $game,
+        private readonly Game $game,
         #[ORM\Column(type: 'text')]
-        private string            $note,
+        private string $note,
         #[ORM\Column(type: 'datetimetz_immutable')]
         private DateTimeImmutable $playedAt,
-        array                              $players,
+        array $players,
         #[ORM\ManyToOne(targetEntity: GameOwned::class)]
         #[ORM\JoinColumn(name: 'game_owned_id', referencedColumnName: 'id', nullable: true)]
-        private ?GameOwned        $gameUsed,
+        private ?GameOwned $gameUsed,
     ) {
         $this->id = Uuid::uuid4();
         $this->createdAt = new DateTimeImmutable();
