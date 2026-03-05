@@ -32,6 +32,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN chown -R www-data:www-data var/ \
     && chmod -R 755 var/
 
-RUN php bin/console cache:clear --env=prod
-
-CMD ["php-fpm"]
+CMD php bin/console cache:clear --env=prod && php-fpm
