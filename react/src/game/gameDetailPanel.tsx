@@ -100,7 +100,23 @@ export function GameDetailPanel({ game, gameStats, playerId, onEntryCreated, cus
     }
 
     if (gameStats === null) {
-        return <div>Loading stylé</div>
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <div key={i} className="h-24 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                    ))}
+                </div>
+                <div className="border border-slate-600/30 rounded-lg p-4 bg-slate-900/30">
+                    <div className="h-5 w-32 mx-auto rounded bg-slate-700/50 animate-pulse mb-6" />
+                    <div className="space-y-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="h-10 rounded bg-slate-800/50 animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (

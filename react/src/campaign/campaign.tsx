@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useSearchParams, Link } from "react-router-dom"
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { useCircle } from '../contexts/CircleContext'
 import { updateCampaignName, addCampaignEvent, deleteCampaignEvent, getCampaignKeys, createCampaignKey, deleteCampaignKey, toggleCampaignKeyShareable, copyCampaignKey } from '../api/campaigns'
 import { getGameCustomFields } from '../api/customFields'
@@ -105,6 +105,7 @@ export default function CampaignPage() {
     const [searchParams] = useSearchParams()
     const playerId = searchParams.get('playerId')
 
+    const { data: fetchedCampaign } = useQuery<Campaign>(`/campaigns/${campaignId}`)
     const [campaign, setCampaign] = useState<Campaign | null>(null)
     const [editingName, setEditingName] = useState(false)
     const [nameInput, setNameInput] = useState("")
@@ -117,6 +118,10 @@ export default function CampaignPage() {
     const [gameCustomFields, setGameCustomFields] = useState<CustomField[]>([])
     const { displayName } = useCircle()
 
+    useEffect(() => {
+        if (fetchedCampaign) setCampaign(fetchedCampaign)
+    }, [fetchedCampaign])
+
     const isAdmin = (() => {
         const token = localStorage.getItem('jwt')
         if (!token) return false
@@ -127,8 +132,6 @@ export default function CampaignPage() {
             return false
         }
     })()
-
-    useRequest(`/campaigns/${campaignId}`, [campaignId], setCampaign)
 
     const gameId = campaign?.game.id
     useEffect(() => {
@@ -218,13 +221,39 @@ export default function CampaignPage() {
     }
 
     if (!campaign) {
-        return <Layout><div className="text-white">Loading...</div></Layout>
+        return (
+            <Layout>
+                <div className="text-white max-w-4xl mx-auto">
+                    <div className="mb-6">
+                        <div className="h-4 w-24 rounded bg-slate-700/50 animate-pulse mb-4" />
+                        <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded bg-slate-700/50 animate-pulse" />
+                            <div className="h-7 w-48 rounded bg-slate-700/50 animate-pulse" />
+                        </div>
+                        <div className="h-3 w-40 rounded bg-slate-800/50 animate-pulse mt-2" />
+                    </div>
+                    <div className="mb-6">
+                        <div className="h-4 w-28 rounded bg-slate-700/50 animate-pulse mb-3" />
+                        <div className="flex gap-2">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="h-6 w-24 rounded-full bg-slate-800/50 animate-pulse" />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="h-20 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+            </Layout>
+        )
     }
 
     const sortedEntries = [...campaign.entries].sort((a, b) => {
-        const dateDiff = new Date(a.playedAt.date).getTime() - new Date(b.playedAt.date).getTime()
+        const dateDiff = new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
         if (dateDiff !== 0) return dateDiff
-        return new Date(a.createdAt.date).getTime() - new Date(b.createdAt.date).getTime()
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     })
 
     const lastEntry = sortedEntries.length > 0 ? sortedEntries[sortedEntries.length - 1] : null
@@ -273,7 +302,7 @@ export default function CampaignPage() {
                         )}
                     </div>
                     <p className="text-slate-500 text-sm mt-1">
-                        Created {new Date(campaign.createdAt.date).toLocaleDateString('fr-FR')}
+                        Created {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
                         {' · '}
                         {campaign.entries.length} {campaign.entries.length === 1 ? 'session' : 'sessions'}
                     </p>
@@ -381,7 +410,7 @@ export default function CampaignPage() {
                                                     #{index + 1}
                                                 </span>
                                                 <span className="text-slate-300 text-sm">
-                                                    {new Date(entry.playedAt.date).toLocaleDateString('fr-FR')}
+                                                    {new Date(entry.playedAt).toLocaleDateString('fr-FR')}
                                                 </span>
                                                 {entry.events.length > 0 && (
                                                     <span className="text-xs text-purple-400">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { useDebounce } from '../hooks/useDebounce'
 import { createGame, addGameToLibrary, updateOwnedGame } from '../api/games'
 import Layout from '../Layout'
@@ -10,7 +10,6 @@ import { PlayerGameStats, Game } from '../types'
 export default function Games() {
     const { playerId } = useParams() as { playerId: string }
     const navigate = useNavigate()
-    const [games, setGames] = useState<PlayerGameStats[]>([])
     const [query, setQuery] = useState("")
     const [searchResults, setSearchResults] = useState<Game[]>([])
     const [selected, setSelected] = useState<Game | null>(null)
@@ -21,18 +20,26 @@ export default function Games() {
     const [addToCollection, setAddToCollection] = useState(true)
     const debouncedQuery = useDebounce(query, 300)
 
-    useRequest(`/players/${playerId}/games`, [playerId], setGames)
+    const { data: fetchedGames } = useQuery<PlayerGameStats[]>(`/players/${playerId}/games`)
+    const [games, setGames] = useState<PlayerGameStats[]>([])
 
-    const setResultsResetSelected = (results: Game[]) => {
-        setSearchResults(results)
-        setSelected(null)
-    }
+    useEffect(() => {
+        if (fetchedGames) setGames(fetchedGames)
+    }, [fetchedGames])
 
-    useRequest(`/games?query=${debouncedQuery}`, [debouncedQuery], setResultsResetSelected, debouncedQuery !== "")
+    const { data: searchData } = useQuery<Game[]>(debouncedQuery ? `/games?query=${debouncedQuery}` : null)
+
+    useEffect(() => {
+        if (searchData) {
+            setSearchResults(searchData)
+            setSelected(null)
+        }
+    }, [searchData])
 
     useEffect(() => {
         if (debouncedQuery === "" && searchResults.length > 0) {
-            setResultsResetSelected([])
+            setSearchResults([])
+            setSelected(null)
         }
     }, [debouncedQuery, searchResults.length])
 

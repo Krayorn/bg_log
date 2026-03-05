@@ -96,7 +96,7 @@ class EntryController extends BaseController
         $note = $payload->getOptionalString('note');
         $players = $payload->getOptionalArray('players') ?? [];
         $gameUsed = $payload->getOptionalString('gameUsed');
-        $playedAt = $payload->getOptionalString('playedDate');
+        $playedAt = $payload->getOptionalString('playedAt');
         $campaign = $payload->getOptionalString('campaign');
 
         $customFieldsEvents = array_map(fn ($customField) => new CustomFieldEvent($customField), $customFields);

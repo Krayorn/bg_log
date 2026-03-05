@@ -4,7 +4,7 @@ import { searchPlayers } from '../api/players'
 import { Package, Plus, Search, ArrowLeft } from 'lucide-react'
 import type { GameOwner } from '../types'
 import { useCircle } from '../contexts/CircleContext'
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 
 type PlayerOption = { id: string; name: string; nickname?: string | null }
 
@@ -28,11 +28,17 @@ export default function GameOwnerSearchSelect({
     placeholder = "Search player...",
 }: GameOwnerSearchSelectProps) {
     const { players: circlePlayers } = useCircle()
-    const [gameOwners, setGameOwners] = useState<GameOwner[]>([])
     const [scope, setScope] = useState<'circle' | 'all'>('circle')
     const [allResults, setAllResults] = useState<PlayerOption[]>([])
     const [searching, setSearching] = useState(false)
     const [activated, setActivated] = useState(autoSelectOwner)
+
+    const { data: fetchedGameOwners } = useQuery<GameOwner[]>(activated ? `/games/${gameId}/owners` : null)
+    const [gameOwners, setGameOwners] = useState<GameOwner[]>([])
+
+    useEffect(() => {
+        if (fetchedGameOwners) setGameOwners(fetchedGameOwners)
+    }, [fetchedGameOwners])
 
     const [query, setQuery] = useState("")
     const [open, setOpen] = useState(false)
@@ -43,8 +49,6 @@ export default function GameOwnerSearchSelect({
     const containerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const debounceRef = useRef<ReturnType<typeof setTimeout>>()
-
-    useRequest(`/games/${gameId}/owners`, [gameId, activated], setGameOwners, activated)
 
     const playersList = scope === 'all' ? allResults : circlePlayers
 

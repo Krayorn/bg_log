@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { createCampaign as apiCreateCampaign } from '../api/campaigns'
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { Plus, Scroll, ChevronRight } from 'lucide-react'
 import { Campaign } from '../types'
 
@@ -10,6 +10,7 @@ type CampaignPanelProps = {
 }
 
 export function CampaignPanel({ gameId }: CampaignPanelProps) {
+    const { data: fetchedCampaigns } = useQuery<Campaign[]>(`/campaigns?game=${gameId}`)
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [newCampaignName, setNewCampaignName] = useState("")
     const [showCreateForm, setShowCreateForm] = useState(false)
@@ -17,7 +18,9 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
     const [searchParams] = useSearchParams()
     const playerId = searchParams.get('playerId')
 
-    useRequest(`/campaigns?game=${gameId}`, [gameId], setCampaigns)
+    useEffect(() => {
+        if (fetchedCampaigns) setCampaigns(fetchedCampaigns)
+    }, [fetchedCampaigns])
 
     const createCampaign = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -106,7 +109,7 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
                                 <span className="text-slate-500 text-xs">
                                     {campaign.entries.length} {campaign.entries.length === 1 ? 'entry' : 'entries'}
                                     {' · '}
-                                    Created {new Date(campaign.createdAt.date).toLocaleDateString('fr-FR')}
+                                    Created {new Date(campaign.createdAt).toLocaleDateString('fr-FR')}
                                 </span>
                             </div>
                             <ChevronRight className="w-5 h-5 text-slate-500" />

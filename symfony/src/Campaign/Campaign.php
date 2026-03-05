@@ -55,7 +55,7 @@ class Campaign
     /**
      * @param array<string, list<array{label: string, playerId: string|null, entries: array<string, mixed>, scoped: list<array{label: string, entries: array<string, mixed>}>}>>|null $entryStates pre-computed states from CampaignStateCalculator
      *
-     * @return array{id: UuidInterface, name: string, game: array<string, mixed>, createdBy: array<string, mixed>, createdAt: DateTimeImmutable, entries: array<int, array<string, mixed>>}
+     * @return array{id: UuidInterface, name: string, game: array<string, mixed>, createdBy: array<string, mixed>, createdAt: string, entries: array<int, array<string, mixed>>}
      */
     public function view(?array $entryStates = null): array
     {
@@ -81,20 +81,20 @@ class Campaign
             'name' => $this->name,
             'game' => $this->game->view(),
             'createdBy' => $this->createdBy->view(),
-            'createdAt' => $this->createdAt,
+            'createdAt' => $this->createdAt->format('c'),
             'entries' => $entriesView,
         ];
     }
 
     /**
-     * @return array{id: UuidInterface, name: string, createdAt: DateTimeImmutable}
+     * @return array{id: UuidInterface, name: string, createdAt: string}
      */
     public function viewSummary(): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'createdAt' => $this->createdAt,
+            'createdAt' => $this->createdAt->format('c'),
         ];
     }
 

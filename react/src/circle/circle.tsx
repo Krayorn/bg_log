@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { createPlayer, synchronizePlayer, setNickname, removeNickname } from '../api/players'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import Layout from '../Layout'
@@ -10,6 +10,7 @@ import { useCircle } from '../contexts/CircleContext'
 
 export default function Circle() {
     const { playerId } = useParams() as { playerId: string }
+    const { data: fetchedCirclePlayers } = useQuery<CirclePlayer[]>(`/players/${playerId}/circle`)
     const [circlePlayers, setCirclePlayers] = useState<CirclePlayer[]>([])
     const { players: contextPlayers } = useCircle()
     const [syncingGuestId, setSyncingGuestId] = useState<string | null>(null)
@@ -18,7 +19,9 @@ export default function Circle() {
     const [showCreateGuest, setShowCreateGuest] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
 
-    useRequest(`/players/${playerId}/circle`, [playerId], setCirclePlayers)
+    useEffect(() => {
+        if (fetchedCirclePlayers) setCirclePlayers(fetchedCirclePlayers)
+    }, [fetchedCirclePlayers])
 
     const registeredPlayers = contextPlayers.filter(p => !p.isGuest)
 

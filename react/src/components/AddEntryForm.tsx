@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { createEntry } from '../api/entries'
 import { getLastCampaignEntry } from '../api/campaigns'
 import { useCircle } from '../contexts/CircleContext'
@@ -36,10 +36,8 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
     const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string | string[] }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
-    const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
+    const { data: campaigns } = useQuery<CampaignSummary[]>(!fixedCampaignId ? `/campaigns?game=${gameId}` : null)
     const [entryCampaign, setEntryCampaign] = useState(fixedCampaignId ?? "")
-
-    useRequest(`/campaigns?game=${gameId}`, [gameId], setCampaigns, !fixedCampaignId)
 
     const [initialPlayerSet, setInitialPlayerSet] = useState(false)
     useEffect(() => {
@@ -138,8 +136,8 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             addPlayer(mp)
         }
 
-        if (data.playedAt?.date) {
-            setEntryPlayedAt(data.playedAt.date.substring(0, 10))
+        if (data.playedAt) {
+            setEntryPlayedAt(data.playedAt.substring(0, 10))
         }
     }
 
@@ -229,7 +227,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                         autoSelectOwner
                     />
                 </div>
-                {!fixedCampaignId && campaigns.length > 0 && (
+                {!fixedCampaignId && campaigns && campaigns.length > 0 && (
                     <div className="flex flex-col gap-1">
                         <label className="text-white text-sm font-medium">Campaign</label>
                         <div className="flex gap-2">

@@ -1,12 +1,12 @@
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { useLocalStorage, parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import {
     Activity, Users, Gamepad2, Trophy, TrendingUp,
     Calendar, Shield, Database, ArrowLeft, LayoutDashboard,
-    Crown, Zap
+    Crown, Zap, Settings, BarChart3, Swords, Link2,
+    Copy, Share2, Search, BookOpen, Layers
 } from 'lucide-react'
 import type { AdminStats } from '../types'
 import type { ReactNode } from 'react'
@@ -84,8 +84,7 @@ function AdminLayout({ children }: { children: ReactNode }) {
 export { AdminLayout }
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState<AdminStats | null>(null)
-    useRequest<AdminStats>('/admin/stats', [], setStats)
+    const { data: stats } = useQuery<AdminStats>('/admin/stats')
 
     return (
         <AdminLayout>
@@ -125,6 +124,7 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                     label="USERS"
                     value={stats.registeredPlayers}
                     accent="cyan"
+                    scanDelay={0}
                 />
                 <MetricCard
                     icon={<Activity className="w-5 h-5" />}
@@ -137,6 +137,7 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                     label="TOTAL GAMES"
                     value={stats.totalGames}
                     accent="purple"
+                    scanDelay={1.2}
                 />
                 <MetricCard
                     icon={<Trophy className="w-5 h-5" />}
@@ -229,7 +230,7 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                 </Panel>
             </div>
 
-            {/* Row 4: Recent Activity + Stats Footer */}
+            {/* Row 4: Recent Activity + Game Ownership */}
             <div className="grid grid-cols-2 gap-4">
                 <Panel title="RECENT ACTIVITY">
                     <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -248,22 +249,123 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                     </div>
                 </Panel>
 
-                <Panel title="SYSTEM STATS">
+                <Panel title="GAME OWNERSHIP">
                     <div className="grid grid-cols-2 gap-4">
                         <MiniStat icon={<Database className="w-4 h-4" />} label="Games owned" value={stats.totalGamesOwned} />
                         <MiniStat icon={<Gamepad2 className="w-4 h-4" />} label="Unique games" value={stats.totalGames} />
+                        <MiniStat icon={<TrendingUp className="w-4 h-4" />} label="Avg owned/user" value={stats.avgGamesOwnedPerUser} />
+                        <MiniStat icon={<Swords className="w-4 h-4" />} label="Games w/ campaign keys" value={stats.gamesWithCampaignKeys} />
                     </div>
                 </Panel>
+            </div>
+
+            {/* Row 5: Custom Fields */}
+            <SectionHeader title="CUSTOM FIELDS" icon={<Settings className="w-4 h-4" />} />
+            <div className="grid grid-cols-4 gap-4">
+                <MetricCard icon={<Settings className="w-5 h-5" />} label="TOTAL FIELDS" value={stats.totalCustomFields} accent="purple" scanDelay={0.5} />
+                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG / GAME" value={stats.avgCustomFieldsPerGame} accent="purple" />
+                <MetricCard icon={<Share2 className="w-5 h-5" />} label="SHAREABLE" value={stats.shareableCustomFields} accent="cyan" />
+                <MetricCard icon={<Copy className="w-5 h-5" />} label="COPIED" value={stats.copiedCustomFields} accent="cyan" scanDelay={2.1} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <Panel title="FIELDS BY SCOPE">
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-400">Entry-level</span>
+                            <span className="text-cyan-400 font-mono font-bold">{stats.customFieldsByScope.entry}</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+                                style={{ width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.entry / stats.totalCustomFields) * 100 : 0}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-400">Player-level</span>
+                            <span className="text-purple-400 font-mono font-bold">{stats.customFieldsByScope.playerResult}</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]"
+                                style={{ width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.playerResult / stats.totalCustomFields) * 100 : 0}%` }}
+                            />
+                        </div>
+                    </div>
+                </Panel>
+                <Panel title="CUSTOM FIELD DATA">
+                    <div className="grid grid-cols-1 gap-4">
+                        <MiniStat icon={<Layers className="w-4 h-4" />} label="Total values recorded" value={stats.totalCustomFieldValues} />
+                    </div>
+                </Panel>
+            </div>
+
+            {/* Row 6: Campaigns */}
+            <SectionHeader title="CAMPAIGNS" icon={<BookOpen className="w-4 h-4" />} />
+            <div className="grid grid-cols-4 gap-4">
+                <MetricCard icon={<Trophy className="w-5 h-5" />} label="CAMPAIGNS" value={stats.totalCampaigns} accent="purple" />
+                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG ENTRIES / CAMPAIGN" value={stats.avgEntriesPerCampaign} accent="purple" scanDelay={1.8} />
+                <MetricCard icon={<Link2 className="w-5 h-5" />} label="ENTRIES IN CAMPAIGNS" value={stats.entriesInCampaign} accent="cyan" />
+                <MetricCard icon={<Zap className="w-5 h-5" />} label="CAMPAIGN EVENTS" value={stats.totalCampaignEvents} accent="cyan" scanDelay={0.3} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <Panel title="CAMPAIGN KEYS">
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-400">Total keys</span>
+                            <span className="text-cyan-400 font-mono font-bold">{stats.totalCampaignKeys}</span>
+                        </div>
+                        <div className="border-t border-slate-700/50 pt-3 space-y-2">
+                            {([
+                                ['String', stats.campaignKeysByType.string],
+                                ['Number', stats.campaignKeysByType.number],
+                                ['List', stats.campaignKeysByType.list],
+                                ['Counted list', stats.campaignKeysByType.counted_list],
+                            ] as const).map(([label, count]) => (
+                                <div key={label} className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-500">{label}</span>
+                                    <span className="text-slate-300 font-mono">{count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Panel>
+                <Panel title="CAMPAIGN COVERAGE">
+                    <div className="flex flex-col items-center justify-center h-full py-4">
+                        <div className="text-3xl font-bold font-mono text-purple-400">
+                            {stats.totalEntries > 0 ? Math.round((stats.entriesInCampaign / stats.totalEntries) * 100) : 0}%
+                        </div>
+                        <span className="text-sm text-slate-400 mt-1">of entries are in a campaign</span>
+                    </div>
+                </Panel>
+            </div>
+
+            {/* Row 7: Statistics Queries */}
+            <SectionHeader title="SAVED STATISTICS" icon={<BarChart3 className="w-4 h-4" />} />
+            <div className="grid grid-cols-3 gap-4">
+                <MetricCard icon={<Search className="w-5 h-5" />} label="SAVED QUERIES" value={stats.totalStatisticsQueries} accent="cyan" scanDelay={0.8} />
+                <MetricCard icon={<Users className="w-5 h-5" />} label="USERS WITH QUERIES" value={stats.usersWithSavedQueries} accent="cyan" />
+                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG QUERIES / USER" value={stats.avgQueriesPerUser} accent="purple" />
             </div>
         </div>
     )
 }
 
-function MetricCard({ icon, label, value, accent }: {
+function SectionHeader({ title, icon }: { title: string; icon: ReactNode }) {
+    return (
+        <div className="flex items-center gap-2 pt-4">
+            <div className="text-cyan-400">{icon}</div>
+            <span className="text-xs font-bold tracking-[0.3em] text-cyan-400 uppercase">{title}</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-cyan-400/30 to-transparent"></div>
+        </div>
+    )
+}
+
+function MetricCard({ icon, label, value, accent, scanDelay }: {
     icon: ReactNode
     label: string
     value: number
     accent: 'cyan' | 'purple'
+    scanDelay?: number
 }) {
     const isCyan = accent === 'cyan'
     return (
@@ -272,7 +374,7 @@ function MetricCard({ icon, label, value, accent }: {
                 ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                 : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
         }`}>
-            <ScanLine accent={accent} />
+            {scanDelay !== undefined && <ScanLine accent={accent} delay={scanDelay} />}
 
             <div className="p-4 relative">
                 <div className="flex items-center gap-2 mb-3">

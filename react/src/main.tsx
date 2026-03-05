@@ -9,6 +9,7 @@ import Circle from './circle/circle.tsx'
 import CampaignPage from './campaign/campaign.tsx'
 import AdminDashboard from './admin/dashboard.tsx'
 import AdminUsers from './admin/users.tsx'
+import StatsPage from './stats/stats.tsx'
 import './index.css'
 import {
   createBrowserRouter,
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     path: "/about",
     element: <About />,
+  },
+  {
+    path: "/stats",
+    element: <StatsPage />,
   },
   {
     path: "/players",

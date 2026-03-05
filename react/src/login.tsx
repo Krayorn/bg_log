@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
 import { login as apiLogin, register as apiRegister } from './api/auth'
 import Layout from './Layout'
@@ -125,6 +125,14 @@ export default function Login() {
                     </div>
                 </div>
             </section>
+        </div>
+        <div className="fixed bottom-4 right-4 flex gap-3">
+            <Link to="/stats" className="text-slate-500 text-xs hover:text-cyan-400 transition-colors">
+                stats
+            </Link>
+            <Link to="/about" className="text-slate-500 text-xs hover:text-slate-300 transition-colors">
+                about
+            </Link>
         </div>
     </Layout>
   )

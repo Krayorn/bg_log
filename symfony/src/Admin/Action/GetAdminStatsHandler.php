@@ -76,6 +76,87 @@ class GetAdminStatsHandler
             SELECT COUNT(*) as total FROM game_owned
         ')->fetchAssociative();
 
+        $customFieldStats = $conn->executeQuery("
+            SELECT
+                COUNT(*) as total_custom_fields,
+                COUNT(CASE WHEN scope = 'entry' THEN 1 END) as entry_scope,
+                COUNT(CASE WHEN scope = 'playerResult' THEN 1 END) as player_scope,
+                COUNT(CASE WHEN shareable = true THEN 1 END) as shareable_count,
+                COUNT(CASE WHEN origin_custom_field_id IS NOT NULL THEN 1 END) as copied_count
+            FROM custom_fields
+        ")->fetchAssociative();
+
+        $avgCustomFieldsPerGame = $conn->executeQuery('
+            SELECT ROUND(AVG(cf_count)::numeric, 1) as avg_custom_fields_per_game
+            FROM (
+                SELECT game_id, COUNT(*) as cf_count
+                FROM custom_fields
+                GROUP BY game_id
+            ) sub
+        ')->fetchAssociative();
+
+        $statisticsQueryStats = $conn->executeQuery('
+            SELECT
+                COUNT(*) as total_queries,
+                COUNT(DISTINCT player_id) as users_with_queries
+            FROM statistics_query
+        ')->fetchAssociative();
+
+        $avgQueriesPerUser = $conn->executeQuery('
+            SELECT ROUND(AVG(query_count)::numeric, 1) as avg_queries_per_user
+            FROM (
+                SELECT player_id, COUNT(*) as query_count
+                FROM statistics_query
+                GROUP BY player_id
+            ) sub
+        ')->fetchAssociative();
+
+        $campaignDetailStats = $conn->executeQuery('
+            SELECT
+                ROUND(AVG(entry_count)::numeric, 1) as avg_entries_per_campaign
+            FROM (
+                SELECT campaign_id, COUNT(*) as entry_count
+                FROM entry
+                WHERE campaign_id IS NOT NULL
+                GROUP BY campaign_id
+            ) sub
+        ')->fetchAssociative();
+
+        $campaignEventStats = $conn->executeQuery('
+            SELECT COUNT(*) as total_campaign_events FROM campaign_event
+        ')->fetchAssociative();
+
+        $campaignKeyStats = $conn->executeQuery("
+            SELECT
+                COUNT(*) as total_campaign_keys,
+                COUNT(CASE WHEN type = 'string' THEN 1 END) as string_keys,
+                COUNT(CASE WHEN type = 'number' THEN 1 END) as number_keys,
+                COUNT(CASE WHEN type = 'list' THEN 1 END) as list_keys,
+                COUNT(CASE WHEN type = 'counted_list' THEN 1 END) as counted_list_keys
+            FROM campaign_key
+        ")->fetchAssociative();
+
+        $totalCustomFieldValues = $conn->executeQuery('
+            SELECT COUNT(*) as total FROM custom_fields_values
+        ')->fetchAssociative();
+
+        $entriesInCampaign = $conn->executeQuery('
+            SELECT COUNT(*) as total FROM entry WHERE campaign_id IS NOT NULL
+        ')->fetchAssociative();
+
+        $avgGamesOwnedPerUser = $conn->executeQuery('
+            SELECT ROUND(AVG(owned_count)::numeric, 1) as avg_games_owned_per_user
+            FROM (
+                SELECT player_id, COUNT(*) as owned_count
+                FROM game_owned
+                GROUP BY player_id
+            ) sub
+        ')->fetchAssociative();
+
+        $gamesWithCampaignKeys = $conn->executeQuery('
+            SELECT COUNT(DISTINCT game_id) as total FROM campaign_key
+        ')->fetchAssociative();
+
         $recentEntries = $conn->executeQuery('
             SELECT e.played_at, g.name as game_name
             FROM entry e
@@ -100,6 +181,12 @@ class GetAdminStatsHandler
         assert($gameStats !== false);
         assert($campaignStats !== false);
         assert($totalGamesOwned !== false);
+        assert($customFieldStats !== false);
+        assert($statisticsQueryStats !== false);
+        assert($campaignEventStats !== false);
+        assert($campaignKeyStats !== false);
+        assert($totalCustomFieldValues !== false);
+        assert($entriesInCampaign !== false);
 
         return [
             'totalPlayers' => (int) $playerStats['total_players'],
@@ -114,6 +201,30 @@ class GetAdminStatsHandler
             'avgPlayersPerEntry' => (float) ($avgPlayersPerEntry !== false ? ($avgPlayersPerEntry['avg_players_per_entry'] ?? 0) : 0),
             'mostPlayedGame' => $mostPlayedGame !== false ? $mostPlayedGame : null,
             'totalGamesOwned' => (int) $totalGamesOwned['total'],
+            'totalCustomFields' => (int) $customFieldStats['total_custom_fields'],
+            'customFieldsByScope' => [
+                'entry' => (int) $customFieldStats['entry_scope'],
+                'playerResult' => (int) $customFieldStats['player_scope'],
+            ],
+            'shareableCustomFields' => (int) $customFieldStats['shareable_count'],
+            'copiedCustomFields' => (int) $customFieldStats['copied_count'],
+            'avgCustomFieldsPerGame' => (float) ($avgCustomFieldsPerGame !== false ? ($avgCustomFieldsPerGame['avg_custom_fields_per_game'] ?? 0) : 0),
+            'totalStatisticsQueries' => (int) $statisticsQueryStats['total_queries'],
+            'usersWithSavedQueries' => (int) $statisticsQueryStats['users_with_queries'],
+            'avgQueriesPerUser' => (float) ($avgQueriesPerUser !== false ? ($avgQueriesPerUser['avg_queries_per_user'] ?? 0) : 0),
+            'avgEntriesPerCampaign' => (float) ($campaignDetailStats !== false ? ($campaignDetailStats['avg_entries_per_campaign'] ?? 0) : 0),
+            'totalCampaignEvents' => (int) $campaignEventStats['total_campaign_events'],
+            'totalCampaignKeys' => (int) $campaignKeyStats['total_campaign_keys'],
+            'campaignKeysByType' => [
+                'string' => (int) $campaignKeyStats['string_keys'],
+                'number' => (int) $campaignKeyStats['number_keys'],
+                'list' => (int) $campaignKeyStats['list_keys'],
+                'counted_list' => (int) $campaignKeyStats['counted_list_keys'],
+            ],
+            'totalCustomFieldValues' => (int) $totalCustomFieldValues['total'],
+            'entriesInCampaign' => (int) $entriesInCampaign['total'],
+            'avgGamesOwnedPerUser' => (float) ($avgGamesOwnedPerUser !== false ? ($avgGamesOwnedPerUser['avg_games_owned_per_user'] ?? 0) : 0),
+            'gamesWithCampaignKeys' => (int) ($gamesWithCampaignKeys !== false ? ($gamesWithCampaignKeys['total'] ?? 0) : 0),
             'recentEntries' => $recentEntries,
             'topPlayers' => $topPlayers,
         ];

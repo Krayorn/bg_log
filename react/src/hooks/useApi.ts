@@ -44,6 +44,12 @@ export async function api<T = unknown>(
             return { data: null, error: null, ok: true }
         }
 
+        if (response.status === 401) {
+            localStorage.removeItem('jwt')
+            window.location.href = '/'
+            return { data: null, error: 'Unauthorized', ok: false }
+        }
+
         const data = await response.json()
 
         if (!response.ok) {

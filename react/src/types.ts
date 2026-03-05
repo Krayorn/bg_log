@@ -57,15 +57,15 @@ export type GameStats = {
 export type CampaignSummary = {
     id: string
     name: string
-    createdAt: { date: string }
+    createdAt: string
 }
 
 export type Entry = {
     id: string
     note: string
     players: PlayerResult[]
-    playedAt: { date: string }
-    createdAt: { date: string }
+    playedAt: string
+    createdAt: string
     customFields: CustomFieldValue[]
     campaign: CampaignSummary | null
     gameUsed: GameOwner | null
@@ -113,7 +113,7 @@ export type Campaign = {
     name: string
     game: Game
     createdBy: { id: string; name: string }
-    createdAt: { date: string }
+    createdAt: string
     entries: CampaignEntry[]
 }
 
@@ -121,7 +121,7 @@ export type Player = {
     id: string
     name: string
     number: number
-    registeredOn: { date: string } | null
+    registeredOn: string | null
     isGuest: boolean
     inPartyOf: { id: string; name: string } | null
     email?: string | null
@@ -155,6 +155,16 @@ export type GeneralStatistics = {
     gamePartners: number
     globalWinrate: number
     lastGameDate: Date
+}
+
+export type PlayerUsageStats = {
+    customFieldsCreated: number
+    campaignsCreated: number
+    savedQueries: number
+    guestPlayersCreated: number
+    entriesInCampaigns: number
+    entriesThisMonth: number
+    recentActivity: { entry_id: string; game_id: string; played_at: string; game_name: string }[]
 }
 
 export type StatsResult =
@@ -195,16 +205,46 @@ export type AdminStats = {
     totalGamesOwned: number
     recentEntries: { played_at: string; game_name: string }[]
     topPlayers: { name: string; entries_count: number }[]
+    totalCustomFields: number
+    customFieldsByScope: { entry: number; playerResult: number }
+    shareableCustomFields: number
+    copiedCustomFields: number
+    avgCustomFieldsPerGame: number
+    totalStatisticsQueries: number
+    usersWithSavedQueries: number
+    avgQueriesPerUser: number
+    avgEntriesPerCampaign: number
+    totalCampaignEvents: number
+    totalCampaignKeys: number
+    campaignKeysByType: { string: number; number: number; list: number; counted_list: number }
+    totalCustomFieldValues: number
+    entriesInCampaign: number
+    avgGamesOwnedPerUser: number
+    gamesWithCampaignKeys: number
 }
 
 export type AdminUser = {
     id: string
     name: string
     number: number
-    registeredOn: { date: string } | null
+    registeredOn: string | null
     isGuest: boolean
     inPartyOf: { id: string; name: string } | null
     email: string | null
     roles: string[]
     isAdmin: boolean
+}
+
+export type PublicStats = {
+    totalEntries: number
+    totalGames: number
+    totalPlayers: number
+    totalCampaigns: number
+    totalCustomFields: number
+    totalCustomFieldValues: number
+    totalCampaignEvents: number
+    avgPlayersPerEntry: number
+    mostPlayedGame: { name: string; play_count: number } | null
+    topGames: { name: string; play_count: number }[]
+    entriesPerMonth: { month: string; count: number }[]
 }

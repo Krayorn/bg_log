@@ -70,7 +70,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return array{id: UuidInterface, name: string, number: int, registeredOn: DateTimeImmutable|null, isGuest: bool, inPartyOf: array{id: UuidInterface, name: string}|null, email?: string|null}
+     * @return array{id: UuidInterface, name: string, number: int, registeredOn: string|null, isGuest: bool, inPartyOf: array{id: UuidInterface, name: string}|null, email?: string|null}
      */
     public function view(bool $includeSensitive = false): array
     {
@@ -78,7 +78,7 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
             'id' => $this->id,
             'name' => $this->name,
             'number' => $this->number,
-            'registeredOn' => $this->registeredOn,
+            'registeredOn' => $this->registeredOn?->format('c'),
             'isGuest' => ! $this->registeredOn instanceof \DateTimeImmutable,
             'inPartyOf' => $this->inPartyOf instanceof self ? [
                 'id' => $this->inPartyOf->getId(),

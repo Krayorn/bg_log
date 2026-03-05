@@ -18,7 +18,7 @@ type EntryListItemProps = {
 
 export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryListItemProps) {
     const { displayName } = useCircle()
-    const playedAt = new Date(entry.playedAt.date)
+    const playedAt = new Date(entry.playedAt)
     const playerResult = playerId ? entry.players.find(p => p.player.id === playerId) : null
     const won = playerResult?.won
 
@@ -81,7 +81,7 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     const [editField, setEditField] = useState<string | null>(null)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [note, setNote] = useState(entry.note)
-    const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt.date))
+    const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt))
     const [players, setPlayers] = useState(entry.players.map(p => ({ ...p })))
     const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
@@ -90,7 +90,7 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
 
     useEffect(() => {
         setNote(entry.note)
-        setPlayedAt(new Date(entry.playedAt.date))
+        setPlayedAt(new Date(entry.playedAt))
         setPlayers(entry.players.map(p => ({ ...p })))
         setCustomFields(entry.customFields.map(c => ({ ...c })))
         setSelectedCampaignId(entry.campaign?.id ?? '')
@@ -119,7 +119,7 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     }
 
     const handleDateBlur = async () => {
-        const originalDate = new Date(entry.playedAt.date).toDateString()
+        const originalDate = new Date(entry.playedAt).toDateString()
         if (playedAt.toDateString() !== originalDate) {
             await patchEntry({ playedAt: playedAt.toDateString(), customFields: [], players: [] })
         }

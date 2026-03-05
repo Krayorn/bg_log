@@ -87,7 +87,7 @@ class Entry
     }
 
     /**
-     * @return array{id: UuidInterface, game: array<string, mixed>, note: string, playedAt: DateTimeImmutable, players: mixed, gameUsed: array<string, mixed>|null}
+     * @return array{id: UuidInterface, game: array<string, mixed>, note: string, playedAt: string, players: mixed, gameUsed: array<string, mixed>|null}
      */
     public function view(): array
     {
@@ -95,8 +95,8 @@ class Entry
             'id' => $this->id,
             'game' => $this->game->view(),
             'note' => $this->note,
-            'playedAt' => $this->playedAt,
-            'createdAt' => $this->createdAt,
+            'playedAt' => $this->playedAt->format('c'),
+            'createdAt' => $this->createdAt->format('c'),
             'players' => array_values(array_map(fn ($playerResult) => $playerResult->view(), $this->playerResults->toArray())),
             'gameUsed' => $this->gameUsed?->view(),
             'customFields' => array_values(array_map(fn ($customField) => $customField->view(), $this->customFields->toArray())),

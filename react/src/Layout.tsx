@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useRequest } from './hooks/useRequest';
+import { useQuery } from './hooks/useQuery';
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage';
 import { Landmark, Puzzle, Users, Search, X, Shield } from 'lucide-react';
 import { Game } from './types';
@@ -96,6 +96,12 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
               </Link>
             )}
             <Link
+              to="/stats"
+              className="text-slate-500 text-xs hover:text-slate-300 transition-colors"
+            >
+              stats
+            </Link>
+            <Link
               to="/about"
               className="text-slate-500 text-xs hover:text-slate-300 transition-colors"
             >
@@ -125,7 +131,13 @@ function SearchModal({ close, playerId }: { close: () => void, playerId: string 
     setSelected(null)
   }
 
-  useRequest(`/games?query=${query}`, [query], setResultsResetSelected, query !== "")
+  const { data: searchData } = useQuery<Game[]>(query !== "" ? `/games?query=${query}` : null)
+
+  useEffect(() => {
+    if (searchData) {
+      setResultsResetSelected(searchData)
+    }
+  }, [searchData])
 
   if (query === "" && results.length > 0) {
     setResultsResetSelected([])

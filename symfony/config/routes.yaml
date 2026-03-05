@@ -1,3 +1,9 @@
+public_stats:
+    resource:
+        path: ../src/PublicStats/
+        namespace: App\PublicStats
+    type: attribute
+
 admin:
     resource:
         path: ../src/Admin/

@@ -101,7 +101,7 @@ class CampaignEvent
             'campaignKey' => $this->campaignKey->view(),
             'payload' => $this->payload,
             'customFieldValue' => $this->customFieldValue?->view(),
-            'createdAt' => $this->createdAt,
+            'createdAt' => $this->createdAt->format('c'),
         ];
     }
 }

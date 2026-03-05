@@ -1,20 +1,19 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom"
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { updatePlayerEmail } from '../api/players'
 import Layout from '../Layout'
-import { Landmark, User, Check, X, Pencil, ExternalLink, Gamepad2, Activity, Users, Trophy, Calendar } from 'lucide-react'
-import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer } from '../types'
+import { Landmark, User, Check, X, Pencil, ExternalLink, Gamepad2, Activity, Users, Trophy, Calendar, Settings, BookOpen, BarChart3, Zap, UserPlus } from 'lucide-react'
+import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer, PlayerUsageStats } from '../types'
 import { MissionBriefing } from '../components/MissionBriefing'
 import { SciFiPanel, MetricCard } from '../components/SciFi'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
 function Home() {
     const { playerId } = useParams() as { playerId: string }
-    const [generalStats, setGeneralStats] = useState<GeneralStatisticsType | null>(null)
+    const { data: generalStats } = useQuery<GeneralStatisticsType>(`/players/${playerId}/stats`)
+    const { data: usageStats } = useQuery<PlayerUsageStats>(`/players/${playerId}/usage`)
     const [tutorialDismissed, setTutorialDismissed] = useLocalStorage('tutorial_dismissed', false)
-
-    useRequest(`/players/${playerId}/stats`, [playerId], setGeneralStats)
 
     const showTutorial = generalStats !== null && !tutorialDismissed && (
         generalStats.gamesOwned === 0 ||
@@ -70,6 +69,39 @@ function Home() {
                             <PlayerStatistics playerId={playerId}/>
                         </SciFiPanel>
                     </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <MetricCard icon={<Settings className="w-5 h-5" />} label="Custom Fields" value={usageStats?.customFieldsCreated ?? '—'} accent="purple" noScanLine />
+                        <MetricCard icon={<BookOpen className="w-5 h-5" />} label="Campaigns" value={usageStats?.campaignsCreated ?? '—'} accent="purple" delay={0.6} />
+                        <MetricCard icon={<BarChart3 className="w-5 h-5" />} label="Saved Stats" value={usageStats?.savedQueries ?? '—'} accent="cyan" noScanLine />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <MetricCard icon={<UserPlus className="w-5 h-5" />} label="Guest Players" value={usageStats?.guestPlayersCreated ?? '—'} accent="cyan" delay={1.2} />
+                        <MetricCard icon={<Calendar className="w-5 h-5" />} label="Plays This Month" value={usageStats?.entriesThisMonth ?? '—'} accent="cyan" noScanLine />
+                        <MetricCard icon={<Trophy className="w-5 h-5" />} label="Campaign Entries" value={usageStats?.entriesInCampaigns ?? '—'} accent="purple" delay={1.8} />
+                    </div>
+
+                    <SciFiPanel title="Recent Activity">
+                        {usageStats === null ? (
+                            <div className="text-slate-500">Loading...</div>
+                        ) : usageStats.recentActivity.length === 0 ? (
+                            <div className="text-slate-500">No recent activity</div>
+                        ) : (
+                            <div className="space-y-2">
+                                {usageStats.recentActivity.map((entry) => (
+                                    <Link key={entry.entry_id} to={`/games/${entry.game_id}?playerId=${playerId}&entryId=${entry.entry_id}`} className="flex items-center gap-2 text-sm group hover:bg-slate-800/50 rounded px-1 -mx-1 py-0.5 transition-colors">
+                                        <Zap className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span className="text-slate-400 font-mono text-xs shrink-0">
+                                            {new Date(entry.played_at).toLocaleDateString('fr-FR')}
+                                        </span>
+                                        <span className="text-slate-300 truncate group-hover:text-cyan-400 transition-colors">{entry.game_name}</span>
+                                        <ExternalLink className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 shrink-0 ml-auto transition-colors" />
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </SciFiPanel>
                 </div>
             )}
         </Layout>
@@ -80,12 +112,10 @@ export default Home
 
 
 function PlayerBox({ playerId }: {playerId: string}) {
-    const [playerInfos, setPlayerInfos] = useState<Player|null>(null)
+    const { data: playerInfos, refetch } = useQuery<Player>(`/players/${playerId}`)
     const [isEditingEmail, setIsEditingEmail] = useState(false)
     const [emailInput, setEmailInput] = useState('')
     const [emailError, setEmailError] = useState<string|null>(null)
-    
-    useRequest(`/players/${playerId}`, [playerId], setPlayerInfos)
     
     if (playerInfos === null) {
         return <div className="text-slate-500">Loading...</div>
@@ -98,12 +128,12 @@ function PlayerBox({ playerId }: {playerId: string}) {
     }
 
     const handleSaveEmail = async () => {
-        const { data, error, ok } = await updatePlayerEmail(playerId, emailInput)
+        const { error, ok } = await updatePlayerEmail(playerId, emailInput)
         if (!ok) {
             setEmailError(error ?? 'Failed to update email')
             return
         }
-        setPlayerInfos(data)
+        refetch()
         setIsEditingEmail(false)
         setEmailError(null)
     }
@@ -127,7 +157,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
             <div className="flex flex-col mt-4 text-sm text-slate-300 gap-2">
                 {playerInfos.registeredOn === null 
                     ? <span className="text-slate-500">Guest user</span>
-                    : <span>Registered on {(new Date(playerInfos.registeredOn.date)).toLocaleDateString('fr-FR')}</span>
+                    : <span>Registered on {(new Date(playerInfos.registeredOn)).toLocaleDateString('fr-FR')}</span>
                 }
                 {'email' in playerInfos && (
                     <div className="flex items-center gap-2">
@@ -189,7 +219,7 @@ function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null
         <div className="grid grid-cols-5 gap-4">
             <MetricCard icon={<Gamepad2 className="w-5 h-5" />} label="Games Owned" value={stats.gamesOwned} accent="cyan" noScanLine />
             <MetricCard icon={<Activity className="w-5 h-5" />} label="Total Plays" value={stats.entriesPlayed} accent="cyan" delay={0.6} />
-            <MetricCard icon={<Users className="w-5 h-5" />} label="Partners" value={stats.gamePartners} accent="purple" noScanLine />
+            <MetricCard icon={<Users className="w-5 h-5" />} label="Circle Size" value={stats.gamePartners} accent="purple" noScanLine />
             <MetricCard icon={<Trophy className="w-5 h-5" />} label="Win Rate" value={`${stats.globalWinrate ?? 0}%`} accent="cyan" delay={1.8} />
             <MetricCard icon={<Calendar className="w-5 h-5" />} label="Days Idle" value={daysSinceLastGame} accent="purple" noScanLine />
         </div>
@@ -197,9 +227,7 @@ function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null
 }
 
 function GameStatistics({ playerId }: {playerId: string}) {
-    const [gameStats, setGameStats] = useState<PlayerGameStats[]|null>(null)
-    
-    useRequest(`/players/${playerId}/games`, [playerId], setGameStats)
+    const { data: gameStats } = useQuery<PlayerGameStats[]>(`/players/${playerId}/games`)
 
     if (gameStats === null) {
         return <div className="text-slate-500">Loading...</div>
@@ -241,9 +269,7 @@ function GameStatistics({ playerId }: {playerId: string}) {
 }
 
 function PlayerStatistics({ playerId }: {playerId: string}) {
-    const [playerStats, setPlayerStats] = useState<CirclePlayer[]|null>(null)
-
-    useRequest(`/players/${playerId}/circle`, [playerId], setPlayerStats)
+    const { data: playerStats } = useQuery<CirclePlayer[]>(`/players/${playerId}/circle`)
 
     if (playerStats === null) {
         return <div className="text-slate-500">Loading...</div>

@@ -3,19 +3,57 @@
 import { useState, useEffect, useCallback } from "react"
 import { getSavedQueries, createSavedQuery, updateSavedQuery, deleteSavedQuery, executeStatsQuery } from '../api/statistics'
 import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp, Trophy } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Legend, Rectangle, Sector } from 'recharts'
-import type { BarShapeProps, PieSectorShapeProps } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import type { CustomField, StatsResult, ChartType, AggregationType, SavedQuery } from '../types'
+import { ScanLine, CornerBrackets } from '../components/SciFi'
 
 const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#84cc16', '#f97316']
 
-const ColoredBar = (props: BarShapeProps) => (
-    <Rectangle {...props} fill={CHART_COLORS[props.index % CHART_COLORS.length]} />
-)
+const HUD_TOOLTIP_STYLE = {
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    border: '1px solid rgba(34, 211, 238, 0.3)',
+    borderRadius: '8px',
+    color: '#e2e8f0',
+    boxShadow: '0 0 15px rgba(34, 211, 238, 0.15), inset 0 1px 0 rgba(34, 211, 238, 0.1)',
+    fontFamily: 'ui-monospace, monospace',
+    fontSize: '12px',
+}
 
-const ColoredSector = (props: PieSectorShapeProps) => (
-    <Sector {...props} fill={CHART_COLORS[props.index % CHART_COLORS.length]} />
-)
+function HudTooltipContent({ active, payload, label }: { active?: boolean; label?: string; payload?: { name: string; value: number; color: string; payload: { fill?: string } }[] }) {
+    if (!active || !payload?.length) return null
+    return (
+        <div style={{ ...HUD_TOOLTIP_STYLE, padding: '8px 12px' }}>
+            {label && <div style={{ color: '#22d3ee', fontWeight: 'bold', marginBottom: 4 }}>{label}</div>}
+            {payload.map((entry, i) => {
+                const color = entry.payload?.fill ?? entry.color ?? '#e2e8f0'
+                return (
+                    <div key={i} style={{ color }}>
+                        {entry.name} : {entry.value}
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
+function WinrateTooltipContent({ active, payload, label }: { active?: boolean; label?: string; payload?: { value: number; payload: { fill?: string; wins: number; total: number; rate: number } }[] }) {
+    if (!active || !payload?.length) return null
+    const entry = payload[0]
+    const color = entry.payload?.fill ?? '#e2e8f0'
+    return (
+        <div style={{ ...HUD_TOOLTIP_STYLE, padding: '8px 12px' }}>
+            {label && <div style={{ color: '#22d3ee', fontWeight: 'bold', marginBottom: 4 }}>{label}</div>}
+            <div style={{ color }}>
+                {entry.payload.wins} wins / {entry.payload.total} total ({entry.payload.rate.toFixed(1)}%)
+            </div>
+        </div>
+    )
+}
+
+const HUD_AXIS = {
+    x: { stroke: '#334155', tick: { fill: '#64748b', fontSize: 11, fontFamily: 'ui-monospace, monospace' } },
+    y: { stroke: '#334155', tick: { fill: '#94a3b8', fontSize: 11, fontFamily: 'ui-monospace, monospace' } },
+}
 
 type StatisticsPanelProps = {
     gameId: string
@@ -67,7 +105,7 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
 
             <button
                 onClick={() => setShowExplorer(!showExplorer)}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-purple-400/30 text-slate-400 hover:text-purple-400 hover:border-purple-400/60 hover:bg-purple-500/5 hover:shadow-[0_0_15px_rgba(168,85,247,0.1)] transition-all duration-300 font-mono text-sm"
             >
                 {showExplorer ? <ChevronUp className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 {showExplorer ? 'Hide Explorer' : 'New Query'}
@@ -122,6 +160,7 @@ function SavedQueryCard({
     const selectedField = customFields.find(cf => cf.id === savedQuery.customFieldId)
     const groupByField = savedQuery.groupByFieldId ? customFields.find(cf => cf.id === savedQuery.groupByFieldId) : null
     const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
+    const hasPieOption = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
     const fetchStats = useCallback(async () => {
@@ -168,65 +207,71 @@ function SavedQueryCard({
     }
 
     return (
-        <div className="border border-slate-600 rounded-lg p-6 bg-slate-900/30 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
+        <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border border-cyan-400/20 hover:border-cyan-400/40 transition-all duration-300 overflow-hidden p-6">
+            <ScanLine accent="cyan" delay={1} />
+            <CornerBrackets color="cyan" />
+            <div className="relative flex items-center justify-between mb-4">
                 {editing ? (
                     <div className="flex items-center gap-2">
                         <input
                             value={editName}
                             onChange={e => setEditName(e.target.value)}
-                            className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-sm"
+                            className="bg-slate-800/80 border border-cyan-400/30 rounded px-2 py-1 text-white text-sm font-mono focus:border-cyan-400/60 focus:outline-none"
                             autoFocus
                             onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit() }}
                         />
-                        <button onClick={handleSaveEdit} className="text-emerald-400 hover:text-emerald-300 text-sm">Save</button>
-                        <button onClick={() => { setEditing(false); setEditName(savedQuery.name) }} className="text-slate-400 hover:text-white text-sm">Cancel</button>
+                        <button onClick={handleSaveEdit} className="text-emerald-400 hover:text-emerald-300 text-sm font-mono">Save</button>
+                        <button onClick={() => { setEditing(false); setEditName(savedQuery.name) }} className="text-slate-400 hover:text-white text-sm font-mono">Cancel</button>
                     </div>
                 ) : (
-                    <h3 className="text-white font-medium">{savedQuery.name}</h3>
+                    <h3 className="text-white font-medium tracking-wide">{savedQuery.name}</h3>
                 )}
                 <div className="flex items-center gap-2">
                     {hasChartData && (
                         <>
                             <button
                                 onClick={() => setChartType('bar')}
-                                className={`p-1.5 rounded transition-colors ${chartType === 'bar' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}
+                                className={`p-1.5 rounded transition-all duration-200 ${chartType === 'bar' ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-slate-800/50 text-slate-500 border border-slate-600/50 hover:text-cyan-400 hover:border-cyan-400/30'}`}
                             >
                                 <BarChart3 className="w-4 h-4" />
                             </button>
-                            <button
-                                onClick={() => setChartType('pie')}
-                                className={`p-1.5 rounded transition-colors ${chartType === 'pie' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}
-                            >
-                                <PieChartIcon className="w-4 h-4" />
-                            </button>
-                            <div className="w-px h-5 bg-slate-600 mx-1" />
+                            {hasPieOption && (
+                                <button
+                                    onClick={() => setChartType('pie')}
+                                    className={`p-1.5 rounded transition-all duration-200 ${chartType === 'pie' ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-slate-800/50 text-slate-500 border border-slate-600/50 hover:text-cyan-400 hover:border-cyan-400/30'}`}
+                                >
+                                    <PieChartIcon className="w-4 h-4" />
+                                </button>
+                            )}
+                            <div className="w-px h-5 bg-cyan-400/20 mx-1" />
                         </>
                     )}
-                    <button onClick={() => setEditing(true)} className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                    <button onClick={() => setEditing(true)} className="p-1.5 rounded text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200">
                         <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={handleDelete} disabled={deleting} className="p-1.5 rounded text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors">
+                    <button onClick={handleDelete} disabled={deleting} className="p-1.5 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200">
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
-            {loading ? (
-                <p className="text-slate-500 text-center py-8">Loading...</p>
-            ) : statsResult ? (
-                <StatsResultDisplay
-                    statsResult={statsResult}
-                    chartType={chartType}
-                    selectedField={selectedField}
-                    groupByField={groupByField}
-                    groupByPlayer={savedQuery.groupByPlayer}
-                    isStackedChart={!!isStackedChart}
-                    getStackedChartData={getStackedChartData}
-                />
-            ) : (
-                <p className="text-slate-500 text-center py-8">No data available</p>
-            )}
+            <div className="relative">
+                {loading ? (
+                    <p className="text-slate-500 text-center py-8 font-mono text-sm animate-pulse">Loading...</p>
+                ) : statsResult ? (
+                    <StatsResultDisplay
+                        statsResult={statsResult}
+                        chartType={chartType}
+                        selectedField={selectedField}
+                        groupByField={groupByField}
+                        groupByPlayer={savedQuery.groupByPlayer}
+                        isStackedChart={!!isStackedChart}
+                        getStackedChartData={getStackedChartData}
+                    />
+                ) : (
+                    <p className="text-slate-500 text-center py-8 font-mono text-sm">No data available</p>
+                )}
+            </div>
         </div>
     )
 }
@@ -257,6 +302,7 @@ function QueryExplorer({
     const groupByField = customFields.find(cf => cf.id === groupByFieldId)
     const isNumberField = selectedField?.kind === 'number'
     const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
+    const hasPieOption = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
     const canQuery = selectedFieldId !== null || metric !== null
@@ -397,10 +443,12 @@ function QueryExplorer({
     const playerFields = customFields.filter(cf => cf.scope === 'playerResult')
 
     return (
-        <div className="border border-slate-600 rounded-lg p-6 bg-slate-900/30 backdrop-blur-sm">
-            <div className="mb-4">
+        <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border border-purple-400/20 hover:border-purple-400/40 transition-all duration-300 overflow-hidden p-6">
+            <ScanLine accent="purple" delay={0.5} />
+            <CornerBrackets color="purple" />
+            <div className="relative mb-4">
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-400 text-sm font-mono">
                         {metric !== null
                             ? (groupByFieldId || groupByPlayer ? 'Selection complete' : 'Optionally select a field or player to group by')
                             : selectedFieldId === null 
@@ -496,16 +544,16 @@ function QueryExplorer({
             </div>
 
             {isNumberField && !metric && (
-                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-600">
-                    <span className="text-slate-400 text-sm">Aggregation:</span>
+                <div className="relative flex items-center gap-3 mb-4 pb-4 border-b border-slate-600/50">
+                    <span className="text-slate-500 text-[10px] uppercase tracking-[0.15em] font-mono">Aggregation:</span>
                     {(['sum', 'avg', 'min', 'max'] as AggregationType[]).map(agg => (
                         <button
                             key={agg}
                             onClick={() => { setAggregation(agg); setStatsResult(null); }}
-                            className={`px-3 py-1 rounded text-sm transition-colors ${
+                            className={`px-3 py-1 rounded text-sm font-mono transition-all duration-200 ${
                                 aggregation === agg
-                                    ? 'bg-cyan-600 text-white'
-                                    : 'bg-slate-700 text-slate-400 hover:text-white'
+                                    ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                                    : 'bg-slate-800/50 text-slate-500 border border-slate-600/50 hover:text-cyan-400 hover:border-cyan-400/30'
                             }`}
                         >
                             {agg.charAt(0).toUpperCase() + agg.slice(1)}
@@ -515,12 +563,12 @@ function QueryExplorer({
             )}
 
             {canQuery && (
-                <div className="mb-6">
+                <div className="relative mb-6">
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={fetchStats}
                             disabled={loading}
-                            className="px-6 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium transition-colors"
+                            className="px-6 py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 hover:bg-cyan-500/30 hover:shadow-[0_0_15px_rgba(34,211,238,0.25)] disabled:bg-slate-800/50 disabled:border-slate-600/50 disabled:text-slate-500 disabled:cursor-not-allowed text-cyan-400 font-medium font-mono transition-all duration-200"
                         >
                             {loading ? 'Loading...' : 'Get Graph'}
                         </button>
@@ -532,7 +580,7 @@ function QueryExplorer({
                                     setSaveName(groupBy ? `${primary} by ${groupBy}` : primary)
                                     setShowSaveInput(true)
                                 }}
-                                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors flex items-center gap-2"
+                                className="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400/50 hover:bg-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.25)] text-emerald-400 font-medium font-mono transition-all duration-200 flex items-center gap-2"
                             >
                                 <Save className="w-4 h-4" />
                                 Save
@@ -545,26 +593,26 @@ function QueryExplorer({
                                 value={saveName}
                                 onChange={e => setSaveName(e.target.value)}
                                 placeholder="Query name..."
-                                className="bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm flex-1"
+                                className="bg-slate-800/80 border border-cyan-400/30 rounded px-3 py-2 text-white text-sm font-mono flex-1 focus:border-cyan-400/60 focus:outline-none"
                                 autoFocus
                                 onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
                             />
                             <button
                                 onClick={handleSave}
                                 disabled={!saveName.trim()}
-                                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                                className="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400/50 hover:bg-emerald-500/30 disabled:bg-slate-800/50 disabled:border-slate-600/50 disabled:text-slate-500 disabled:cursor-not-allowed text-emerald-400 text-sm font-medium font-mono transition-all duration-200"
                             >
                                 Save
                             </button>
                             <button
                                 onClick={() => { setShowSaveInput(false); setSaveName('') }}
-                                className="px-3 py-2 rounded-lg text-slate-400 hover:text-white text-sm transition-colors"
+                                className="px-3 py-2 rounded-lg text-slate-500 hover:text-white text-sm font-mono transition-all duration-200"
                             >
                                 Cancel
                             </button>
                         </div>
                     )}
-                    <span className="ml-3 text-slate-500 text-sm">
+                    <span className="ml-3 text-slate-500 text-xs font-mono">
                         {metric ? 'Win Rate' : selectedField?.name}
                         {groupByFieldId && ` → grouped by ${groupByField?.name}`}
                         {groupByPlayer && ` → grouped by Player`}
@@ -573,23 +621,25 @@ function QueryExplorer({
             )}
 
             {statsResult && (
-                <div className="border-t border-slate-600 pt-6">
+                <div className="relative border-t border-cyan-400/10 pt-6">
                     {hasChartData && (
                         <div className="flex justify-center gap-2 mb-4">
                             <button
                                 onClick={() => setChartType('bar')}
-                                className={`p-2 rounded transition-colors ${chartType === 'bar' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}
+                                className={`p-2 rounded transition-all duration-200 ${chartType === 'bar' ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-slate-800/50 text-slate-500 border border-slate-600/50 hover:text-cyan-400 hover:border-cyan-400/30'}`}
                                 title="Bar Chart"
                             >
                                 <BarChart3 className="w-5 h-5" />
                             </button>
-                            <button
-                                onClick={() => setChartType('pie')}
-                                className={`p-2 rounded transition-colors ${chartType === 'pie' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}
-                                title="Pie Chart"
-                            >
-                                <PieChartIcon className="w-5 h-5" />
-                            </button>
+                            {hasPieOption && (
+                                <button
+                                    onClick={() => setChartType('pie')}
+                                    className={`p-2 rounded transition-all duration-200 ${chartType === 'pie' ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-slate-800/50 text-slate-500 border border-slate-600/50 hover:text-cyan-400 hover:border-cyan-400/30'}`}
+                                    title="Pie Chart"
+                                >
+                                    <PieChartIcon className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -632,14 +682,15 @@ function StatsResultDisplay({
     return (
         <>
             {['sum', 'avg', 'min', 'max'].includes(statsResult.type) && 'total' in statsResult && (
-                <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-2">
+                <div className="relative text-center py-4">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.06),transparent_70%)]" />
+                    <p className="relative text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-3">
                         {statsResult.type === 'sum' && `Total sum for "${selectedField?.name}"`}
                         {statsResult.type === 'avg' && `Average for "${selectedField?.name}"`}
                         {statsResult.type === 'min' && `Minimum for "${selectedField?.name}"`}
                         {statsResult.type === 'max' && `Maximum for "${selectedField?.name}"`}
                     </p>
-                    <p className="text-5xl font-bold text-cyan-400">
+                    <p className="relative text-5xl font-bold font-mono text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.4)]">
                         {statsResult.type === 'avg' ? statsResult.total.toFixed(2) : statsResult.total}
                     </p>
                 </div>
@@ -647,33 +698,28 @@ function StatsResultDisplay({
             
             {statsResult.type === 'grouped' && (
                 <div>
-                    <p className="text-slate-400 text-sm mb-4 text-center">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">
                         "{selectedField?.name}" grouped by "{groupByPlayer ? 'Player' : groupByField?.name}"
                     </p>
                     {statsResult.data.length === 0 ? (
-                        <p className="text-slate-500 text-center">No data available</p>
+                        <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : chartType === 'bar' ? (
                         <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
-                                    <XAxis type="number" stroke="#94a3b8" />
+                                    <XAxis type="number" {...HUD_AXIS.x} />
                                     <YAxis 
                                         type="category" 
                                         dataKey="label" 
-                                        stroke="#94a3b8" 
                                         width={150}
-                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                        {...HUD_AXIS.y}
                                     />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#1e293b', 
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                    />
-                                    <Bar dataKey="total" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
+                                    <Tooltip content={<HudTooltipContent />} />
+                                    <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                                        {statsResult.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -689,20 +735,19 @@ function StatsResultDisplay({
                                         cy="50%"
                                         outerRadius={100}
                                         innerRadius={50}
-                                        label={({ label, percent }) => `${label} (${(percent * 100).toFixed(0)}%)`}
-                                        labelLine={{ stroke: '#94a3b8' }}
-                                        shape={ColoredSector}
-                                    />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#1e293b', 
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                    />
-                                    <Legend wrapperStyle={{ color: '#e2e8f0' }} />
+                                        label={({ x, y, index, label, percent, textAnchor }) => (
+                                            <text x={x} y={y} textAnchor={textAnchor} fill={CHART_COLORS[index % CHART_COLORS.length]} fontSize={12} fontFamily="ui-monospace, monospace">
+                                                {`${label} (${(percent * 100).toFixed(0)}%)`}
+                                            </text>
+                                        )}
+                                        labelLine={{ stroke: '#475569' }}
+                                    >
+                                        {statsResult.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<HudTooltipContent />} />
+                                    <Legend wrapperStyle={{ color: '#94a3b8', fontFamily: 'ui-monospace, monospace', fontSize: '11px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -712,33 +757,28 @@ function StatsResultDisplay({
             
             {statsResult.type === 'breakdown' && (
                 <div>
-                    <p className="text-slate-400 text-sm mb-4 text-center">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">
                         Value distribution for "{selectedField?.name}"
                     </p>
                     {statsResult.data.length === 0 ? (
-                        <p className="text-slate-500 text-center">No data available</p>
+                        <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : chartType === 'bar' ? (
                         <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
-                                    <XAxis type="number" stroke="#94a3b8" />
+                                    <XAxis type="number" {...HUD_AXIS.x} />
                                     <YAxis 
                                         type="category" 
                                         dataKey="value" 
-                                        stroke="#94a3b8" 
                                         width={150}
-                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                        {...HUD_AXIS.y}
                                     />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#1e293b', 
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                    />
-                                    <Bar dataKey="count" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
+                                    <Tooltip content={<HudTooltipContent />} />
+                                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                                        {statsResult.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -754,20 +794,19 @@ function StatsResultDisplay({
                                         cy="50%"
                                         outerRadius={100}
                                         innerRadius={50}
-                                        label={({ value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`}
-                                        labelLine={{ stroke: '#94a3b8' }}
-                                        shape={ColoredSector}
-                                    />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#1e293b', 
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                    />
-                                    <Legend wrapperStyle={{ color: '#e2e8f0' }} />
+                                        label={({ x, y, index, value, percent, textAnchor }) => (
+                                            <text x={x} y={y} textAnchor={textAnchor} fill={CHART_COLORS[index % CHART_COLORS.length]} fontSize={12} fontFamily="ui-monospace, monospace">
+                                                {`${value} (${(percent * 100).toFixed(0)}%)`}
+                                            </text>
+                                        )}
+                                        labelLine={{ stroke: '#475569' }}
+                                    >
+                                        {statsResult.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<HudTooltipContent />} />
+                                    <Legend wrapperStyle={{ color: '#94a3b8', fontFamily: 'ui-monospace, monospace', fontSize: '11px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -777,33 +816,24 @@ function StatsResultDisplay({
 
             {isStackedChart && (statsResult.type === 'stacked' || statsResult.type === 'crosstab') && (
                 <div>
-                    <p className="text-slate-400 text-sm mb-4 text-center">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">
                         "{selectedField?.name}" by {statsResult.type === 'stacked' ? 'player' : `"${groupByField?.name}"`}
                     </p>
                     {statsResult.data.length === 0 ? (
-                        <p className="text-slate-500 text-center">No data available</p>
+                        <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : (
                         <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={getStackedChartData()} layout="vertical" margin={{ left: 20, right: 20 }}>
-                                    <XAxis type="number" stroke="#94a3b8" />
+                                    <XAxis type="number" {...HUD_AXIS.x} />
                                     <YAxis 
                                         type="category" 
                                         dataKey="group" 
-                                        stroke="#94a3b8" 
                                         width={120}
-                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                        {...HUD_AXIS.y}
                                     />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#1e293b', 
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                    />
-                                    <Legend wrapperStyle={{ color: '#e2e8f0' }} />
+                                    <Tooltip content={<HudTooltipContent />} />
+                                    <Legend wrapperStyle={{ color: '#94a3b8', fontFamily: 'ui-monospace, monospace', fontSize: '11px' }} />
                                     {statsResult.keys.map((key, index) => (
                                         <Bar 
                                             key={key} 
@@ -820,12 +850,13 @@ function StatsResultDisplay({
             )}
 
             {statsResult.type === 'winrate' && !('data' in statsResult) && (
-                <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-2">Win Rate</p>
-                    <p className="text-5xl font-bold text-amber-400">
+                <div className="relative text-center py-4">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.06),transparent_70%)]" />
+                    <p className="relative text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-3">Win Rate</p>
+                    <p className="relative text-5xl font-bold font-mono text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]">
                         {(statsResult.rate * 100).toFixed(1)}%
                     </p>
-                    <p className="text-slate-500 text-sm mt-2">
+                    <p className="relative text-slate-500 text-xs font-mono mt-3">
                         {statsResult.wins} wins / {statsResult.total} total
                     </p>
                 </div>
@@ -833,9 +864,9 @@ function StatsResultDisplay({
 
             {statsResult.type === 'winrate' && 'data' in statsResult && Array.isArray((statsResult as { data: unknown }).data) && (
                 <div>
-                    <p className="text-slate-400 text-sm mb-4 text-center">Win Rate by group</p>
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">Win Rate by group</p>
                     {(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length === 0 ? (
-                        <p className="text-slate-500 text-center">No data available</p>
+                        <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : (
                         <div style={{ height: chartHeight((statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -844,27 +875,19 @@ function StatsResultDisplay({
                                     layout="vertical"
                                     margin={{ left: 20, right: 20 }}
                                 >
-                                    <XAxis type="number" stroke="#94a3b8" domain={[0, 100]} unit="%" />
+                                    <XAxis type="number" domain={[0, 100]} unit="%" {...HUD_AXIS.x} />
                                     <YAxis
                                         type="category"
                                         dataKey="label"
-                                        stroke="#94a3b8"
                                         width={150}
-                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                        {...HUD_AXIS.y}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                        formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
-                                            [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
-                                        }
-                                    />
-                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
+                                    <Tooltip content={<WinrateTooltipContent />} />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
+                                        {(statsResult as { data: { label: string }[] }).data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -874,9 +897,9 @@ function StatsResultDisplay({
 
             {statsResult.type === 'winrate_by_player' && (
                 <div>
-                    <p className="text-slate-400 text-sm mb-4 text-center">Win Rate by group and player</p>
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">Win Rate by group and player</p>
                     {statsResult.data.length === 0 ? (
-                        <p className="text-slate-500 text-center">No data available</p>
+                        <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : (
                         <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -885,27 +908,19 @@ function StatsResultDisplay({
                                     layout="vertical"
                                     margin={{ left: 20, right: 20 }}
                                 >
-                                    <XAxis type="number" stroke="#94a3b8" domain={[0, 100]} unit="%" />
+                                    <XAxis type="number" domain={[0, 100]} unit="%" {...HUD_AXIS.x} />
                                     <YAxis
                                         type="category"
                                         dataKey="displayLabel"
-                                        stroke="#94a3b8"
                                         width={200}
-                                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                                        {...HUD_AXIS.y}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid #475569',
-                                            borderRadius: '8px',
-                                            color: '#e2e8f0'
-                                        }}
-                                        labelStyle={{ color: '#e2e8f0' }}
-                                        formatter={(_value: number, _name: string, props: { payload: { wins: number; total: number; rate: number } }) =>
-                                            [`${props.payload.wins} wins / ${props.payload.total} total (${props.payload.rate.toFixed(1)}%)`, 'Win Rate']
-                                        }
-                                    />
-                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]} shape={ColoredBar} fill="#e2e8f0" />
+                                    <Tooltip content={<WinrateTooltipContent />} />
+                                    <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
+                                        {statsResult.data.map((_, i) => (
+                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

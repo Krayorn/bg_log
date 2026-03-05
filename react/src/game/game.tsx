@@ -1,6 +1,6 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react";
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import { StatisticsPanel } from './statistics'
@@ -81,8 +81,8 @@ export default function Game() {
 
     const sortEntries = (list: Entry[]) =>
         [...list].sort((a, b) => {
-            const dateDiff = new Date(b.playedAt.date).getTime() - new Date(a.playedAt.date).getTime()
-            return dateDiff !== 0 ? dateDiff : new Date(b.createdAt.date).getTime() - new Date(a.createdAt.date).getTime()
+            const dateDiff = new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
+            return dateDiff !== 0 ? dateDiff : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
 
     const onEntryCreated = (newEntry: Entry) => {
@@ -98,18 +98,60 @@ export default function Game() {
         setSelectedEntryId(null)
     }
 
-    useRequest(`/games/${gameId}`, [gameId], setGame)
-    useRequest(`/entries?game=${gameId}&player=${playerId}`, [gameId, playerId], setEntries)
-    useRequest(`/games/${gameId}/stats?player=${playerId}`, [gameId, playerId], setGameStats)
-    useRequest(`/game/${gameId}/customFields`, [gameId], (data: { myFields: CustomField[], shareableFields: CustomField[] }) => {
-        setCustomFields(data.myFields)
-        setShareableFields(data.shareableFields)
-    })
-    useRequest(`/campaigns?game=${gameId}`, [gameId], setCampaigns)
+    const { data: fetchedGame } = useQuery<GameType>(`/games/${gameId}`)
+    const { data: fetchedEntries } = useQuery<Entry[]>(`/entries?game=${gameId}&player=${playerId}`)
+    const { data: fetchedGameStats } = useQuery<GameStats>(`/games/${gameId}/stats?player=${playerId}`)
+    const { data: fetchedCustomFieldsData } = useQuery<{ myFields: CustomField[], shareableFields: CustomField[] }>(`/game/${gameId}/customFields`)
+    const { data: fetchedCampaigns } = useQuery<CampaignSummary[]>(`/campaigns?game=${gameId}`)
+
+    useEffect(() => { if (fetchedGame) setGame(fetchedGame) }, [fetchedGame])
+    useEffect(() => { if (fetchedEntries) setEntries(fetchedEntries) }, [fetchedEntries])
+    useEffect(() => { if (fetchedGameStats) setGameStats(fetchedGameStats) }, [fetchedGameStats])
+    useEffect(() => {
+        if (fetchedCustomFieldsData) {
+            setCustomFields(fetchedCustomFieldsData.myFields)
+            setShareableFields(fetchedCustomFieldsData.shareableFields)
+        }
+    }, [fetchedCustomFieldsData])
+    useEffect(() => { if (fetchedCampaigns) setCampaigns(fetchedCampaigns) }, [fetchedCampaigns])
 
     if (game === null) {
         return (
-            <div>loading</div>
+            <Layout>
+                <div className='flex text-white h-[calc(100vh-7rem)]'>
+                    <aside className="w-80 shrink-0 flex flex-col bg-slate-950/60 backdrop-blur-md rounded-l-lg border border-cyan-400/20 border-r-0">
+                        <div className="shrink-0 border-b border-cyan-400/20 p-4">
+                            <div className="h-4 w-40 mx-auto rounded bg-slate-700/50 animate-pulse" />
+                            <div className="h-3 w-24 mx-auto rounded bg-slate-800/50 animate-pulse mt-2" />
+                        </div>
+                        <div className="flex border-t border-cyan-400/10">
+                            <div className="flex-1 py-3 flex justify-center">
+                                <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
+                            </div>
+                            <div className="w-px bg-cyan-400/10" />
+                            <div className="flex-1 py-3 flex justify-center">
+                                <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="h-14 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                            ))}
+                        </div>
+                    </aside>
+                    <section className="flex-1 rounded-r-lg border border-slate-600/30 border-l-cyan-400/20 p-4">
+                        <div className="space-y-4">
+                            <div className="h-6 w-48 rounded bg-slate-700/50 animate-pulse" />
+                            <div className="h-4 w-64 rounded bg-slate-800/50 animate-pulse" />
+                            <div className="grid grid-cols-3 gap-4 mt-6">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="h-24 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </Layout>
         )
     }
 

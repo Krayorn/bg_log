@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { useLocalStorage, parseJwt } from '../hooks/useLocalStorage'
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { getDisplayName } from '../utils/displayName'
 
 type CirclePlayer = { id: string; name: string; nickname?: string | null; isGuest?: boolean }
@@ -22,10 +22,12 @@ const CircleContext = createContext<CircleContextType>({
 export function CircleProvider({ children }: { children: ReactNode }) {
     const [token] = useLocalStorage('jwt', null)
     const playerId = token ? parseJwt(token).id : null
+    const { data: fetchedPlayers, refetch } = useQuery<CirclePlayer[]>(playerId ? `/players/${playerId}/circle?includeSelf=true` : null)
     const [players, setPlayers] = useState<CirclePlayer[]>([])
-    const [refreshKey, setRefreshKey] = useState(0)
 
-    useRequest(`/players/${playerId}/circle?includeSelf=true`, [playerId, refreshKey], setPlayers, !!playerId)
+    useEffect(() => {
+        if (fetchedPlayers) setPlayers(fetchedPlayers)
+    }, [fetchedPlayers])
 
     const displayName = useCallback((id: string, fallbackName?: string) => {
         const found = players.find(p => p.id === id)
@@ -41,8 +43,8 @@ export function CircleProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const refreshPlayers = useCallback(() => {
-        setRefreshKey(k => k + 1)
-    }, [])
+        refetch()
+    }, [refetch])
 
     return (
         <CircleContext.Provider value={{ players, displayName, addPlayer, refreshPlayers }}>

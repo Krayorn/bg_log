@@ -133,6 +133,23 @@ class PlayerController extends BaseController
         );
     }
 
+    #[Route('api/players/{player}/usage', methods: 'GET')]
+    public function playerUsage(Player $player, PlayerRepository $playerRepository): Response
+    {
+        $usage = $playerRepository->getUsageStats($player);
+        $recentActivity = $playerRepository->getRecentActivity($player);
+
+        return new JsonResponse([
+            'customFieldsCreated' => (int) $usage['custom_fields_created'],
+            'campaignsCreated' => (int) $usage['campaigns_created'],
+            'savedQueries' => (int) $usage['saved_queries'],
+            'guestPlayersCreated' => (int) $usage['guest_players_created'],
+            'entriesInCampaigns' => (int) $usage['entries_in_campaigns'],
+            'entriesThisMonth' => (int) $usage['entries_this_month'],
+            'recentActivity' => $recentActivity,
+        ], Response::HTTP_OK);
+    }
+
     #[Route('api/players/{player}/circle', methods: 'GET')]
     public function circle(Player $player, Request $request, PlayerRepository $playerRepository): Response
     {

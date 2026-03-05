@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useLocalStorage, parseJwt } from '../hooks/useLocalStorage'
-import { useRequest } from '../hooks/useRequest'
+import { useQuery } from '../hooks/useQuery'
 import { deleteAdminUser, toggleAdminRole } from '../api/admin'
 import { AdminLayout } from './dashboard'
 import { Shield, Trash2, UserCheck, UserX, Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
@@ -13,7 +13,7 @@ function getSortValue(user: AdminUser, key: SortKey): string | number {
     switch (key) {
         case 'number': return user.number
         case 'name': return user.name.toLowerCase()
-        case 'registeredOn': return user.registeredOn ? new Date(user.registeredOn.date).getTime() : 0
+        case 'registeredOn': return user.registeredOn ? new Date(user.registeredOn).getTime() : 0
         case 'email': return (user.email ?? '').toLowerCase()
         case 'admin': return user.isAdmin ? 0 : 1
     }
@@ -27,16 +27,13 @@ function SortIcon({ column, sortKey, sortDir }: { column: SortKey; sortKey: Sort
 }
 
 export default function AdminUsers() {
-    const [users, setUsers] = useState<AdminUser[] | null>(null)
-    const [refreshKey, setRefreshKey] = useState(0)
+    const { data: users, refetch } = useQuery<AdminUser[]>('/admin/users')
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
     const [token] = useLocalStorage('jwt', null)
     const currentUserId = token ? parseJwt(token).id : null
     const [search, setSearch] = useState('')
     const [sortKey, setSortKey] = useState<SortKey | null>(null)
     const [sortDir, setSortDir] = useState<SortDir>('asc')
-
-    useRequest<AdminUser[]>('/admin/users', [refreshKey], setUsers)
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -81,14 +78,14 @@ export default function AdminUsers() {
         const { ok } = await deleteAdminUser(playerId)
         if (ok) {
             setConfirmDelete(null)
-            setRefreshKey(k => k + 1)
+            refetch()
         }
     }
 
     const handleToggleAdmin = async (playerId: string) => {
         const { ok } = await toggleAdminRole(playerId)
         if (ok) {
-            setRefreshKey(k => k + 1)
+            refetch()
         }
     }
 
@@ -180,7 +177,7 @@ export default function AdminUsers() {
                                             </td>
                                             <td className="px-4 py-3 text-slate-400 font-mono text-xs">
                                                 {user.registeredOn
-                                                    ? new Date(user.registeredOn.date).toLocaleDateString('fr-FR')
+                                                    ? new Date(user.registeredOn).toLocaleDateString('fr-FR')
                                                     : '—'}
                                             </td>
                                             <td className="px-4 py-3 text-slate-400 text-xs">

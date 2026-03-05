@@ -175,6 +175,51 @@ class PlayerRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getUsageStats(Player $player): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $result = $conn->executeQuery("
+            SELECT
+                (SELECT COUNT(*) FROM custom_fields WHERE player_id = :playerId) as custom_fields_created,
+                (SELECT COUNT(*) FROM campaign WHERE created_by_id = :playerId) as campaigns_created,
+                (SELECT COUNT(*) FROM statistics_query WHERE player_id = :playerId) as saved_queries,
+                (SELECT COUNT(*) FROM player WHERE in_party_of_id = :playerId) as guest_players_created,
+                (SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE pr.player_id = :playerId AND e.campaign_id IS NOT NULL) as entries_in_campaigns,
+                (SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE pr.player_id = :playerId AND e.played_at >= date_trunc('month', CURRENT_DATE)) as entries_this_month
+        ", [
+            'playerId' => $player->getId(),
+        ]);
+
+        $row = $result->fetchAssociative();
+        assert($row !== false);
+
+        return $row;
+    }
+
+    /**
+     * @return array<array<string, mixed>>
+     */
+    public function getRecentActivity(Player $player): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        return $conn->executeQuery('
+            SELECT e.id as entry_id, g.id as game_id, e.played_at, g.name as game_name
+            FROM entry e
+            JOIN player_result pr ON pr.entry_id = e.id
+            JOIN game g ON e.game_id = g.id
+            WHERE pr.player_id = :playerId
+            ORDER BY e.played_at DESC
+            LIMIT 5
+        ', [
+            'playerId' => $player->getId(),
+        ])->fetchAllAssociative();
+    }
+
     public function findNextNumber(): int
     {
         $conn = $this->getEntityManager()->getConnection();
