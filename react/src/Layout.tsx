@@ -37,7 +37,7 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
   };
 
   return (
-    <div className='bg-[radial-gradient(ellipse_at_center,rgba(40,69,102,1),rgba(14,21,32,1))] h-screen overflow-y-auto'>
+    <div className='bg-[radial-gradient(ellipse_at_center,rgba(40,69,102,1),rgba(14,21,32,1))] h-screen overflow-y-auto overflow-x-hidden'>
       {searchModalOpen && playerId && (
         <SearchModal playerId={playerId} close={() => setSearchModalOpen(false)} />
       )}

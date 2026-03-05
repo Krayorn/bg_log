@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useQuery } from '../hooks/useQuery'
 import { useDebounce } from '../hooks/useDebounce'
 import { createGame, addGameToLibrary, updateOwnedGame } from '../api/games'
-import Layout from '../Layout'
+
 import { Puzzle, ExternalLink } from 'lucide-react'
 import { PlayerGameStats, Game } from '../types'
 
@@ -171,7 +171,7 @@ export default function Games() {
     const played = games.filter(g => g.game_owned_id === null)
 
     return (
-        <Layout>
+        <>
             <div className="text-white">
                 <header className="border-b border-slate-500/50 pb-4 flex items-center mb-8">
                     <div className="rounded-full border-cyan-400/50 border-2 p-2 bg-cyan-500/10 mr-4">
@@ -313,7 +313,7 @@ export default function Games() {
                     </section>
                 )}
             </div>
-        </Layout>
+        </>
     )
 }
 

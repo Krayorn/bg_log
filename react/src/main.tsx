@@ -10,6 +10,7 @@ import CampaignPage from './campaign/campaign.tsx'
 import AdminDashboard from './admin/dashboard.tsx'
 import AdminUsers from './admin/users.tsx'
 import StatsPage from './stats/stats.tsx'
+import PlayerTabsLayout from './PlayerTabsLayout.tsx'
 import './index.css'
 import {
   createBrowserRouter,
@@ -40,17 +41,26 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        path: "/players/:playerId",
-        element: <Home />,
+        path: ":playerId",
+        element: <PlayerTabsLayout />,
+        children: [
+          {
+            index: true,
+            element: <Home />,
+            handle: { tabKey: 'home', tabIndex: 0, direction: 'up' },
+          },
+          {
+            path: "games",
+            element: <Games />,
+            handle: { tabKey: 'games', tabIndex: 1, direction: 'left' },
+          },
+          {
+            path: "circle",
+            element: <Circle />,
+            handle: { tabKey: 'circle', tabIndex: 2, direction: 'right' },
+          },
+        ],
       },
-      {
-        path: "/players/:playerId/games",
-        element: <Games />,
-      },
-      {
-        path: "/players/:playerId/circle",
-        element: <Circle />,
-      }
     ]
   },
   {

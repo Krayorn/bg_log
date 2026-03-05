@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom"
 import { useQuery } from '../hooks/useQuery'
 import { createPlayer, synchronizePlayer, setNickname, removeNickname } from '../api/players'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
-import Layout from '../Layout'
+
 import { UserPlus, User } from 'lucide-react'
 import { CirclePlayer } from '../types'
 import { useCircle } from '../contexts/CircleContext'
@@ -44,7 +44,7 @@ export default function Circle() {
     const registered = circlePlayers.filter(p => !p.isGuest)
 
     return (
-        <Layout>
+        <>
             <header className="border-b border-slate-500/50 pb-4 flex items-center mb-8">
                 <div className="rounded-full border-cyan-400/50 border-2 p-2 bg-cyan-500/10 mr-4">
                     <User className="w-8 h-8 text-cyan-400" />
@@ -210,7 +210,7 @@ export default function Circle() {
                     </div>
                 )}
             </section>
-        </Layout>
+        </>
     )
 }
 

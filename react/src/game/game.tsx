@@ -9,6 +9,7 @@ import { GameDetailPanel } from './gameDetailPanel'
 import { BarChart3, FileText, Scroll } from 'lucide-react'
 import { CampaignPanel } from './campaignPanel'
 import { CustomField, Entry, Game as GameType, GameStats, CampaignSummary } from '../types'
+import { motion } from 'framer-motion'
 
 export default function Game() {
     const { gameId } = useParams() as { gameId: string }
@@ -115,49 +116,15 @@ export default function Game() {
     }, [fetchedCustomFieldsData])
     useEffect(() => { if (fetchedCampaigns) setCampaigns(fetchedCampaigns) }, [fetchedCampaigns])
 
-    if (game === null) {
-        return (
-            <Layout>
-                <div className='flex text-white h-[calc(100vh-7rem)]'>
-                    <aside className="w-80 shrink-0 flex flex-col bg-slate-950/60 backdrop-blur-md rounded-l-lg border border-cyan-400/20 border-r-0">
-                        <div className="shrink-0 border-b border-cyan-400/20 p-4">
-                            <div className="h-4 w-40 mx-auto rounded bg-slate-700/50 animate-pulse" />
-                            <div className="h-3 w-24 mx-auto rounded bg-slate-800/50 animate-pulse mt-2" />
-                        </div>
-                        <div className="flex border-t border-cyan-400/10">
-                            <div className="flex-1 py-3 flex justify-center">
-                                <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
-                            </div>
-                            <div className="w-px bg-cyan-400/10" />
-                            <div className="flex-1 py-3 flex justify-center">
-                                <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
-                            </div>
-                        </div>
-                        <div className="overflow-y-auto flex-1 p-2 space-y-2">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className="h-14 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
-                            ))}
-                        </div>
-                    </aside>
-                    <section className="flex-1 rounded-r-lg border border-slate-600/30 border-l-cyan-400/20 p-4">
-                        <div className="space-y-4">
-                            <div className="h-6 w-48 rounded bg-slate-700/50 animate-pulse" />
-                            <div className="h-4 w-64 rounded bg-slate-800/50 animate-pulse" />
-                            <div className="grid grid-cols-3 gap-4 mt-6">
-                                {Array.from({ length: 3 }).map((_, i) => (
-                                    <div key={i} className="h-24 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </Layout>
-        )
-    }
-
     return (
         <Layout>
-            <div className='flex text-white h-[calc(100vh-7rem)]'>
+            <motion.div
+                initial={{ y: '30%', opacity: 0, scale: 0.97, filter: 'blur(6px)' }}
+                animate={{ y: 0, opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className='flex text-white h-[calc(100vh-7rem)]'
+            >
+            {game === null ? <GameSkeleton /> : (<>
                 <aside className="w-80 shrink-0 flex flex-col bg-slate-950/60 backdrop-blur-md rounded-l-lg border border-cyan-400/20 border-r-0">
                     <div className="shrink-0 border-b border-cyan-400/20">
                         <div
@@ -243,7 +210,46 @@ export default function Game() {
                         />
                     )}
                 </section>
-            </div>
+            </>)}
+            </motion.div>
         </Layout>
+    )
+}
+
+function GameSkeleton() {
+    return (
+        <>
+            <aside className="w-80 shrink-0 flex flex-col bg-slate-950/60 backdrop-blur-md rounded-l-lg border border-cyan-400/20 border-r-0">
+                <div className="shrink-0 border-b border-cyan-400/20 p-4">
+                    <div className="h-4 w-40 mx-auto rounded bg-slate-700/50 animate-pulse" />
+                    <div className="h-3 w-24 mx-auto rounded bg-slate-800/50 animate-pulse mt-2" />
+                </div>
+                <div className="flex border-t border-cyan-400/10">
+                    <div className="flex-1 py-3 flex justify-center">
+                        <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
+                    </div>
+                    <div className="w-px bg-cyan-400/10" />
+                    <div className="flex-1 py-3 flex justify-center">
+                        <div className="h-3 w-16 rounded bg-slate-800/50 animate-pulse" />
+                    </div>
+                </div>
+                <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="h-14 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                    ))}
+                </div>
+            </aside>
+            <section className="flex-1 rounded-r-lg border border-slate-600/30 border-l-cyan-400/20 p-4">
+                <div className="space-y-4">
+                    <div className="h-6 w-48 rounded bg-slate-700/50 animate-pulse" />
+                    <div className="h-4 w-64 rounded bg-slate-800/50 animate-pulse" />
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="h-24 rounded-lg border border-slate-700/30 bg-slate-900/30 animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </>
     )
 }

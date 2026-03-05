@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom"
 import { useQuery } from '../hooks/useQuery'
 import { updatePlayerEmail } from '../api/players'
-import Layout from '../Layout'
+
 import { Landmark, User, Check, X, Pencil, ExternalLink, Gamepad2, Activity, Users, Trophy, Calendar, Settings, BookOpen, BarChart3, Zap, UserPlus } from 'lucide-react'
 import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer, PlayerUsageStats } from '../types'
 import { MissionBriefing } from '../components/MissionBriefing'
@@ -22,7 +22,7 @@ function Home() {
     )
 
     return (
-        <Layout> 
+        <> 
             <header className="border-b border-slate-500/50 pb-4 flex justify-between mb-8">
                 <div className="flex">
                     <div className="border-b border-slate-600">
@@ -104,7 +104,7 @@ function Home() {
                     </SciFiPanel>
                 </div>
             )}
-        </Layout>
+        </>
   )
 }
 
