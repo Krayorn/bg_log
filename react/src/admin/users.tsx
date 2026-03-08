@@ -11,19 +11,22 @@ type SortDir = 'asc' | 'desc'
 
 function getSortValue(user: AdminUser, key: SortKey): string | number {
     switch (key) {
-        case 'number': return user.number
-        case 'name': return user.name.toLowerCase()
-        case 'registeredOn': return user.registeredOn ? new Date(user.registeredOn).getTime() : 0
-        case 'email': return (user.email ?? '').toLowerCase()
-        case 'admin': return user.isAdmin ? 0 : 1
+        case 'number':
+            return user.number
+        case 'name':
+            return user.name.toLowerCase()
+        case 'registeredOn':
+            return user.registeredOn ? new Date(user.registeredOn).getTime() : 0
+        case 'email':
+            return (user.email ?? '').toLowerCase()
+        case 'admin':
+            return user.isAdmin ? 0 : 1
     }
 }
 
 function SortIcon({ column, sortKey, sortDir }: { column: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
     if (sortKey !== column) return <ChevronsUpDown className="w-3 h-3 text-slate-600" />
-    return sortDir === 'asc'
-        ? <ChevronUp className="w-3 h-3 text-cyan-400" />
-        : <ChevronDown className="w-3 h-3 text-cyan-400" />
+    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-cyan-400" /> : <ChevronDown className="w-3 h-3 text-cyan-400" />
 }
 
 export default function AdminUsers() {
@@ -55,10 +58,8 @@ export default function AdminUsers() {
 
         let result = users
         if (q) {
-            result = result.filter(u =>
-                u.name.toLowerCase().includes(q) ||
-                u.number.toString().includes(q) ||
-                (u.email ?? '').toLowerCase().includes(q)
+            result = result.filter(
+                (u) => u.name.toLowerCase().includes(q) || u.number.toString().includes(q) || (u.email ?? '').toLowerCase().includes(q),
             )
         }
 
@@ -118,7 +119,7 @@ export default function AdminUsers() {
                             <input
                                 type="text"
                                 value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search users..."
                                 className="bg-slate-900/60 border border-slate-600/40 rounded pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:border-cyan-400/50 focus:outline-none transition-colors w-56"
                             />
@@ -157,37 +158,25 @@ export default function AdminUsers() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredUsers?.map(user => {
+                                {filteredUsers?.map((user) => {
                                     const isSelf = user.id === currentUserId
                                     return (
                                         <tr
                                             key={user.id}
                                             className={`border-b border-slate-800/50 transition-colors ${
-                                                isSelf
-                                                    ? 'bg-cyan-500/5 border-l-2 border-l-cyan-400/50'
-                                                    : 'hover:bg-slate-800/30'
+                                                isSelf ? 'bg-cyan-500/5 border-l-2 border-l-cyan-400/50' : 'hover:bg-slate-800/30'
                                             }`}
                                         >
-                                            <td className="px-4 py-3 font-mono text-slate-500 text-xs">
-                                                {user.number.toString().padStart(4, '0')}
-                                            </td>
+                                            <td className="px-4 py-3 font-mono text-slate-500 text-xs">{user.number.toString().padStart(4, '0')}</td>
                                             <td className="px-4 py-3 text-white font-medium">
                                                 {user.name}
                                                 {isSelf && <span className="ml-2 text-[10px] text-cyan-400">(you)</span>}
                                             </td>
                                             <td className="px-4 py-3 text-slate-400 font-mono text-xs">
-                                                {user.registeredOn
-                                                    ? new Date(user.registeredOn).toLocaleDateString('fr-FR')
-                                                    : '—'}
+                                                {user.registeredOn ? new Date(user.registeredOn).toLocaleDateString('fr-FR') : '—'}
                                             </td>
-                                            <td className="px-4 py-3 text-slate-400 text-xs">
-                                                {user.email ?? '—'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {user.isAdmin && (
-                                                    <Shield className="w-4 h-4 text-cyan-400" />
-                                                )}
-                                            </td>
+                                            <td className="px-4 py-3 text-slate-400 text-xs">{user.email ?? '—'}</td>
+                                            <td className="px-4 py-3">{user.isAdmin && <Shield className="w-4 h-4 text-cyan-400" />}</td>
                                             <td className="px-4 py-3">
                                                 {isSelf ? (
                                                     <span className="text-[10px] text-slate-600">—</span>
@@ -202,10 +191,7 @@ export default function AdminUsers() {
                                                             }`}
                                                             title={user.isAdmin ? 'Remove admin' : 'Make admin'}
                                                         >
-                                                            {user.isAdmin
-                                                                ? <UserX className="w-4 h-4" />
-                                                                : <UserCheck className="w-4 h-4" />
-                                                            }
+                                                            {user.isAdmin ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                                                         </button>
                                                         {confirmDelete === user.id ? (
                                                             <div className="flex items-center gap-1">

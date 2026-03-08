@@ -110,7 +110,7 @@ class EntryController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse($entry->view(), Response::HTTP_CREATED);
+        return new JsonResponse($entry->view(), Response::HTTP_OK);
     }
 
     #[Route('api/entries/{entry}', name: 'delete_entry', methods: 'DELETE')]

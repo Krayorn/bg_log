@@ -47,21 +47,9 @@ class PlayerController extends BaseController
     public function players(Request $request, PlayerRepository $playerRepository): Response
     {
         $query = $request->query->get('q');
-        $rows = $playerRepository->searchAll($this->getPlayer(), $query);
+        $players = $playerRepository->searchAll($this->getPlayer(), $query);
 
-        $players = array_map(fn (array $row): array => [
-            'id' => $row['id'],
-            'name' => $row['name'],
-            'number' => $row['number'],
-            'registeredOn' => $row['registeredOn'],
-            'isGuest' => $row['registeredOn'] === null,
-            'inPartyOf' => $row['inPartyOfId'] !== null ? [
-                'id' => $row['inPartyOfId'],
-            ] : null,
-            'nickname' => $row['nickname'],
-        ], $rows);
-
-        return new JsonResponse($players, Response::HTTP_OK);
+        return new JsonResponse(array_map(fn (PlayerSearchResult $p): array => $p->view(), $players), Response::HTTP_OK);
     }
 
     #[Route('api/players', methods: 'POST')]
@@ -104,12 +92,13 @@ class PlayerController extends BaseController
         $email = $payload->getOptionalString('email');
 
         if ($email !== null) {
-            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            try {
+                $player->setEmail($email);
+            } catch (InvalidEmailException $e) {
                 return new JsonResponse([
-                    'errors' => ['Invalid email format'],
+                    'errors' => [$e->getMessage()],
                 ], Response::HTTP_BAD_REQUEST);
             }
-            $player->setEmail($email);
         }
 
         $entityManager->flush();
@@ -154,24 +143,9 @@ class PlayerController extends BaseController
     public function circle(Player $player, Request $request, PlayerRepository $playerRepository): Response
     {
         $includeSelf = $request->query->getBoolean('includeSelf', false);
-        $rows = $playerRepository->getCircle($player, $includeSelf);
+        $circle = $playerRepository->getCircle($player, $includeSelf);
 
-        $circle = array_map(fn (array $row): array => [
-            'id' => $row['id'],
-            'name' => $row['name'],
-            'number' => $row['number'],
-            'registeredOn' => $row['registered_on'],
-            'isGuest' => $row['registered_on'] === null,
-            'inPartyOf' => $row['in_party_of_id'] !== null ? [
-                'id' => $row['in_party_of_id'],
-            ] : null,
-            'nickname' => $row['nickname'],
-            'gamesPlayed' => (int) $row['games_played'],
-            'wins' => (int) $row['wins'],
-            'losses' => (int) $row['losses'],
-        ], $rows);
-
-        return new JsonResponse($circle, Response::HTTP_OK);
+        return new JsonResponse(array_map(fn (CirclePlayer $p): array => $p->view(), $circle), Response::HTTP_OK);
     }
 
     #[Route('api/players/{guestPlayer}/synchronize', methods: 'POST')]

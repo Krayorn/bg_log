@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from 'react'
 
 type EnumSelectProps = {
     options: string[]
@@ -7,12 +7,7 @@ type EnumSelectProps = {
     placeholder?: string
 }
 
-export default function EnumSelect({
-    options,
-    value,
-    onChange,
-    placeholder = "Select...",
-}: EnumSelectProps) {
+export default function EnumSelect({ options, value, onChange, placeholder = 'Select...' }: EnumSelectProps) {
     const [query, setQuery] = useState(value)
     const [open, setOpen] = useState(false)
     const [highlightIndex, setHighlightIndex] = useState(-1)
@@ -23,9 +18,7 @@ export default function EnumSelect({
         setQuery(value)
     }, [value])
 
-    const filtered = query
-        ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
-        : options
+    const filtered = query ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase())) : options
 
     useEffect(() => {
         setHighlightIndex(-1)
@@ -54,10 +47,10 @@ export default function EnumSelect({
 
         if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setHighlightIndex(i => Math.min(i + 1, filtered.length - 1))
+            setHighlightIndex((i) => Math.min(i + 1, filtered.length - 1))
         } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setHighlightIndex(i => Math.max(i - 1, 0))
+            setHighlightIndex((i) => Math.max(i - 1, 0))
         } else if (e.key === 'Enter') {
             e.preventDefault()
             if (highlightIndex >= 0 && highlightIndex < filtered.length) {
@@ -93,9 +86,7 @@ export default function EnumSelect({
                             key={option}
                             type="button"
                             className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                                i === highlightIndex
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-white hover:bg-slate-700'
+                                i === highlightIndex ? 'bg-cyan-500/20 text-cyan-400' : 'text-white hover:bg-slate-700'
                             }`}
                             onMouseEnter={() => setHighlightIndex(i)}
                             onClick={() => handleSelect(option)}

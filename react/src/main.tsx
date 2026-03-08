@@ -12,123 +12,118 @@ import AdminUsers from './admin/users.tsx'
 import StatsPage from './stats/stats.tsx'
 import PlayerTabsLayout from './PlayerTabsLayout.tsx'
 import './index.css'
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Outlet,
-  useNavigate
-} from "react-router-dom"
+import { createBrowserRouter, RouterProvider, Outlet, useNavigate } from 'react-router-dom'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { CircleProvider } from './contexts/CircleContext'
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Login />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: "/about",
-    element: <About />,
-  },
-  {
-    path: "/stats",
-    element: <StatsPage />,
-  },
-  {
-    path: "/players",
-    element: <ProtectedRoute />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        path: ":playerId",
-        element: <PlayerTabsLayout />,
+    {
+        path: '/',
+        element: <Login />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: '/about',
+        element: <About />,
+    },
+    {
+        path: '/stats',
+        element: <StatsPage />,
+    },
+    {
+        path: '/players',
+        element: <ProtectedRoute />,
+        errorElement: <ErrorPage />,
         children: [
-          {
-            index: true,
-            element: <Home />,
-            handle: { tabKey: 'home', tabIndex: 0, direction: 'up' },
-          },
-          {
-            path: "games",
-            element: <Games />,
-            handle: { tabKey: 'games', tabIndex: 1, direction: 'left' },
-          },
-          {
-            path: "circle",
-            element: <Circle />,
-            handle: { tabKey: 'circle', tabIndex: 2, direction: 'right' },
-          },
+            {
+                path: ':playerId',
+                element: <PlayerTabsLayout />,
+                children: [
+                    {
+                        index: true,
+                        element: <Home />,
+                        handle: { tabKey: 'home', tabIndex: 0, direction: 'up' },
+                    },
+                    {
+                        path: 'games',
+                        element: <Games />,
+                        handle: { tabKey: 'games', tabIndex: 1, direction: 'left' },
+                    },
+                    {
+                        path: 'circle',
+                        element: <Circle />,
+                        handle: { tabKey: 'circle', tabIndex: 2, direction: 'right' },
+                    },
+                ],
+            },
         ],
-      },
-    ]
-  },
-  {
-    path: "/games",
-    element: <ProtectedRoute />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        path: "/games/:gameId",
-        element: <Game />,
-      }
-    ]
-  },
-  {
-    path: "/campaigns",
-    element: <ProtectedRoute />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        path: "/campaigns/:campaignId",
-        element: <CampaignPage />,
-      }
-    ]
-  },
-  {
-    path: "/admin",
-    element: <ProtectedRoute />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        index: true,
-        element: <AdminDashboard />,
-      },
-      {
-        path: "/admin/users",
-        element: <AdminUsers />,
-      }
-    ]
-  },
+    },
+    {
+        path: '/games',
+        element: <ProtectedRoute />,
+        errorElement: <ErrorPage />,
+        children: [
+            {
+                path: '/games/:gameId',
+                element: <Game />,
+            },
+        ],
+    },
+    {
+        path: '/campaigns',
+        element: <ProtectedRoute />,
+        errorElement: <ErrorPage />,
+        children: [
+            {
+                path: '/campaigns/:campaignId',
+                element: <CampaignPage />,
+            },
+        ],
+    },
+    {
+        path: '/admin',
+        element: <ProtectedRoute />,
+        errorElement: <ErrorPage />,
+        children: [
+            {
+                index: true,
+                element: <AdminDashboard />,
+            },
+            {
+                path: '/admin/users',
+                element: <AdminUsers />,
+            },
+        ],
+    },
 ])
 
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
+    <React.StrictMode>
+        <RouterProvider router={router} />
+    </React.StrictMode>,
 )
 
 export function ProtectedRoute() {
-  const navigate = useNavigate()
-  const [token] = useLocalStorage('jwt', null)
+    const navigate = useNavigate()
+    const [token] = useLocalStorage('jwt', null)
 
-  useEffect(() => {
-    if (token === null) {
-      navigate('/')
-    }
-  }, [token, navigate])
+    useEffect(() => {
+        if (token === null) {
+            navigate('/')
+        }
+    }, [token, navigate])
 
-  return (<div>
-    {token !== null && <CircleProvider><Outlet /></CircleProvider>}
-  </div>)
+    return (
+        <div>
+            {token !== null && (
+                <CircleProvider>
+                    <Outlet />
+                </CircleProvider>
+            )}
+        </div>
+    )
 }
 
 export function ErrorPage() {
-  return (
-    <main>
-      This page does not exist.
-    </main>
-  )
+    return <main>This page does not exist.</main>
 }
-

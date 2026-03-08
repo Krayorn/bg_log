@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useCircle } from '../contexts/CircleContext'
 import { patchEntry as apiPatchEntry, deleteEntry } from '../api/entries'
 import PlayerSearchSelect from '../components/PlayerSearchSelect'
 import EnumSelect from '../components/EnumSelect'
-import MultiEnumSelect from "../components/MultiEnumSelect"
+import MultiEnumSelect from '../components/MultiEnumSelect'
 import { Plus, X, Scroll, Trash2 } from 'lucide-react'
 import GameOwnerSearchSelect from '../components/GameOwnerSearchSelect'
 import { CustomField, Entry, CampaignSummary } from '../types'
@@ -19,38 +19,39 @@ type EntryListItemProps = {
 export function EntryListItem({ entry, isCurrent, onClick, playerId }: EntryListItemProps) {
     const { displayName } = useCircle()
     const playedAt = new Date(entry.playedAt)
-    const playerResult = playerId ? entry.players.find(p => p.player.id === playerId) : null
+    const playerResult = playerId ? entry.players.find((p) => p.player.id === playerId) : null
     const won = playerResult?.won
 
     return (
         <div
             onClick={onClick}
-            className={`p-3 cursor-pointer transition-all border-b border-cyan-400/10 ${isCurrent
-                ? 'bg-gradient-to-r from-cyan-500/15 to-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.2),2px_0_8px_-2px_rgba(34,211,238,0.3)]'
-                : 'hover:bg-slate-800/30'
-                }`}
+            className={`p-3 cursor-pointer transition-all border-b border-cyan-400/10 ${
+                isCurrent
+                    ? 'bg-gradient-to-r from-cyan-500/15 to-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.2),2px_0_8px_-2px_rgba(34,211,238,0.3)]'
+                    : 'hover:bg-slate-800/30'
+            }`}
         >
             <div className="flex items-center justify-between mb-2">
-                <span className={`text-sm font-mono ${isCurrent ? 'text-cyan-400' : 'text-slate-500'}`}>
-                    {playedAt.toLocaleDateString('fr-FR')}
-                </span>
+                <span className={`text-sm font-mono ${isCurrent ? 'text-cyan-400' : 'text-slate-500'}`}>{playedAt.toLocaleDateString('fr-FR')}</span>
                 {won !== null && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${won
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
+                    <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                            won
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}
+                    >
                         {won ? 'Win' : 'Loss'}
                     </span>
                 )}
             </div>
             <div className="text-sm text-slate-300 truncate">
-                {[...entry.players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map(p => displayName(p.player.id, p.player.name)).join(', ')}
+                {[...entry.players]
+                    .sort((a, b) => a.player.name.localeCompare(b.player.name))
+                    .map((p) => displayName(p.player.id, p.player.name))
+                    .join(', ')}
             </div>
-            {entry.note && (
-                <div className="text-xs text-slate-500 mt-1 truncate">
-                    {entry.note.split(';')[0]}
-                </div>
-            )}
+            {entry.note && <div className="text-xs text-slate-500 mt-1 truncate">{entry.note.split(';')[0]}</div>}
             {entry.campaign && (
                 <div className="mt-1">
                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -76,14 +77,22 @@ type EntryDetailPanelProps = {
     campaigns: CampaignSummary[]
 }
 
-export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEntryDeleted, customFields: gameCustomFields, campaigns }: EntryDetailPanelProps) {
+export function EntryDetailPanel({
+    entry,
+    gameId,
+    playerId,
+    onEntryUpdated,
+    onEntryDeleted,
+    customFields: gameCustomFields,
+    campaigns,
+}: EntryDetailPanelProps) {
     const { players: circlePlayers, displayName } = useCircle()
     const [editField, setEditField] = useState<string | null>(null)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [note, setNote] = useState(entry.note)
     const [playedAt, setPlayedAt] = useState(new Date(entry.playedAt))
-    const [players, setPlayers] = useState(entry.players.map(p => ({ ...p })))
-    const [customFields, setCustomFields] = useState(entry.customFields.map(c => ({ ...c })))
+    const [players, setPlayers] = useState(entry.players.map((p) => ({ ...p })))
+    const [customFields, setCustomFields] = useState(entry.customFields.map((c) => ({ ...c })))
     const [showAddPlayer, setShowAddPlayer] = useState(false)
     const [selectedCampaignId, setSelectedCampaignId] = useState<string>(entry.campaign?.id ?? '')
     const [selectedGameUsed, setSelectedGameUsed] = useState<string>(entry.gameUsed?.id ?? '')
@@ -91,8 +100,8 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     useEffect(() => {
         setNote(entry.note)
         setPlayedAt(new Date(entry.playedAt))
-        setPlayers(entry.players.map(p => ({ ...p })))
-        setCustomFields(entry.customFields.map(c => ({ ...c })))
+        setPlayers(entry.players.map((p) => ({ ...p })))
+        setCustomFields(entry.customFields.map((c) => ({ ...c })))
         setSelectedCampaignId(entry.campaign?.id ?? '')
         setSelectedGameUsed(entry.gameUsed?.id ?? '')
     }, [entry])
@@ -127,17 +136,17 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     }
 
     const handleEntryCustomFieldBlur = async (customField: CustomField, value: string, existingValueId?: string) => {
-        const originalValue = entry.customFields.find(c => c.customField.id === customField.id)
+        const originalValue = entry.customFields.find((c) => c.customField.id === customField.id)
 
         if (originalValue === undefined && value !== '') {
             await patchEntry({
-                customFields: [{ kind: "add", payload: { id: customField.id, value } }],
-                players: []
+                customFields: [{ kind: 'add', payload: { id: customField.id, value } }],
+                players: [],
             })
         } else if (originalValue && originalValue.value !== value) {
             await patchEntry({
-                customFields: [{ kind: "update", id: existingValueId, payload: { value } }],
-                players: []
+                customFields: [{ kind: 'update', id: existingValueId, payload: { value } }],
+                players: [],
             })
         }
         if (!customField.multiple) {
@@ -146,43 +155,47 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     }
 
     const handlePlayerNoteBlur = async (playerResultId: string, newNote: string) => {
-        const originalPlayer = entry.players.find(p => p.id === playerResultId)
+        const originalPlayer = entry.players.find((p) => p.id === playerResultId)
         if (originalPlayer && originalPlayer.note !== newNote) {
             await patchEntry({
                 customFields: [],
-                players: [{ kind: "update", id: playerResultId, payload: { note: newNote, customFields: [] } }]
+                players: [{ kind: 'update', id: playerResultId, payload: { note: newNote, customFields: [] } }],
             })
         }
         setEditField(null)
     }
 
     const handlePlayerCustomFieldBlur = async (playerResultId: string, customField: CustomField, value: string, existingValueId?: string) => {
-        const originalPlayer = entry.players.find(p => p.id === playerResultId)
+        const originalPlayer = entry.players.find((p) => p.id === playerResultId)
         if (!originalPlayer) return
 
-        const originalValue = originalPlayer.customFields.find(c => c.customField.id === customField.id)
+        const originalValue = originalPlayer.customFields.find((c) => c.customField.id === customField.id)
 
         if (originalValue === undefined && value !== '') {
             await patchEntry({
                 customFields: [],
-                players: [{
-                    kind: "update",
-                    id: playerResultId,
-                    payload: {
-                        customFields: [{ kind: "add", payload: { id: customField.id, value } }]
-                    }
-                }]
+                players: [
+                    {
+                        kind: 'update',
+                        id: playerResultId,
+                        payload: {
+                            customFields: [{ kind: 'add', payload: { id: customField.id, value } }],
+                        },
+                    },
+                ],
             })
         } else if (originalValue && originalValue.value !== value) {
             await patchEntry({
                 customFields: [],
-                players: [{
-                    kind: "update",
-                    id: playerResultId,
-                    payload: {
-                        customFields: [{ kind: "update", id: existingValueId, payload: { value } }]
-                    }
-                }]
+                players: [
+                    {
+                        kind: 'update',
+                        id: playerResultId,
+                        payload: {
+                            customFields: [{ kind: 'update', id: existingValueId, payload: { value } }],
+                        },
+                    },
+                ],
             })
         }
         if (!customField.multiple) {
@@ -192,21 +205,23 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
 
     const handleRemoveEntryCustomField = async (customFieldValueId: string) => {
         await patchEntry({
-            customFields: [{ kind: "remove", id: customFieldValueId }],
-            players: []
+            customFields: [{ kind: 'remove', id: customFieldValueId }],
+            players: [],
         })
     }
 
     const handleRemovePlayerCustomField = async (playerResultId: string, customFieldValueId: string) => {
         await patchEntry({
             customFields: [],
-            players: [{
-                kind: "update",
-                id: playerResultId,
-                payload: {
-                    customFields: [{ kind: "remove", id: customFieldValueId }]
-                }
-            }]
+            players: [
+                {
+                    kind: 'update',
+                    id: playerResultId,
+                    payload: {
+                        customFields: [{ kind: 'remove', id: customFieldValueId }],
+                    },
+                },
+            ],
         })
     }
 
@@ -215,12 +230,12 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
         await patchEntry({
             campaign: campaignId || 'null',
             customFields: [],
-            players: []
+            players: [],
         })
     }
 
     const updateLocalCustomField = (customField: CustomField, value: string) => {
-        const existingIndex = customFields.findIndex(cf => cf.customField.id === customField.id)
+        const existingIndex = customFields.findIndex((cf) => cf.customField.id === customField.id)
         if (existingIndex >= 0) {
             const updated = [...customFields]
             updated[existingIndex] = { ...updated[existingIndex], value }
@@ -231,29 +246,29 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
     }
 
     const updateLocalPlayerNote = (playerResultId: string, newNote: string) => {
-        setPlayers(players.map(p =>
-            p.id === playerResultId ? { ...p, note: newNote } : p
-        ))
+        setPlayers(players.map((p) => (p.id === playerResultId ? { ...p, note: newNote } : p)))
     }
 
     const updateLocalPlayerCustomField = (playerResultId: string, customField: CustomField, value: string) => {
-        setPlayers(players.map(p => {
-            if (p.id !== playerResultId) return p
-            const existingIndex = p.customFields.findIndex(cf => cf.customField.id === customField.id)
-            if (existingIndex >= 0) {
-                const updatedCf = [...p.customFields]
-                updatedCf[existingIndex] = { ...updatedCf[existingIndex], value }
-                return { ...p, customFields: updatedCf }
-            } else {
-                return { ...p, customFields: [...p.customFields, { value, customField, id: '' }] }
-            }
-        }))
+        setPlayers(
+            players.map((p) => {
+                if (p.id !== playerResultId) return p
+                const existingIndex = p.customFields.findIndex((cf) => cf.customField.id === customField.id)
+                if (existingIndex >= 0) {
+                    const updatedCf = [...p.customFields]
+                    updatedCf[existingIndex] = { ...updatedCf[existingIndex], value }
+                    return { ...p, customFields: updatedCf }
+                } else {
+                    return { ...p, customFields: [...p.customFields, { value, customField, id: '' }] }
+                }
+            }),
+        )
     }
 
     const handleRemovePlayer = async (playerResultId: string) => {
         await patchEntry({
             customFields: [],
-            players: [{ kind: "remove", id: playerResultId }]
+            players: [{ kind: 'remove', id: playerResultId }],
         })
     }
 
@@ -262,16 +277,18 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
 
         await patchEntry({
             customFields: [],
-            players: [{
-                kind: "update",
-                id: playerResultId,
-                payload: { won: newWon, customFields: [] }
-            }]
+            players: [
+                {
+                    kind: 'update',
+                    id: playerResultId,
+                    payload: { won: newWon, customFields: [] },
+                },
+            ],
         })
     }
 
-    const globalCustomFields = gameCustomFields.filter(c => c.scope === 'entry')
-    const playerCustomFields = gameCustomFields.filter(c => c.scope === 'playerResult')
+    const globalCustomFields = gameCustomFields.filter((c) => c.scope === 'entry')
+    const playerCustomFields = gameCustomFields.filter((c) => c.scope === 'playerResult')
 
     return (
         <div className="overflow-y-auto h-full space-y-6">
@@ -308,7 +325,6 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
             </div>
 
             <div className="border-b border-slate-600/30 pb-6">
-
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Date Played</label>
@@ -336,11 +352,13 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                         <select
                             className="p-2 rounded bg-slate-700 text-white border border-slate-500"
                             value={selectedCampaignId}
-                            onChange={e => handleCampaignChange(e.target.value)}
+                            onChange={(e) => handleCampaignChange(e.target.value)}
                         >
                             <option value="">No campaign</option>
-                            {campaigns.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
+                            {campaigns.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
                             ))}
                         </select>
                         {entry.campaign && (
@@ -394,15 +412,15 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                         <div className="border border-slate-500 p-4 rounded-lg bg-slate-800/50">
                             <h3 className="text-white font-medium mb-3">Entry Custom Fields</h3>
                             <div className="flex flex-wrap gap-3">
-                                {globalCustomFields.map(cf => {
-                                    const cfValues = customFields.filter(c => c.customField.id === cf.id)
+                                {globalCustomFields.map((cf) => {
+                                    const cfValues = customFields.filter((c) => c.customField.id === cf.id)
                                     const cfValue = cfValues[0]
                                     const fieldKey = `cf-${cf.id}`
                                     return (
                                         <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
                                             <div className="flex items-center gap-2">
                                                 <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                {cfValues.length > 0 && cfValues.some(v => v.id) && (
+                                                {cfValues.length > 0 && cfValues.some((v) => v.id) && (
                                                     <button
                                                         onClick={async () => {
                                                             for (const cv of cfValues) {
@@ -421,18 +439,18 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                     cf.kind === 'enum' ? (
                                                         <div className="flex flex-wrap gap-2">
                                                             <MultiEnumSelect
-                                                                options={cf.enumValues.map(v => v.value)}
-                                                                selected={cfValues.map(v => String(v.value))}
+                                                                options={cf.enumValues.map((v) => v.value)}
+                                                                selected={cfValues.map((v) => String(v.value))}
                                                                 onChange={async (values) => {
-                                                                    const toRemove = cfValues.filter(v => !values.includes(String(v.value)))
-                                                                    const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
+                                                                    const toRemove = cfValues.filter((v) => !values.includes(String(v.value)))
+                                                                    const toAdd = values.filter((v) => !cfValues.some((cv) => cv.value === v))
                                                                     for (const cv of toRemove) {
                                                                         if (cv.id) await handleRemoveEntryCustomField(cv.id)
                                                                     }
                                                                     for (const v of toAdd) {
                                                                         await patchEntry({
-                                                                            customFields: [{ kind: "add", payload: { id: cf.id, value: v } }],
-                                                                            players: []
+                                                                            customFields: [{ kind: 'add', payload: { id: cf.id, value: v } }],
+                                                                            players: [],
                                                                         })
                                                                     }
                                                                     setEditField(null)
@@ -456,7 +474,7 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                                         value={cv.value ?? ''}
                                                                         onChange={(e) => {
                                                                             const updated = [...customFields]
-                                                                            const globalIdx = updated.findIndex(c => c === cv)
+                                                                            const globalIdx = updated.findIndex((c) => c === cv)
                                                                             if (globalIdx >= 0) updated[globalIdx] = { ...cv, value: e.target.value }
                                                                             setCustomFields(updated)
                                                                         }}
@@ -465,8 +483,13 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                                                 await handleEntryCustomFieldBlur(cf, e.target.value, cv.id)
                                                                             } else if (e.target.value) {
                                                                                 await patchEntry({
-                                                                                    customFields: [{ kind: "add", payload: { id: cf.id, value: e.target.value } }],
-                                                                                    players: []
+                                                                                    customFields: [
+                                                                                        {
+                                                                                            kind: 'add',
+                                                                                            payload: { id: cf.id, value: e.target.value },
+                                                                                        },
+                                                                                    ],
+                                                                                    players: [],
                                                                                 })
                                                                             }
                                                                         }}
@@ -506,42 +529,42 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                         onClick={() => setEditField(fieldKey)}
                                                         className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400"
                                                     >
-                                                        {cfValues.length > 0
-                                                            ? cfValues.map(v => v.value).join(', ')
-                                                            : <span className="text-slate-500">Not set</span>}
+                                                        {cfValues.length > 0 ? (
+                                                            cfValues.map((v) => v.value).join(', ')
+                                                        ) : (
+                                                            <span className="text-slate-500">Not set</span>
+                                                        )}
                                                     </div>
+                                                )
+                                            ) : editField === fieldKey ? (
+                                                cf.kind === 'enum' ? (
+                                                    <EnumSelect
+                                                        options={cf.enumValues.map((v) => v.value)}
+                                                        value={String(cfValue?.value ?? '')}
+                                                        onChange={(v) => {
+                                                            updateLocalCustomField(cf, v)
+                                                            handleEntryCustomFieldBlur(cf, v, cfValue?.id)
+                                                        }}
+                                                        placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        autoFocus
+                                                        type={cf.kind === 'number' ? 'number' : 'text'}
+                                                        value={cfValue?.value ?? ''}
+                                                        onChange={(e) => updateLocalCustomField(cf, e.target.value)}
+                                                        onBlur={(e) => handleEntryCustomFieldBlur(cf, e.target.value, cfValue?.id)}
+                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                                                    />
                                                 )
                                             ) : (
-                                                editField === fieldKey ? (
-                                                    cf.kind === 'enum' ? (
-                                                        <EnumSelect
-                                                            options={cf.enumValues.map(v => v.value)}
-                                                            value={String(cfValue?.value ?? '')}
-                                                            onChange={(v) => {
-                                                                updateLocalCustomField(cf, v)
-                                                                handleEntryCustomFieldBlur(cf, v, cfValue?.id)
-                                                            }}
-                                                            placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                                        />
-                                                    ) : (
-                                                        <input
-                                                            autoFocus
-                                                            type={cf.kind === 'number' ? 'number' : 'text'}
-                                                            value={cfValue?.value ?? ''}
-                                                            onChange={(e) => updateLocalCustomField(cf, e.target.value)}
-                                                            onBlur={(e) => handleEntryCustomFieldBlur(cf, e.target.value, cfValue?.id)}
-                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                                                        />
-                                                    )
-                                                ) : (
-                                                    <div
-                                                        onClick={() => setEditField(fieldKey)}
-                                                        className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400"
-                                                    >
-                                                        {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
-                                                    </div>
-                                                )
+                                                <div
+                                                    onClick={() => setEditField(fieldKey)}
+                                                    className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400"
+                                                >
+                                                    {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
+                                                </div>
                                             )}
                                         </div>
                                     )
@@ -573,19 +596,21 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                             <label className="text-slate-300 text-xs block mb-1">Search Player</label>
                             <PlayerSearchSelect
                                 players={circlePlayers}
-                                excludeIds={players.map(p => p.player.id)}
+                                excludeIds={players.map((p) => p.player.id)}
                                 onSelect={async (p) => {
                                     await patchEntry({
                                         customFields: [],
-                                        players: [{
-                                            kind: "add",
-                                            payload: {
-                                                playerId: p.id,
-                                                note: '',
-                                                won: null,
-                                                customFields: []
-                                            }
-                                        }]
+                                        players: [
+                                            {
+                                                kind: 'add',
+                                                payload: {
+                                                    playerId: p.id,
+                                                    note: '',
+                                                    won: null,
+                                                    customFields: [],
+                                                },
+                                            },
+                                        ],
                                     })
                                     setShowAddPlayer(false)
                                 }}
@@ -604,199 +629,236 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                 )}
 
                 <div className="flex flex-wrap gap-3">
-                    {[...players].sort((a, b) => a.player.name.localeCompare(b.player.name)).map((playerResult) => (
-                        <div key={playerResult.id} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-white font-medium flex-1 truncate">
-                                    {displayName(playerResult.player.id, playerResult.player.name)}
-                                </span>
-                                <button
-                                    onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
-                                    className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${playerResult.won === true
-                                        ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400'
-                                        : playerResult.won === false
-                                            ? 'bg-red-500/20 border-red-400/50 text-red-400'
-                                            : 'bg-slate-700 border-slate-500 text-slate-400'
+                    {[...players]
+                        .sort((a, b) => a.player.name.localeCompare(b.player.name))
+                        .map((playerResult) => (
+                            <div
+                                key={playerResult.id}
+                                className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-white font-medium flex-1 truncate">
+                                        {displayName(playerResult.player.id, playerResult.player.name)}
+                                    </span>
+                                    <button
+                                        onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
+                                        className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${
+                                            playerResult.won === true
+                                                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400'
+                                                : playerResult.won === false
+                                                  ? 'bg-red-500/20 border-red-400/50 text-red-400'
+                                                  : 'bg-slate-700 border-slate-500 text-slate-400'
                                         }`}
-                                    title="Click to toggle: Win → Loss → Not set"
-                                >
-                                    {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
-                                </button>
-                                <button
-                                    onClick={() => handleRemovePlayer(playerResult.id)}
-                                    className="text-red-400 hover:text-red-300 shrink-0"
-                                    title="Remove player"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                                <label className="text-slate-300 text-xs">Notes</label>
-                                {editField === `player-${playerResult.id}-note` ? (
-                                    <textarea
-                                        autoFocus
-                                        value={playerResult.note}
-                                        onChange={(e) => updateLocalPlayerNote(playerResult.id, e.target.value)}
-                                        onBlur={(e) => handlePlayerNoteBlur(playerResult.id, e.target.value)}
-                                        placeholder="Player notes..."
-                                        rows={2}
-                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
-                                    />
-                                ) : (
-                                    <div
-                                        onClick={() => setEditField(`player-${playerResult.id}-note`)}
-                                        className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm min-h-[40px]"
+                                        title="Click to toggle: Win → Loss → Not set"
                                     >
-                                        {playerResult.note || <span className="text-slate-500">No notes...</span>}
-                                    </div>
-                                )}
-                            </div>
+                                        {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleRemovePlayer(playerResult.id)}
+                                        className="text-red-400 hover:text-red-300 shrink-0"
+                                        title="Remove player"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
 
-                            {playerCustomFields.length > 0 && (
-                                <div className="border-t border-slate-600 pt-2 mt-1">
-                                    <span className="text-slate-400 text-xs">Custom Fields</span>
-                                    {playerCustomFields.map(cf => {
-                                        const cfValues = playerResult.customFields.filter(c => c.customField.id === cf.id)
-                                        const cfValue = cfValues[0]
-                                        const fieldKey = `player-${playerResult.id}-cf-${cf.id}`
-                                        return (
-                                            <div key={cf.id} className="flex flex-col gap-1 mt-2">
-                                                <div className="flex items-center gap-2">
-                                                    <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                    {cfValues.length > 0 && cfValues.some(v => v.id) && (
-                                                        <button
-                                                            onClick={async () => {
-                                                                for (const cv of cfValues) {
-                                                                    if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)
-                                                                }
-                                                            }}
-                                                            className="text-slate-500 hover:text-red-400 text-xs"
-                                                            title="Remove value"
-                                                        >
-                                                            unset
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {cf.multiple ? (
-                                                    editField === fieldKey ? (
-                                                        cf.kind === 'enum' ? (
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <MultiEnumSelect
-                                                                    options={cf.enumValues.map(v => v.value)}
-                                                                    selected={cfValues.map(v => String(v.value))}
-                                                                    onChange={async (values) => {
-                                                                        const toRemove = cfValues.filter(v => !values.includes(String(v.value)))
-                                                                        const toAdd = values.filter(v => !cfValues.some(cv => cv.value === v))
-                                                                        for (const cv of toRemove) {
-                                                                            if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)
-                                                                        }
-                                                                        for (const v of toAdd) {
-                                                                            await patchEntry({
-                                                                                customFields: [],
-                                                                                players: [{
-                                                                                    kind: "update",
-                                                                                    id: playerResult.id,
-                                                                                    payload: {
-                                                                                        customFields: [{ kind: "add", payload: { id: cf.id, value: v } }]
-                                                                                    }
-                                                                                }]
-                                                                            })
-                                                                        }
-                                                                        setEditField(null)
-                                                                    }}
-                                                                    placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                                                />
-                                                                <button
-                                                                    onClick={() => setEditField(null)}
-                                                                    className="text-slate-400 hover:text-white text-xs ml-2"
-                                                                >
-                                                                    Done
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex flex-col gap-1">
-                                                                {cfValues.map((cv, idx) => (
-                                                                    <div key={cv.id || idx} className="flex gap-1">
-                                                                        <input
-                                                                            autoFocus={idx === cfValues.length - 1}
-                                                                            type={cf.kind === 'number' ? 'number' : 'text'}
-                                                                            value={cv.value ?? ''}
-                                                                            onChange={(e) => {
-                                                                                const updated = players.map(p => {
-                                                                                    if (p.id !== playerResult.id) return p
-                                                                                    const updatedCf = [...p.customFields]
-                                                                                    const cfIdx = updatedCf.findIndex(c => c === cv)
-                                                                                    if (cfIdx >= 0) updatedCf[cfIdx] = { ...cv, value: e.target.value }
-                                                                                    return { ...p, customFields: updatedCf }
-                                                                                })
-                                                                                setPlayers(updated)
-                                                                            }}
-                                                                            onBlur={async (e) => {
-                                                                                if (cv.id) {
-                                                                                    await handlePlayerCustomFieldBlur(playerResult.id, cf, e.target.value, cv.id)
-                                                                                } else if (e.target.value) {
-                                                                                    await patchEntry({
-                                                                                        customFields: [],
-                                                                                        players: [{
-                                                                                            kind: "update",
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-slate-300 text-xs">Notes</label>
+                                    {editField === `player-${playerResult.id}-note` ? (
+                                        <textarea
+                                            autoFocus
+                                            value={playerResult.note}
+                                            onChange={(e) => updateLocalPlayerNote(playerResult.id, e.target.value)}
+                                            onBlur={(e) => handlePlayerNoteBlur(playerResult.id, e.target.value)}
+                                            placeholder="Player notes..."
+                                            rows={2}
+                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
+                                        />
+                                    ) : (
+                                        <div
+                                            onClick={() => setEditField(`player-${playerResult.id}-note`)}
+                                            className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm min-h-[40px]"
+                                        >
+                                            {playerResult.note || <span className="text-slate-500">No notes...</span>}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {playerCustomFields.length > 0 && (
+                                    <div className="border-t border-slate-600 pt-2 mt-1">
+                                        <span className="text-slate-400 text-xs">Custom Fields</span>
+                                        {playerCustomFields.map((cf) => {
+                                            const cfValues = playerResult.customFields.filter((c) => c.customField.id === cf.id)
+                                            const cfValue = cfValues[0]
+                                            const fieldKey = `player-${playerResult.id}-cf-${cf.id}`
+                                            return (
+                                                <div key={cf.id} className="flex flex-col gap-1 mt-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-slate-300 text-xs">{cf.name}</label>
+                                                        {cfValues.length > 0 && cfValues.some((v) => v.id) && (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    for (const cv of cfValues) {
+                                                                        if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)
+                                                                    }
+                                                                }}
+                                                                className="text-slate-500 hover:text-red-400 text-xs"
+                                                                title="Remove value"
+                                                            >
+                                                                unset
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {cf.multiple ? (
+                                                        editField === fieldKey ? (
+                                                            cf.kind === 'enum' ? (
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    <MultiEnumSelect
+                                                                        options={cf.enumValues.map((v) => v.value)}
+                                                                        selected={cfValues.map((v) => String(v.value))}
+                                                                        onChange={async (values) => {
+                                                                            const toRemove = cfValues.filter((v) => !values.includes(String(v.value)))
+                                                                            const toAdd = values.filter((v) => !cfValues.some((cv) => cv.value === v))
+                                                                            for (const cv of toRemove) {
+                                                                                if (cv.id) await handleRemovePlayerCustomField(playerResult.id, cv.id)
+                                                                            }
+                                                                            for (const v of toAdd) {
+                                                                                await patchEntry({
+                                                                                    customFields: [],
+                                                                                    players: [
+                                                                                        {
+                                                                                            kind: 'update',
                                                                                             id: playerResult.id,
                                                                                             payload: {
-                                                                                                customFields: [{ kind: "add", payload: { id: cf.id, value: e.target.value } }]
-                                                                                            }
-                                                                                        }]
+                                                                                                customFields: [
+                                                                                                    { kind: 'add', payload: { id: cf.id, value: v } },
+                                                                                                ],
+                                                                                            },
+                                                                                        },
+                                                                                    ],
+                                                                                })
+                                                                            }
+                                                                            setEditField(null)
+                                                                        }}
+                                                                        placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => setEditField(null)}
+                                                                        className="text-slate-400 hover:text-white text-xs ml-2"
+                                                                    >
+                                                                        Done
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-col gap-1">
+                                                                    {cfValues.map((cv, idx) => (
+                                                                        <div key={cv.id || idx} className="flex gap-1">
+                                                                            <input
+                                                                                autoFocus={idx === cfValues.length - 1}
+                                                                                type={cf.kind === 'number' ? 'number' : 'text'}
+                                                                                value={cv.value ?? ''}
+                                                                                onChange={(e) => {
+                                                                                    const updated = players.map((p) => {
+                                                                                        if (p.id !== playerResult.id) return p
+                                                                                        const updatedCf = [...p.customFields]
+                                                                                        const cfIdx = updatedCf.findIndex((c) => c === cv)
+                                                                                        if (cfIdx >= 0)
+                                                                                            updatedCf[cfIdx] = { ...cv, value: e.target.value }
+                                                                                        return { ...p, customFields: updatedCf }
                                                                                     })
-                                                                                }
-                                                                            }}
-                                                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400 flex-1"
-                                                                        />
-                                                                        {cv.id && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleRemovePlayerCustomField(playerResult.id, cv.id)}
-                                                                                className="text-slate-400 hover:text-red-400"
-                                                                            >
-                                                                                <X className="w-4 h-4" />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setPlayers(players.map(p => {
-                                                                            if (p.id !== playerResult.id) return p
-                                                                            return { ...p, customFields: [...p.customFields, { value: '', customField: cf, id: '' }] }
-                                                                        }))
-                                                                    }}
-                                                                    className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
-                                                                >
-                                                                    + Add another
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setEditField(null)}
-                                                                    className="text-slate-400 hover:text-white text-xs self-start"
-                                                                >
-                                                                    Done
-                                                                </button>
+                                                                                    setPlayers(updated)
+                                                                                }}
+                                                                                onBlur={async (e) => {
+                                                                                    if (cv.id) {
+                                                                                        await handlePlayerCustomFieldBlur(
+                                                                                            playerResult.id,
+                                                                                            cf,
+                                                                                            e.target.value,
+                                                                                            cv.id,
+                                                                                        )
+                                                                                    } else if (e.target.value) {
+                                                                                        await patchEntry({
+                                                                                            customFields: [],
+                                                                                            players: [
+                                                                                                {
+                                                                                                    kind: 'update',
+                                                                                                    id: playerResult.id,
+                                                                                                    payload: {
+                                                                                                        customFields: [
+                                                                                                            {
+                                                                                                                kind: 'add',
+                                                                                                                payload: {
+                                                                                                                    id: cf.id,
+                                                                                                                    value: e.target.value,
+                                                                                                                },
+                                                                                                            },
+                                                                                                        ],
+                                                                                                    },
+                                                                                                },
+                                                                                            ],
+                                                                                        })
+                                                                                    }
+                                                                                }}
+                                                                                placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400 flex-1"
+                                                                            />
+                                                                            {cv.id && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        handleRemovePlayerCustomField(playerResult.id, cv.id)
+                                                                                    }
+                                                                                    className="text-slate-400 hover:text-red-400"
+                                                                                >
+                                                                                    <X className="w-4 h-4" />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setPlayers(
+                                                                                players.map((p) => {
+                                                                                    if (p.id !== playerResult.id) return p
+                                                                                    return {
+                                                                                        ...p,
+                                                                                        customFields: [
+                                                                                            ...p.customFields,
+                                                                                            { value: '', customField: cf, id: '' },
+                                                                                        ],
+                                                                                    }
+                                                                                }),
+                                                                            )
+                                                                        }}
+                                                                        className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
+                                                                    >
+                                                                        + Add another
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setEditField(null)}
+                                                                        className="text-slate-400 hover:text-white text-xs self-start"
+                                                                    >
+                                                                        Done
+                                                                    </button>
+                                                                </div>
+                                                            )
+                                                        ) : (
+                                                            <div
+                                                                onClick={() => setEditField(fieldKey)}
+                                                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm"
+                                                            >
+                                                                {cfValues.length > 0 ? (
+                                                                    cfValues.map((v) => v.value).join(', ')
+                                                                ) : (
+                                                                    <span className="text-slate-500">Not set</span>
+                                                                )}
                                                             </div>
                                                         )
-                                                    ) : (
-                                                        <div
-                                                            onClick={() => setEditField(fieldKey)}
-                                                            className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm"
-                                                        >
-                                                            {cfValues.length > 0
-                                                                ? cfValues.map(v => v.value).join(', ')
-                                                                : <span className="text-slate-500">Not set</span>}
-                                                        </div>
-                                                    )
-                                                ) : (
-                                                    editField === fieldKey ? (
+                                                    ) : editField === fieldKey ? (
                                                         cf.kind === 'enum' ? (
                                                             <EnumSelect
-                                                                options={cf.enumValues.map(v => v.value)}
+                                                                options={cf.enumValues.map((v) => v.value)}
                                                                 value={String(cfValue?.value ?? '')}
                                                                 onChange={(v) => {
                                                                     updateLocalPlayerCustomField(playerResult.id, cf, v)
@@ -810,7 +872,9 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                                 type={cf.kind === 'number' ? 'number' : 'text'}
                                                                 value={cfValue?.value ?? ''}
                                                                 onChange={(e) => updateLocalPlayerCustomField(playerResult.id, cf, e.target.value)}
-                                                                onBlur={(e) => handlePlayerCustomFieldBlur(playerResult.id, cf, e.target.value, cfValue?.id)}
+                                                                onBlur={(e) =>
+                                                                    handlePlayerCustomFieldBlur(playerResult.id, cf, e.target.value, cfValue?.id)
+                                                                }
                                                                 placeholder={`Enter ${cf.name.toLowerCase()}...`}
                                                                 className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
                                                             />
@@ -822,15 +886,14 @@ export function EntryDetailPanel({ entry, gameId, playerId, onEntryUpdated, onEn
                                                         >
                                                             {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
                                                         </div>
-                                                    )
-                                                )}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                 </div>
             </div>
         </div>

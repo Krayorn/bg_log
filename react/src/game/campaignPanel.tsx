@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { createCampaign as apiCreateCampaign } from '../api/campaigns'
 import { useQuery } from '../hooks/useQuery'
 import { Plus, Scroll, ChevronRight } from 'lucide-react'
@@ -12,7 +12,7 @@ type CampaignPanelProps = {
 export function CampaignPanel({ gameId }: CampaignPanelProps) {
     const { data: fetchedCampaigns } = useQuery<Campaign[]>(`/campaigns?game=${gameId}`)
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
-    const [newCampaignName, setNewCampaignName] = useState("")
+    const [newCampaignName, setNewCampaignName] = useState('')
     const [showCreateForm, setShowCreateForm] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [searchParams] = useSearchParams()
@@ -31,7 +31,11 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
             return
         }
 
-        const { data, error: apiError, ok } = await apiCreateCampaign({
+        const {
+            data,
+            error: apiError,
+            ok,
+        } = await apiCreateCampaign({
             name: newCampaignName,
             game: gameId,
         })
@@ -40,7 +44,7 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
             setError(apiError ?? 'Failed to create campaign')
         } else {
             setCampaigns([data, ...campaigns])
-            setNewCampaignName("")
+            setNewCampaignName('')
             setShowCreateForm(false)
         }
     }
@@ -67,14 +71,17 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
                                 className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
                                 placeholder="Enter campaign name..."
                                 value={newCampaignName}
-                                onChange={e => setNewCampaignName(e.target.value)}
+                                onChange={(e) => setNewCampaignName(e.target.value)}
                             />
                         </div>
                         {error && <span className="text-red-400 text-sm">{error}</span>}
                         <div className="flex gap-2 justify-end">
                             <button
                                 type="button"
-                                onClick={() => { setShowCreateForm(false); setError(null) }}
+                                onClick={() => {
+                                    setShowCreateForm(false)
+                                    setError(null)
+                                }}
                                 className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors text-sm"
                             >
                                 Cancel
@@ -98,7 +105,7 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
                 </div>
             ) : (
                 <div className="flex flex-col gap-2">
-                    {campaigns.map(campaign => (
+                    {campaigns.map((campaign) => (
                         <Link
                             key={campaign.id}
                             to={`/campaigns/${campaign.id}?playerId=${playerId}`}

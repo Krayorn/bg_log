@@ -183,7 +183,7 @@ export type AggregationType = 'sum' | 'avg' | 'min' | 'max'
 export type SavedQuery = {
     id: string
     name: string
-    customFieldId: string
+    customFieldId: string | null
     groupByFieldId: string | null
     groupByPlayer: boolean
     aggregation: string | null

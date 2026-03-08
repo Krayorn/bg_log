@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '../hooks/useQuery'
 import Layout from '../Layout'
-import {
-    Activity, Gamepad2, Users, Trophy, Settings,
-    Layers, Sparkles, Crown, ArrowLeft, BookOpen
-} from 'lucide-react'
+import { Activity, Gamepad2, Users, Trophy, Settings, Layers, Sparkles, Crown, ArrowLeft, BookOpen } from 'lucide-react'
 import type { PublicStats } from '../types'
 import { SciFiPanel } from '../components/SciFi'
 import { ScanLine, CornerBrackets } from '../components/SciFi'
@@ -25,10 +22,7 @@ export default function StatsPage() {
                             <p className="text-xs text-slate-500 font-mono">LIVE DATA FEED</p>
                         </div>
                     </div>
-                    <Link
-                        to="/"
-                        className="text-slate-400 text-sm hover:text-slate-200 transition-colors flex items-center gap-1"
-                    >
+                    <Link to="/" className="text-slate-400 text-sm hover:text-slate-200 transition-colors flex items-center gap-1">
                         <ArrowLeft className="w-4 h-4" />
                         back
                     </Link>
@@ -45,24 +39,9 @@ export default function StatsPage() {
                         <HeroStat value={stats.totalEntries} />
 
                         <div className="grid grid-cols-3 gap-4">
-                            <GlowCard
-                                icon={<Gamepad2 className="w-5 h-5" />}
-                                label="Unique Games"
-                                value={stats.totalGames}
-                                accent="cyan"
-                            />
-                            <GlowCard
-                                icon={<Users className="w-5 h-5" />}
-                                label="Players"
-                                value={stats.totalPlayers}
-                                accent="purple"
-                            />
-                            <GlowCard
-                                icon={<Trophy className="w-5 h-5" />}
-                                label="Campaigns"
-                                value={stats.totalCampaigns}
-                                accent="cyan"
-                            />
+                            <GlowCard icon={<Gamepad2 className="w-5 h-5" />} label="Unique Games" value={stats.totalGames} accent="cyan" />
+                            <GlowCard icon={<Users className="w-5 h-5" />} label="Players" value={stats.totalPlayers} accent="purple" />
+                            <GlowCard icon={<Trophy className="w-5 h-5" />} label="Campaigns" value={stats.totalCampaigns} accent="cyan" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -79,9 +58,7 @@ export default function StatsPage() {
                                     <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/50 rounded-lg border border-cyan-400/20 p-6 overflow-hidden flex-1">
                                         <ScanLine accent="cyan" delay={1.5} />
                                         <CornerBrackets color="cyan" />
-                                        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mb-3">
-                                            Crown Champion
-                                        </div>
+                                        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mb-3">Crown Champion</div>
                                         <div className="flex items-center gap-3">
                                             <div className="rounded-full p-3 bg-cyan-500/10 border border-cyan-400/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]">
                                                 <Crown className="w-6 h-6 text-cyan-400" />
@@ -108,21 +85,9 @@ export default function StatsPage() {
                         </SciFiPanel>
 
                         <div className="grid grid-cols-3 gap-4">
-                            <DataPointCard
-                                icon={<Settings className="w-5 h-5" />}
-                                label="Custom Fields"
-                                value={stats.totalCustomFields}
-                            />
-                            <DataPointCard
-                                icon={<Layers className="w-5 h-5" />}
-                                label="Data Points"
-                                value={stats.totalCustomFieldValues}
-                            />
-                            <DataPointCard
-                                icon={<BookOpen className="w-5 h-5" />}
-                                label="Campaign Events"
-                                value={stats.totalCampaignEvents}
-                            />
+                            <DataPointCard icon={<Settings className="w-5 h-5" />} label="Custom Fields" value={stats.totalCustomFields} />
+                            <DataPointCard icon={<Layers className="w-5 h-5" />} label="Data Points" value={stats.totalCustomFieldValues} />
+                            <DataPointCard icon={<BookOpen className="w-5 h-5" />} label="Campaign Events" value={stats.totalCampaignEvents} />
                         </div>
                     </div>
                 )}
@@ -137,12 +102,8 @@ function HeroStat({ value }: { value: number }) {
             <ScanLine accent="cyan" delay={0} />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.08),transparent_70%)]" />
             <div className="relative py-12 flex flex-col items-center">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/60 mb-2 font-mono">
-                    Total Play Sessions Logged
-                </div>
-                <div className="text-6xl font-bold font-mono text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.4)]">
-                    {value.toLocaleString()}
-                </div>
+                <div className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/60 mb-2 font-mono">Total Play Sessions Logged</div>
+                <div className="text-6xl font-bold font-mono text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.4)]">{value.toLocaleString()}</div>
                 <div className="mt-3 flex items-center gap-2 text-slate-500 text-xs">
                     <Sparkles className="w-3 h-3 text-cyan-400/50" />
                     <span className="font-mono">and counting</span>
@@ -153,34 +114,29 @@ function HeroStat({ value }: { value: number }) {
     )
 }
 
-function GlowCard({ icon, label, value, accent }: {
-    icon: React.ReactNode
-    label: string
-    value: number
-    accent: 'cyan' | 'purple'
-}) {
+function GlowCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent: 'cyan' | 'purple' }) {
     const isCyan = accent === 'cyan'
     return (
-        <div className={`relative group rounded-lg border overflow-hidden transition-all duration-300 ${
-            isCyan
-                ? 'border-cyan-400/20 hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(34,211,238,0.15)]'
-                : 'border-purple-400/20 hover:border-purple-400/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)]'
-        }`}>
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+        <div
+            className={`relative group rounded-lg border overflow-hidden transition-all duration-300 ${
                 isCyan
-                    ? 'bg-[radial-gradient(ellipse_at_bottom,rgba(34,211,238,0.08),transparent_70%)]'
-                    : 'bg-[radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.08),transparent_70%)]'
-            }`} />
+                    ? 'border-cyan-400/20 hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(34,211,238,0.15)]'
+                    : 'border-purple-400/20 hover:border-purple-400/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)]'
+            }`}
+        >
+            <div
+                className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                    isCyan
+                        ? 'bg-[radial-gradient(ellipse_at_bottom,rgba(34,211,238,0.08),transparent_70%)]'
+                        : 'bg-[radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.08),transparent_70%)]'
+                }`}
+            />
             <CornerBrackets color={accent} />
             <div className="relative p-5 text-center">
-                <div className={`inline-flex p-2 rounded-lg mb-3 ${
-                    isCyan ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'
-                }`}>
+                <div className={`inline-flex p-2 rounded-lg mb-3 ${isCyan ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
                     {icon}
                 </div>
-                <div className={`text-3xl font-bold font-mono ${isCyan ? 'text-cyan-400' : 'text-purple-400'}`}>
-                    {value.toLocaleString()}
-                </div>
+                <div className={`text-3xl font-bold font-mono ${isCyan ? 'text-cyan-400' : 'text-purple-400'}`}>{value.toLocaleString()}</div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">{label}</div>
             </div>
         </div>
@@ -199,7 +155,10 @@ function RingStat({ value, label }: { value: number; label: string }) {
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
                     <circle cx="40" cy="40" r="36" fill="none" stroke="rgb(51,65,85)" strokeWidth="4" />
                     <circle
-                        cx="40" cy="40" r="36" fill="none"
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        fill="none"
                         stroke="rgb(168,85,247)"
                         strokeWidth="4"
                         strokeLinecap="round"
@@ -227,16 +186,16 @@ function TopGamesList({ games }: { games: { name: string; play_count: number }[]
         <div className="space-y-3">
             {games.map((game, idx) => (
                 <div key={game.name} className="flex items-center gap-3">
-                    <span className={`text-xs font-mono w-5 text-right shrink-0 ${
-                        idx === 0 ? 'text-cyan-400' : idx === 1 ? 'text-slate-300' : 'text-slate-500'
-                    }`}>
+                    <span
+                        className={`text-xs font-mono w-5 text-right shrink-0 ${
+                            idx === 0 ? 'text-cyan-400' : idx === 1 ? 'text-slate-300' : 'text-slate-500'
+                        }`}
+                    >
                         #{idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                            <span className={`text-sm truncate ${idx === 0 ? 'text-white font-semibold' : 'text-slate-300'}`}>
-                                {game.name}
-                            </span>
+                            <span className={`text-sm truncate ${idx === 0 ? 'text-white font-semibold' : 'text-slate-300'}`}>{game.name}</span>
                             <span className="text-xs font-mono text-cyan-400 ml-2 shrink-0">{game.play_count}</span>
                         </div>
                         <div className="h-1 bg-slate-700/50 rounded-full overflow-hidden">
@@ -253,7 +212,7 @@ function TopGamesList({ games }: { games: { name: string; play_count: number }[]
 }
 
 function MonthlyChart({ data }: { data: { month: string; count: number }[] }) {
-    const max = Math.max(...data.map(d => Number(d.count)), 1)
+    const max = Math.max(...data.map((d) => Number(d.count)), 1)
 
     return (
         <div className="space-y-2">
@@ -270,14 +229,10 @@ function MonthlyChart({ data }: { data: { month: string; count: number }[] }) {
                                 className="h-full rounded bg-gradient-to-r from-cyan-600/80 to-cyan-400/60 group-hover:from-cyan-500 group-hover:to-cyan-300/80 transition-all duration-300 flex items-center justify-end pr-2"
                                 style={{ width: `${Math.max(pct, 2)}%` }}
                             >
-                                {pct > 15 && (
-                                    <span className="text-[10px] font-mono text-white/80">{item.count}</span>
-                                )}
+                                {pct > 15 && <span className="text-[10px] font-mono text-white/80">{item.count}</span>}
                             </div>
                         </div>
-                        {pct <= 15 && (
-                            <span className="text-[10px] font-mono text-slate-500">{item.count}</span>
-                        )}
+                        {pct <= 15 && <span className="text-[10px] font-mono text-slate-500">{item.count}</span>}
                     </div>
                 )
             })}
@@ -285,11 +240,7 @@ function MonthlyChart({ data }: { data: { month: string; count: number }[] }) {
     )
 }
 
-function DataPointCard({ icon, label, value }: {
-    icon: React.ReactNode
-    label: string
-    value: number
-}) {
+function DataPointCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
     return (
         <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/30 rounded-lg border border-slate-500/20 hover:border-purple-400/30 transition-all duration-300 overflow-hidden group">
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.06),transparent_70%)]" />

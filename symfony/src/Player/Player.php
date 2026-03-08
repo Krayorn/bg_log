@@ -2,6 +2,7 @@
 
 namespace App\Player;
 
+use App\Player\Exception\InvalidEmailException;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
@@ -35,15 +36,18 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: 'in_party_of_id', referencedColumnName: 'id', onDelete: 'SET NULL', nullable: true)]
     private ?Player $inPartyOf = null;
 
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $email = null;
+
     public function __construct(
         #[ORM\Column(type: 'string')]
         private readonly string $name,
         #[ORM\Column(type: 'integer', unique: true)]
         private readonly int $number,
-        #[ORM\Column(type: 'string', nullable: true)]
-        private ?string $email = null,
+        ?string $email = null,
     ) {
         $this->id = Uuid::uuid4();
+        $this->setEmail($email);
     }
 
     public static function newGuest(string $name, int $number, self $owner): self
@@ -101,6 +105,10 @@ class Player implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setEmail(?string $email): void
     {
+        if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw new InvalidEmailException('Invalid email format');
+        }
+
         $this->email = $email;
     }
 

@@ -29,15 +29,18 @@ export function CircleProvider({ children }: { children: ReactNode }) {
         if (fetchedPlayers) setPlayers(fetchedPlayers)
     }, [fetchedPlayers])
 
-    const displayName = useCallback((id: string, fallbackName?: string) => {
-        const found = players.find(p => p.id === id)
-        if (!found) return fallbackName ?? id
-        return getDisplayName(found.name, found.nickname)
-    }, [players])
+    const displayName = useCallback(
+        (id: string, fallbackName?: string) => {
+            const found = players.find((p) => p.id === id)
+            if (!found) return fallbackName ?? id
+            return getDisplayName(found.name, found.nickname)
+        },
+        [players],
+    )
 
     const addPlayer = useCallback((player: CirclePlayer) => {
-        setPlayers(prev => {
-            if (prev.some(p => p.id === player.id)) return prev
+        setPlayers((prev) => {
+            if (prev.some((p) => p.id === player.id)) return prev
             return [...prev, player]
         })
     }, [])
@@ -46,11 +49,7 @@ export function CircleProvider({ children }: { children: ReactNode }) {
         refetch()
     }, [refetch])
 
-    return (
-        <CircleContext.Provider value={{ players, displayName, addPlayer, refreshPlayers }}>
-            {children}
-        </CircleContext.Provider>
-    )
+    return <CircleContext.Provider value={{ players, displayName, addPlayer, refreshPlayers }}>{children}</CircleContext.Provider>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

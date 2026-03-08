@@ -71,7 +71,7 @@ class PlayerRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<array<string, mixed>>
+     * @return PlayerSearchResult[]
      */
     public function searchAll(Player $currentPlayer, ?string $query = null): array
     {
@@ -96,11 +96,21 @@ class PlayerRepository extends ServiceEntityRepository
             }
         }
 
-        return $qb->getQuery()->getResult();
+        $rows = $qb->getQuery()->getResult();
+
+        return array_map(fn (array $row): PlayerSearchResult => new PlayerSearchResult(
+            (string) $row['id'],
+            $row['name'],
+            $row['number'],
+            $row['registeredOn']?->format('c'),
+            $row['registeredOn'] === null,
+            $row['inPartyOfId'] !== null ? (string) $row['inPartyOfId'] : null,
+            $row['nickname'],
+        ), $rows);
     }
 
     /**
-     * @return array<array<string, mixed>>
+     * @return CirclePlayer[]
      */
     public function getCircle(Player $player, bool $includeSelf = false): array
     {
@@ -160,7 +170,20 @@ class PlayerRepository extends ServiceEntityRepository
             'playerId' => $player->getId(),
         ]);
 
-        return $result->fetchAllAssociative();
+        $rows = $result->fetchAllAssociative();
+
+        return array_map(fn (array $row): CirclePlayer => new CirclePlayer(
+            $row['id'],
+            $row['name'],
+            (int) $row['number'],
+            $row['registered_on'],
+            $row['registered_on'] === null,
+            $row['in_party_of_id'],
+            $row['nickname'],
+            (int) $row['games_played'],
+            (int) $row['wins'],
+            (int) $row['losses'],
+        ), $rows);
     }
 
     /**

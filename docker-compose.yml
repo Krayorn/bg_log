@@ -28,6 +28,7 @@ services:
       HOSTNAME_PUBLIC_BACKEND: localhost:9000
       HOSTNAME_INTERNAL_NGINX: nginx
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-http://localhost:5173}
+      ENABLE_PROFILER: 1
 
   postgres:
     image: postgres:16-alpine

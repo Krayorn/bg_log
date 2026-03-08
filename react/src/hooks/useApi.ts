@@ -18,17 +18,13 @@ function getToken(): string | null {
     }
 }
 
-export async function api<T = unknown>(
-    uri: string,
-    method: HttpMethod = 'GET',
-    body?: unknown
-): Promise<ApiResponse<T>> {
+export async function api<T = unknown>(uri: string, method: HttpMethod = 'GET', body?: unknown): Promise<ApiResponse<T>> {
     const token = getToken()
-    
+
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     }
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`
     }
@@ -53,9 +49,7 @@ export async function api<T = unknown>(
         const data = await response.json()
 
         if (!response.ok) {
-            const errorMsg = Array.isArray(data.errors)
-                ? data.errors.join(', ')
-                : 'Request failed'
+            const errorMsg = Array.isArray(data.errors) ? data.errors.join(', ') : 'Request failed'
 
             return {
                 data: null,

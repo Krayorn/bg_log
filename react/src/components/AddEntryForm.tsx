@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react'
 import { useQuery } from '../hooks/useQuery'
 import { createEntry } from '../api/entries'
 import { getLastCampaignEntry } from '../api/campaigns'
@@ -30,21 +30,21 @@ type AddEntryFormProps = {
 export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, fixedCampaignId }: AddEntryFormProps) {
     const { players: circlePlayers, addPlayer, displayName } = useCircle()
 
-    const [entryNote, setEntryNote] = useState("")
+    const [entryNote, setEntryNote] = useState('')
     const [entryPlayedAt, setEntryPlayedAt] = useState(new Date().toISOString().split('T')[0])
-    const [entryGameUsed, setEntryGameUsed] = useState("")
+    const [entryGameUsed, setEntryGameUsed] = useState('')
     const [entryCustomFields, setEntryCustomFields] = useState<{ [key: string]: string | string[] }>({})
     const [entryPlayers, setEntryPlayers] = useState<PlayerEntry[]>([])
     const [entryErrors, setEntryErrors] = useState<string[]>([])
     const { data: campaigns } = useQuery<CampaignSummary[]>(!fixedCampaignId ? `/campaigns?game=${gameId}` : null)
-    const [entryCampaign, setEntryCampaign] = useState(fixedCampaignId ?? "")
+    const [entryCampaign, setEntryCampaign] = useState(fixedCampaignId ?? '')
 
     const [initialPlayerSet, setInitialPlayerSet] = useState(false)
     useEffect(() => {
         if (playerId && circlePlayers.length > 0 && !initialPlayerSet) {
-            const currentPlayer = circlePlayers.find(p => p.id === playerId)
+            const currentPlayer = circlePlayers.find((p) => p.id === playerId)
             if (currentPlayer) {
-                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
+                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: '', won: false, customFields: {} }])
             }
             setInitialPlayerSet(true)
         }
@@ -54,34 +54,38 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
         if (fixedCampaignId) {
             loadFromLastGame(fixedCampaignId)
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fixedCampaignId])
 
     const sortedCustomFields = [...customFields].sort((a, b) => a.name.localeCompare(b.name))
-    const globalCustomFields = sortedCustomFields.filter(c => c.scope === 'entry')
-    const playerCustomFields = sortedCustomFields.filter(c => c.scope === 'playerResult')
+    const globalCustomFields = sortedCustomFields.filter((c) => c.scope === 'entry')
+    const playerCustomFields = sortedCustomFields.filter((c) => c.scope === 'playerResult')
 
     const addPlayerToEntry = (e: React.MouseEvent) => {
         e.preventDefault()
-        setEntryPlayers([...entryPlayers, { genId: uuidv4(), id: "", note: "", won: false, customFields: {} }])
+        setEntryPlayers([...entryPlayers, { genId: uuidv4(), id: '', note: '', won: false, customFields: {} }])
     }
 
     const removePlayerFromEntry = (genId: string) => {
-        setEntryPlayers(entryPlayers.filter(p => p.genId !== genId))
+        setEntryPlayers(entryPlayers.filter((p) => p.genId !== genId))
     }
 
     const updatePlayer = (genId: string, field: string, value: string | boolean) => {
-        setEntryPlayers(entryPlayers.map(p => {
-            if (p.genId !== genId) return p
-            return { ...p, [field]: value }
-        }))
+        setEntryPlayers(
+            entryPlayers.map((p) => {
+                if (p.genId !== genId) return p
+                return { ...p, [field]: value }
+            }),
+        )
     }
 
     const updatePlayerCustomField = (genId: string, customFieldId: string, value: string | string[]) => {
-        setEntryPlayers(entryPlayers.map(p => {
-            if (p.genId !== genId) return p
-            return { ...p, customFields: { ...p.customFields, [customFieldId]: value } }
-        }))
+        setEntryPlayers(
+            entryPlayers.map((p) => {
+                if (p.genId !== genId) return p
+                return { ...p, customFields: { ...p.customFields, [customFieldId]: value } }
+            }),
+        )
     }
 
     const updateEntryCustomField = (customFieldId: string, value: string | string[]) => {
@@ -93,10 +97,10 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
         const { data, ok } = await getLastCampaignEntry(campaignId)
         if (!ok || !data) return
 
-        const newPlayers: PlayerEntry[] = data.players.map(p => ({
+        const newPlayers: PlayerEntry[] = data.players.map((p) => ({
             genId: uuidv4(),
             id: p.player.id,
-            note: "",
+            note: '',
             won: false,
             customFields: (() => {
                 const grouped: { [key: string]: string | string[] } = {}
@@ -110,34 +114,30 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                     }
                 }
                 return grouped
-            })()
+            })(),
         }))
         setEntryPlayers(newPlayers)
 
-        setEntryCustomFields((() => {
-            const grouped: { [key: string]: string | string[] } = {}
-            for (const cf of data.customFields) {
-                const id = cf.customField.id
-                if (cf.customField.multiple) {
-                    if (!grouped[id]) grouped[id] = []
-                    ;(grouped[id] as string[]).push(String(cf.value))
-                } else {
-                    grouped[id] = String(cf.value)
+        setEntryCustomFields(
+            (() => {
+                const grouped: { [key: string]: string | string[] } = {}
+                for (const cf of data.customFields) {
+                    const id = cf.customField.id
+                    if (cf.customField.multiple) {
+                        if (!grouped[id]) grouped[id] = []
+                        ;(grouped[id] as string[]).push(String(cf.value))
+                    } else {
+                        grouped[id] = String(cf.value)
+                    }
                 }
-            }
-            return grouped
-        })())
+                return grouped
+            })(),
+        )
 
-        const existingIds = new Set(circlePlayers.map(p => p.id))
-        const missingPlayers = data.players
-            .filter(p => !existingIds.has(p.player.id))
-            .map(p => ({ id: p.player.id, name: p.player.name }))
+        const existingIds = new Set(circlePlayers.map((p) => p.id))
+        const missingPlayers = data.players.filter((p) => !existingIds.has(p.player.id)).map((p) => ({ id: p.player.id, name: p.player.name }))
         for (const mp of missingPlayers) {
             addPlayer(mp)
-        }
-
-        if (data.playedAt) {
-            setEntryPlayedAt(data.playedAt.substring(0, 10))
         }
     }
 
@@ -171,16 +171,16 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
             gameUsed: entryGameUsed || null,
             campaign: campaignId || null,
             customFields: Object.entries(entryCustomFields)
-                .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== '')
+                .filter(([, value]) => (Array.isArray(value) ? value.length > 0 : value !== ''))
                 .map(([id, value]) => ({ id, value })),
-            players: entryPlayers.map(p => ({
+            players: entryPlayers.map((p) => ({
                 id: p.id,
                 note: p.note,
                 won: p.won,
                 customFields: Object.entries(p.customFields)
-                    .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== '')
-                    .map(([id, value]) => ({ id, value }))
-            }))
+                    .filter(([, value]) => (Array.isArray(value) ? value.length > 0 : value !== ''))
+                    .map(([id, value]) => ({ id, value })),
+            })),
         }
 
         const { data, error, ok } = await createEntry(payload)
@@ -188,14 +188,14 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
         if (!ok || !data) {
             setEntryErrors([error ?? 'Failed to create entry.'])
         } else {
-            setEntryNote("")
-            setEntryPlayedAt("")
-            setEntryGameUsed("")
+            setEntryNote('')
+            setEntryPlayedAt('')
+            setEntryGameUsed('')
             setEntryCustomFields({})
-            setEntryCampaign(fixedCampaignId ?? "")
-            const currentPlayer = playerId ? circlePlayers.find(p => p.id === playerId) : null
+            setEntryCampaign(fixedCampaignId ?? '')
+            const currentPlayer = playerId ? circlePlayers.find((p) => p.id === playerId) : null
             if (currentPlayer) {
-                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: "", won: false, customFields: {} }])
+                setEntryPlayers([{ genId: uuidv4(), id: currentPlayer.id, note: '', won: false, customFields: {} }])
             } else {
                 setEntryPlayers([])
             }
@@ -214,7 +214,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                         className="p-2 rounded bg-slate-700 text-white border border-slate-500"
                         type="date"
                         value={entryPlayedAt}
-                        onChange={e => setEntryPlayedAt(e.target.value)}
+                        onChange={(e) => setEntryPlayedAt(e.target.value)}
                     />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -223,7 +223,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                         gameId={gameId}
                         playerId={playerId}
                         value={entryGameUsed}
-                        onChange={v => setEntryGameUsed(v)}
+                        onChange={(v) => setEntryGameUsed(v)}
                         autoSelectOwner
                     />
                 </div>
@@ -234,11 +234,13 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                             <select
                                 className="p-2 rounded bg-slate-700 text-white border border-slate-500 flex-1"
                                 value={entryCampaign}
-                                onChange={e => setEntryCampaign(e.target.value)}
+                                onChange={(e) => setEntryCampaign(e.target.value)}
                             >
                                 <option value="">No campaign</option>
-                                {campaigns.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                {campaigns.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
                                 ))}
                             </select>
                             {entryCampaign && (
@@ -260,7 +262,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                     <textarea
                         className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
                         value={entryNote}
-                        onChange={e => setEntryNote(e.target.value)}
+                        onChange={(e) => setEntryNote(e.target.value)}
                         placeholder="Notes about the game session..."
                         rows={3}
                     />
@@ -269,22 +271,24 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                     <div className="border border-slate-500 p-4 rounded-lg bg-slate-800/50">
                         <h3 className="text-white font-medium mb-3">Entry Custom Fields</h3>
                         <div className="flex flex-wrap gap-3">
-                            {globalCustomFields.map(cf => (
+                            {globalCustomFields.map((cf) => (
                                 <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
                                     <label className="text-slate-300 text-xs">{cf.name}</label>
                                     {cf.multiple ? (
                                         cf.kind === 'enum' ? (
                                             <MultiEnumSelect
-                                                options={cf.enumValues.map(v => v.value)}
+                                                options={cf.enumValues.map((v) => v.value)}
                                                 selected={Array.isArray(entryCustomFields[cf.id]) ? (entryCustomFields[cf.id] as string[]) : []}
-                                                onChange={values => updateEntryCustomField(cf.id, values)}
+                                                onChange={(values) => updateEntryCustomField(cf.id, values)}
                                                 placeholder={`Select ${cf.name.toLowerCase()}...`}
                                             />
                                         ) : (
                                             <div className="flex flex-col gap-1">
                                                 {(Array.isArray(entryCustomFields[cf.id])
                                                     ? (entryCustomFields[cf.id] as string[])
-                                                    : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                    : entryCustomFields[cf.id]
+                                                      ? [entryCustomFields[cf.id] as string]
+                                                      : ['']
                                                 ).map((val, idx) => (
                                                     <div key={idx} className="flex gap-1">
                                                         <input
@@ -292,10 +296,12 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                             type={cf.kind === 'number' ? 'number' : 'text'}
                                                             placeholder={`Enter ${cf.name.toLowerCase()}...`}
                                                             value={val}
-                                                            onChange={e => {
+                                                            onChange={(e) => {
                                                                 const current = Array.isArray(entryCustomFields[cf.id])
                                                                     ? [...(entryCustomFields[cf.id] as string[])]
-                                                                    : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                                    : entryCustomFields[cf.id]
+                                                                      ? [entryCustomFields[cf.id] as string]
+                                                                      : ['']
                                                                 current[idx] = e.target.value
                                                                 updateEntryCustomField(cf.id, current)
                                                             }}
@@ -322,7 +328,9 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                     onClick={() => {
                                                         const current = Array.isArray(entryCustomFields[cf.id])
                                                             ? [...(entryCustomFields[cf.id] as string[])]
-                                                            : entryCustomFields[cf.id] ? [entryCustomFields[cf.id] as string] : ['']
+                                                            : entryCustomFields[cf.id]
+                                                              ? [entryCustomFields[cf.id] as string]
+                                                              : ['']
                                                         updateEntryCustomField(cf.id, [...current, ''])
                                                     }}
                                                     className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
@@ -331,23 +339,21 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                 </button>
                                             </div>
                                         )
+                                    ) : cf.kind === 'enum' ? (
+                                        <EnumSelect
+                                            options={cf.enumValues.map((v) => v.value)}
+                                            value={(entryCustomFields[cf.id] as string) || ''}
+                                            onChange={(v) => updateEntryCustomField(cf.id, v)}
+                                            placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                        />
                                     ) : (
-                                        cf.kind === 'enum' ? (
-                                            <EnumSelect
-                                                options={cf.enumValues.map(v => v.value)}
-                                                value={entryCustomFields[cf.id] as string || ''}
-                                                onChange={v => updateEntryCustomField(cf.id, v)}
-                                                placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                            />
-                                        ) : (
-                                            <input
-                                                className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
-                                                type={cf.kind === 'number' ? 'number' : 'text'}
-                                                placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                value={entryCustomFields[cf.id] as string || ''}
-                                                onChange={e => updateEntryCustomField(cf.id, e.target.value)}
-                                            />
-                                        )
+                                        <input
+                                            className="p-2 rounded bg-slate-700 text-white border border-slate-500 placeholder-slate-400"
+                                            type={cf.kind === 'number' ? 'number' : 'text'}
+                                            placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                            value={(entryCustomFields[cf.id] as string) || ''}
+                                            onChange={(e) => updateEntryCustomField(cf.id, e.target.value)}
+                                        />
                                     )}
                                 </div>
                             ))}
@@ -361,7 +367,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                     <h2 className="text-white font-medium">Players</h2>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    {entryPlayers.map(player => (
+                    {entryPlayers.map((player) => (
                         <div key={player.genId} className="border border-slate-500 rounded-lg p-3 w-[220px] flex flex-col gap-2 bg-slate-800/50">
                             <button
                                 type="button"
@@ -374,14 +380,14 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                 <label className="text-slate-300 text-xs">Player</label>
                                 {player.id ? (
                                     <div className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm">
-                                        {displayName(player.id, circlePlayers.find(p => p.id === player.id)?.name)}
+                                        {displayName(player.id, circlePlayers.find((p) => p.id === player.id)?.name)}
                                     </div>
                                 ) : (
                                     <PlayerSearchSelect
                                         players={circlePlayers}
-                                        excludeIds={entryPlayers.filter(p => p.id).map(p => p.id)}
-                                        onSelect={p => updatePlayer(player.genId, 'id', p.id)}
-                                        onPlayerCreated={p => addPlayer({ id: p.id, name: p.name })}
+                                        excludeIds={entryPlayers.filter((p) => p.id).map((p) => p.id)}
+                                        onSelect={(p) => updatePlayer(player.genId, 'id', p.id)}
+                                        onPlayerCreated={(p) => addPlayer({ id: p.id, name: p.name })}
                                         allowCreate
                                         placeholder="Search player..."
                                     />
@@ -393,7 +399,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                     className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
                                     placeholder="Player notes..."
                                     value={player.note}
-                                    onChange={e => updatePlayer(player.genId, 'note', e.target.value)}
+                                    onChange={(e) => updatePlayer(player.genId, 'note', e.target.value)}
                                     rows={2}
                                 />
                             </div>
@@ -401,7 +407,7 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                 <input
                                     type="checkbox"
                                     checked={player.won}
-                                    onChange={e => updatePlayer(player.genId, 'won', e.target.checked)}
+                                    onChange={(e) => updatePlayer(player.genId, 'won', e.target.checked)}
                                     className="w-4 h-4"
                                 />
                                 <span className="text-sm">Won</span>
@@ -409,22 +415,26 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                             {playerCustomFields.length > 0 && (
                                 <div className="border-t border-slate-600 pt-2 mt-1">
                                     <span className="text-slate-400 text-xs">Custom Fields</span>
-                                    {playerCustomFields.map(cf => (
+                                    {playerCustomFields.map((cf) => (
                                         <div key={cf.id} className="flex flex-col gap-1 mt-2">
                                             <label className="text-slate-300 text-xs">{cf.name}</label>
                                             {cf.multiple ? (
                                                 cf.kind === 'enum' ? (
                                                     <MultiEnumSelect
-                                                        options={cf.enumValues.map(v => v.value)}
-                                                        selected={Array.isArray(player.customFields[cf.id]) ? (player.customFields[cf.id] as string[]) : []}
-                                                        onChange={values => updatePlayerCustomField(player.genId, cf.id, values)}
+                                                        options={cf.enumValues.map((v) => v.value)}
+                                                        selected={
+                                                            Array.isArray(player.customFields[cf.id]) ? (player.customFields[cf.id] as string[]) : []
+                                                        }
+                                                        onChange={(values) => updatePlayerCustomField(player.genId, cf.id, values)}
                                                         placeholder={`Select ${cf.name.toLowerCase()}...`}
                                                     />
                                                 ) : (
                                                     <div className="flex flex-col gap-1">
                                                         {(Array.isArray(player.customFields[cf.id])
                                                             ? (player.customFields[cf.id] as string[])
-                                                            : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                            : player.customFields[cf.id]
+                                                              ? [player.customFields[cf.id] as string]
+                                                              : ['']
                                                         ).map((val, idx) => (
                                                             <div key={idx} className="flex gap-1">
                                                                 <input
@@ -432,10 +442,12 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                                     type={cf.kind === 'number' ? 'number' : 'text'}
                                                                     placeholder={`Enter ${cf.name.toLowerCase()}...`}
                                                                     value={val}
-                                                                    onChange={e => {
+                                                                    onChange={(e) => {
                                                                         const current = Array.isArray(player.customFields[cf.id])
                                                                             ? [...(player.customFields[cf.id] as string[])]
-                                                                            : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                                            : player.customFields[cf.id]
+                                                                              ? [player.customFields[cf.id] as string]
+                                                                              : ['']
                                                                         current[idx] = e.target.value
                                                                         updatePlayerCustomField(player.genId, cf.id, current)
                                                                     }}
@@ -462,7 +474,9 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                             onClick={() => {
                                                                 const current = Array.isArray(player.customFields[cf.id])
                                                                     ? [...(player.customFields[cf.id] as string[])]
-                                                                    : player.customFields[cf.id] ? [player.customFields[cf.id] as string] : ['']
+                                                                    : player.customFields[cf.id]
+                                                                      ? [player.customFields[cf.id] as string]
+                                                                      : ['']
                                                                 updatePlayerCustomField(player.genId, cf.id, [...current, ''])
                                                             }}
                                                             className="text-cyan-400 hover:text-cyan-300 text-xs self-start"
@@ -471,23 +485,21 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
                                                         </button>
                                                     </div>
                                                 )
+                                            ) : cf.kind === 'enum' ? (
+                                                <EnumSelect
+                                                    options={cf.enumValues.map((v) => v.value)}
+                                                    value={(player.customFields[cf.id] as string) || ''}
+                                                    onChange={(v) => updatePlayerCustomField(player.genId, cf.id, v)}
+                                                    placeholder={`Select ${cf.name.toLowerCase()}...`}
+                                                />
                                             ) : (
-                                                cf.kind === 'enum' ? (
-                                                    <EnumSelect
-                                                        options={cf.enumValues.map(v => v.value)}
-                                                        value={player.customFields[cf.id] as string || ''}
-                                                        onChange={v => updatePlayerCustomField(player.genId, cf.id, v)}
-                                                        placeholder={`Select ${cf.name.toLowerCase()}...`}
-                                                    />
-                                                ) : (
-                                                    <input
-                                                        className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
-                                                        type={cf.kind === 'number' ? 'number' : 'text'}
-                                                        placeholder={`Enter ${cf.name.toLowerCase()}...`}
-                                                        value={player.customFields[cf.id] as string || ''}
-                                                        onChange={e => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
-                                                    />
-                                                )
+                                                <input
+                                                    className="p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400"
+                                                    type={cf.kind === 'number' ? 'number' : 'text'}
+                                                    placeholder={`Enter ${cf.name.toLowerCase()}...`}
+                                                    value={(player.customFields[cf.id] as string) || ''}
+                                                    onChange={(e) => updatePlayerCustomField(player.genId, cf.id, e.target.value)}
+                                                />
                                             )}
                                         </div>
                                     ))}
@@ -522,11 +534,16 @@ export function AddEntryForm({ gameId, playerId, customFields, onEntryCreated, f
 
             {entryErrors.length > 0 && (
                 <div className="text-red-400 mb-4 text-center">
-                    {entryErrors.map((err, i) => <div key={i}>{err}</div>)}
+                    {entryErrors.map((err, i) => (
+                        <div key={i}>{err}</div>
+                    ))}
                 </div>
             )}
 
-            <button className="px-6 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white font-medium self-center transition-colors" type="submit">
+            <button
+                className="px-6 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white font-medium self-center transition-colors"
+                type="submit"
+            >
                 Create Entry
             </button>
         </form>

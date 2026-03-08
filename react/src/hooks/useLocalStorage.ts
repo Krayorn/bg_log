@@ -1,41 +1,45 @@
-
-import { useState } from "react";
+import { useState } from 'react'
 
 export const parseJwt = (token: string) => {
-  const base64Url = token.split('.')[1];
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+        window
+            .atob(base64)
+            .split('')
+            .map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            })
+            .join(''),
+    )
 
-  return JSON.parse(jsonPayload);
+    return JSON.parse(jsonPayload)
 }
 
-export const useLocalStorage = <T,>(keyName: string, defaultValue: T) => {
+export const useLocalStorage = <T>(keyName: string, defaultValue: T) => {
     const [storedValue, setStoredValue] = useState<T>(() => {
-      try {
-        const value = window.localStorage.getItem(keyName)
-  
-        if (value) {
-          return JSON.parse(value)
-        } else {
-          window.localStorage.setItem(keyName, JSON.stringify(defaultValue))
-          return defaultValue
+        try {
+            const value = window.localStorage.getItem(keyName)
+
+            if (value) {
+                return JSON.parse(value)
+            } else {
+                window.localStorage.setItem(keyName, JSON.stringify(defaultValue))
+                return defaultValue
+            }
+        } catch (err) {
+            return defaultValue
         }
-      } catch (err) {
-        return defaultValue
-      }
     })
-  
+
     const setValue = (newValue: T) => {
-      try {
-        window.localStorage.setItem(keyName, JSON.stringify(newValue))
-      } catch {
-      // Ignore localStorage errors
+        try {
+            window.localStorage.setItem(keyName, JSON.stringify(newValue))
+        } catch {
+            // Ignore localStorage errors
+        }
+        setStoredValue(newValue)
     }
-      setStoredValue(newValue)
-    }
-  
+
     return [storedValue, setValue] as const
-  }
-  
+}

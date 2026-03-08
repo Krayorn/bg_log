@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from 'react'
 import { createPlayerOption, searchPlayers } from '../api/players'
 import { Plus, Search, ArrowLeft } from 'lucide-react'
 import { getDisplayName } from '../utils/displayName'
@@ -20,9 +20,9 @@ export default function PlayerSearchSelect({
     onSelect,
     onPlayerCreated,
     allowCreate = false,
-    placeholder = "Search player...",
+    placeholder = 'Search player...',
 }: PlayerSearchSelectProps) {
-    const [query, setQuery] = useState("")
+    const [query, setQuery] = useState('')
     const [open, setOpen] = useState(false)
     const [highlightIndex, setHighlightIndex] = useState(-1)
     const [creating, setCreating] = useState(false)
@@ -34,20 +34,20 @@ export default function PlayerSearchSelect({
     const inputRef = useRef<HTMLInputElement>(null)
     const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
-    const available = players.filter(p => !excludeIds.includes(p.id))
+    const available = players.filter((p) => !excludeIds.includes(p.id))
 
     const circleFiltered = query
-        ? available.filter(p => {
-            const q = query.toLowerCase()
-            return p.name.toLowerCase().includes(q) || (p.nickname && p.nickname.toLowerCase().includes(q))
-        })
+        ? available.filter((p) => {
+              const q = query.toLowerCase()
+              return p.name.toLowerCase().includes(q) || (p.nickname && p.nickname.toLowerCase().includes(q))
+          })
         : available
 
-    const allFiltered = allResults.filter(p => !excludeIds.includes(p.id))
+    const allFiltered = allResults.filter((p) => !excludeIds.includes(p.id))
 
     const filtered = scope === 'circle' ? circleFiltered : allFiltered
 
-    const showCreateOption = allowCreate && query.trim() !== "" && !filtered.some(p => p.name.toLowerCase() === query.trim().toLowerCase())
+    const showCreateOption = allowCreate && query.trim() !== '' && !filtered.some((p) => p.name.toLowerCase() === query.trim().toLowerCase())
     const showScopeAction = true
 
     const totalItems = filtered.length + (showCreateOption ? 1 : 0) + (showScopeAction ? 1 : 0)
@@ -92,7 +92,7 @@ export default function PlayerSearchSelect({
 
     const handleSelect = (player: PlayerOption) => {
         onSelect(player)
-        setQuery("")
+        setQuery('')
         setOpen(false)
         setScope('circle')
         setAllResults([])
@@ -109,7 +109,7 @@ export default function PlayerSearchSelect({
         if (ok && data) {
             onPlayerCreated?.(data)
             onSelect(data)
-            setQuery("")
+            setQuery('')
             setOpen(false)
             setScope('circle')
             setAllResults([])
@@ -136,10 +136,10 @@ export default function PlayerSearchSelect({
 
         if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setHighlightIndex(i => Math.min(i + 1, totalItems - 1))
+            setHighlightIndex((i) => Math.min(i + 1, totalItems - 1))
         } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setHighlightIndex(i => Math.max(i - 1, 0))
+            setHighlightIndex((i) => Math.max(i - 1, 0))
         } else if (e.key === 'Enter') {
             e.preventDefault()
             if (highlightIndex >= 0 && highlightIndex < filtered.length) {
@@ -163,7 +163,11 @@ export default function PlayerSearchSelect({
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={e => { setQuery(e.target.value); setOpen(true); setCreateError(null) }}
+                onChange={(e) => {
+                    setQuery(e.target.value)
+                    setOpen(true)
+                    setCreateError(null)
+                }}
                 onFocus={() => setOpen(true)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
@@ -171,10 +175,8 @@ export default function PlayerSearchSelect({
             />
             {open && totalItems > 0 && (
                 <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded bg-slate-800 border border-slate-600 shadow-lg">
-                    {scope === 'all' && searching && (
-                        <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>
-                    )}
-                    {scope === 'all' && !searching && query.trim() !== "" && filtered.length === 0 && (
+                    {scope === 'all' && searching && <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>}
+                    {scope === 'all' && !searching && query.trim() !== '' && filtered.length === 0 && (
                         <div className="px-3 py-2 text-xs text-slate-400">No players found</div>
                     )}
                     {filtered.map((player, i) => (
@@ -182,9 +184,7 @@ export default function PlayerSearchSelect({
                             key={player.id}
                             type="button"
                             className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                                i === highlightIndex
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-white hover:bg-slate-700'
+                                i === highlightIndex ? 'bg-cyan-500/20 text-cyan-400' : 'text-white hover:bg-slate-700'
                             }`}
                             onMouseEnter={() => setHighlightIndex(i)}
                             onClick={() => handleSelect(player)}
@@ -196,9 +196,7 @@ export default function PlayerSearchSelect({
                         <button
                             type="button"
                             className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 border-t border-slate-600 transition-colors ${
-                                highlightIndex === filtered.length
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-slate-300 hover:bg-slate-700'
+                                highlightIndex === filtered.length ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-300 hover:bg-slate-700'
                             }`}
                             onMouseEnter={() => setHighlightIndex(filtered.length)}
                             onClick={handleCreate}
@@ -212,25 +210,25 @@ export default function PlayerSearchSelect({
                         <button
                             type="button"
                             className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 border-t border-slate-600 transition-colors ${
-                                highlightIndex === totalItems - 1
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-slate-300 hover:bg-slate-700'
+                                highlightIndex === totalItems - 1 ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-300 hover:bg-slate-700'
                             }`}
                             onMouseEnter={() => setHighlightIndex(totalItems - 1)}
-                            onClick={() => scope === 'circle' ? handleSwitchToAll() : handleSwitchToCircle()}
+                            onClick={() => (scope === 'circle' ? handleSwitchToAll() : handleSwitchToCircle())}
                         >
                             {scope === 'circle' ? (
-                                <><Search className="w-4 h-4" /> Search all users</>
+                                <>
+                                    <Search className="w-4 h-4" /> Search all users
+                                </>
                             ) : (
-                                <><ArrowLeft className="w-4 h-4" /> Back to circle</>
+                                <>
+                                    <ArrowLeft className="w-4 h-4" /> Back to circle
+                                </>
                             )}
                         </button>
                     )}
                 </div>
             )}
-            {createError && (
-                <p className="text-red-400 text-xs mt-1">{createError}</p>
-            )}
+            {createError && <p className="text-red-400 text-xs mt-1">{createError}</p>}
         </div>
     )
 }

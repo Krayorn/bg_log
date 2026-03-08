@@ -3,10 +3,27 @@ import { useQuery } from '../hooks/useQuery'
 import { useLocalStorage, parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
 import {
-    Activity, Users, Gamepad2, Trophy, TrendingUp,
-    Calendar, Shield, Database, ArrowLeft, LayoutDashboard,
-    Crown, Zap, Settings, BarChart3, Swords, Link2,
-    Copy, Share2, Search, BookOpen, Layers
+    Activity,
+    Users,
+    Gamepad2,
+    Trophy,
+    TrendingUp,
+    Calendar,
+    Shield,
+    Database,
+    ArrowLeft,
+    LayoutDashboard,
+    Crown,
+    Zap,
+    Settings,
+    BarChart3,
+    Swords,
+    Link2,
+    Copy,
+    Share2,
+    Search,
+    BookOpen,
+    Layers,
 } from 'lucide-react'
 import type { AdminStats } from '../types'
 import type { ReactNode } from 'react'
@@ -73,9 +90,7 @@ function AdminLayout({ children }: { children: ReactNode }) {
                     </div>
                 </aside>
 
-                <div className="flex-1 p-6 overflow-y-auto">
-                    {children}
-                </div>
+                <div className="flex-1 p-6 overflow-y-auto">{children}</div>
             </div>
         </Layout>
     )
@@ -89,11 +104,7 @@ export default function AdminDashboard() {
     return (
         <AdminLayout>
             <DashboardHeader />
-            {stats === null ? (
-                <div className="text-slate-500 mt-8">Loading system data...</div>
-            ) : (
-                <DashboardContent stats={stats} />
-            )}
+            {stats === null ? <div className="text-slate-500 mt-8">Loading system data...</div> : <DashboardContent stats={stats} />}
         </AdminLayout>
     )
 }
@@ -109,7 +120,9 @@ function DashboardHeader() {
                 <h1 className="text-xl font-bold text-white tracking-wide">SYSTEM OVERVIEW</h1>
                 <div className="h-px flex-1 bg-gradient-to-r from-cyan-400/40 to-transparent"></div>
             </div>
-            <div className="text-xs text-slate-500 font-mono">{dateStr} — {timeStr}</div>
+            <div className="text-xs text-slate-500 font-mono">
+                {dateStr} — {timeStr}
+            </div>
         </div>
     )
 }
@@ -119,32 +132,10 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
         <div className="space-y-4">
             {/* Row 1: Core Metrics */}
             <div className="grid grid-cols-4 gap-4">
-                <MetricCard
-                    icon={<Users className="w-5 h-5" />}
-                    label="USERS"
-                    value={stats.registeredPlayers}
-                    accent="cyan"
-                    scanDelay={0}
-                />
-                <MetricCard
-                    icon={<Activity className="w-5 h-5" />}
-                    label="TOTAL ENTRIES"
-                    value={stats.totalEntries}
-                    accent="cyan"
-                />
-                <MetricCard
-                    icon={<Gamepad2 className="w-5 h-5" />}
-                    label="TOTAL GAMES"
-                    value={stats.totalGames}
-                    accent="purple"
-                    scanDelay={1.2}
-                />
-                <MetricCard
-                    icon={<Trophy className="w-5 h-5" />}
-                    label="CAMPAIGNS"
-                    value={stats.totalCampaigns}
-                    accent="purple"
-                />
+                <MetricCard icon={<Users className="w-5 h-5" />} label="USERS" value={stats.registeredPlayers} accent="cyan" scanDelay={0} />
+                <MetricCard icon={<Activity className="w-5 h-5" />} label="TOTAL ENTRIES" value={stats.totalEntries} accent="cyan" />
+                <MetricCard icon={<Gamepad2 className="w-5 h-5" />} label="TOTAL GAMES" value={stats.totalGames} accent="purple" scanDelay={1.2} />
+                <MetricCard icon={<Trophy className="w-5 h-5" />} label="CAMPAIGNS" value={stats.totalCampaigns} accent="purple" />
             </div>
 
             {/* Row 2: User Breakdown + Activity */}
@@ -210,22 +201,20 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                     <div className="space-y-2">
                         {stats.topPlayers.map((player, idx) => (
                             <div key={player.name} className="flex items-center gap-3">
-                                <span className={`text-xs font-mono w-5 text-right ${
-                                    idx === 0 ? 'text-cyan-400' : idx === 1 ? 'text-slate-300' : 'text-slate-500'
-                                }`}>
+                                <span
+                                    className={`text-xs font-mono w-5 text-right ${
+                                        idx === 0 ? 'text-cyan-400' : idx === 1 ? 'text-slate-300' : 'text-slate-500'
+                                    }`}
+                                >
                                     #{idx + 1}
                                 </span>
                                 <div className="flex-1 flex items-center justify-between">
-                                    <span className={`text-sm ${idx === 0 ? 'text-white font-semibold' : 'text-slate-300'}`}>
-                                        {player.name}
-                                    </span>
+                                    <span className={`text-sm ${idx === 0 ? 'text-white font-semibold' : 'text-slate-300'}`}>{player.name}</span>
                                     <span className="text-xs font-mono text-cyan-400">{player.entries_count} plays</span>
                                 </div>
                             </div>
                         ))}
-                        {stats.topPlayers.length === 0 && (
-                            <div className="text-slate-500 text-sm">No data available</div>
-                        )}
+                        {stats.topPlayers.length === 0 && <div className="text-slate-500 text-sm">No data available</div>}
                     </div>
                 </Panel>
             </div>
@@ -243,9 +232,7 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                                 <span className="text-slate-300 truncate">{entry.game_name}</span>
                             </div>
                         ))}
-                        {stats.recentEntries.length === 0 && (
-                            <div className="text-slate-500 text-sm">No recent activity</div>
-                        )}
+                        {stats.recentEntries.length === 0 && <div className="text-slate-500 text-sm">No recent activity</div>}
                     </div>
                 </Panel>
 
@@ -262,7 +249,13 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
             {/* Row 5: Custom Fields */}
             <SectionHeader title="CUSTOM FIELDS" icon={<Settings className="w-4 h-4" />} />
             <div className="grid grid-cols-4 gap-4">
-                <MetricCard icon={<Settings className="w-5 h-5" />} label="TOTAL FIELDS" value={stats.totalCustomFields} accent="purple" scanDelay={0.5} />
+                <MetricCard
+                    icon={<Settings className="w-5 h-5" />}
+                    label="TOTAL FIELDS"
+                    value={stats.totalCustomFields}
+                    accent="purple"
+                    scanDelay={0.5}
+                />
                 <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG / GAME" value={stats.avgCustomFieldsPerGame} accent="purple" />
                 <MetricCard icon={<Share2 className="w-5 h-5" />} label="SHAREABLE" value={stats.shareableCustomFields} accent="cyan" />
                 <MetricCard icon={<Copy className="w-5 h-5" />} label="COPIED" value={stats.copiedCustomFields} accent="cyan" scanDelay={2.1} />
@@ -277,7 +270,9 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                         <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
                             <div
                                 className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.4)]"
-                                style={{ width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.entry / stats.totalCustomFields) * 100 : 0}%` }}
+                                style={{
+                                    width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.entry / stats.totalCustomFields) * 100 : 0}%`,
+                                }}
                             />
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -287,7 +282,9 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                         <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
                             <div
                                 className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]"
-                                style={{ width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.playerResult / stats.totalCustomFields) * 100 : 0}%` }}
+                                style={{
+                                    width: `${stats.totalCustomFields > 0 ? (stats.customFieldsByScope.playerResult / stats.totalCustomFields) * 100 : 0}%`,
+                                }}
                             />
                         </div>
                     </div>
@@ -303,9 +300,21 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
             <SectionHeader title="CAMPAIGNS" icon={<BookOpen className="w-4 h-4" />} />
             <div className="grid grid-cols-4 gap-4">
                 <MetricCard icon={<Trophy className="w-5 h-5" />} label="CAMPAIGNS" value={stats.totalCampaigns} accent="purple" />
-                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG ENTRIES / CAMPAIGN" value={stats.avgEntriesPerCampaign} accent="purple" scanDelay={1.8} />
+                <MetricCard
+                    icon={<TrendingUp className="w-5 h-5" />}
+                    label="AVG ENTRIES / CAMPAIGN"
+                    value={stats.avgEntriesPerCampaign}
+                    accent="purple"
+                    scanDelay={1.8}
+                />
                 <MetricCard icon={<Link2 className="w-5 h-5" />} label="ENTRIES IN CAMPAIGNS" value={stats.entriesInCampaign} accent="cyan" />
-                <MetricCard icon={<Zap className="w-5 h-5" />} label="CAMPAIGN EVENTS" value={stats.totalCampaignEvents} accent="cyan" scanDelay={0.3} />
+                <MetricCard
+                    icon={<Zap className="w-5 h-5" />}
+                    label="CAMPAIGN EVENTS"
+                    value={stats.totalCampaignEvents}
+                    accent="cyan"
+                    scanDelay={0.3}
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <Panel title="CAMPAIGN KEYS">
@@ -315,12 +324,14 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
                             <span className="text-cyan-400 font-mono font-bold">{stats.totalCampaignKeys}</span>
                         </div>
                         <div className="border-t border-slate-700/50 pt-3 space-y-2">
-                            {([
-                                ['String', stats.campaignKeysByType.string],
-                                ['Number', stats.campaignKeysByType.number],
-                                ['List', stats.campaignKeysByType.list],
-                                ['Counted list', stats.campaignKeysByType.counted_list],
-                            ] as const).map(([label, count]) => (
+                            {(
+                                [
+                                    ['String', stats.campaignKeysByType.string],
+                                    ['Number', stats.campaignKeysByType.number],
+                                    ['List', stats.campaignKeysByType.list],
+                                    ['Counted list', stats.campaignKeysByType.counted_list],
+                                ] as const
+                            ).map(([label, count]) => (
                                 <div key={label} className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">{label}</span>
                                     <span className="text-slate-300 font-mono">{count}</span>
@@ -342,7 +353,13 @@ function DashboardContent({ stats }: { stats: AdminStats }) {
             {/* Row 7: Statistics Queries */}
             <SectionHeader title="SAVED STATISTICS" icon={<BarChart3 className="w-4 h-4" />} />
             <div className="grid grid-cols-3 gap-4">
-                <MetricCard icon={<Search className="w-5 h-5" />} label="SAVED QUERIES" value={stats.totalStatisticsQueries} accent="cyan" scanDelay={0.8} />
+                <MetricCard
+                    icon={<Search className="w-5 h-5" />}
+                    label="SAVED QUERIES"
+                    value={stats.totalStatisticsQueries}
+                    accent="cyan"
+                    scanDelay={0.8}
+                />
                 <MetricCard icon={<Users className="w-5 h-5" />} label="USERS WITH QUERIES" value={stats.usersWithSavedQueries} accent="cyan" />
                 <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="AVG QUERIES / USER" value={stats.avgQueriesPerUser} accent="purple" />
             </div>
@@ -360,7 +377,13 @@ function SectionHeader({ title, icon }: { title: string; icon: ReactNode }) {
     )
 }
 
-function MetricCard({ icon, label, value, accent, scanDelay }: {
+function MetricCard({
+    icon,
+    label,
+    value,
+    accent,
+    scanDelay,
+}: {
     icon: ReactNode
     label: string
     value: number
@@ -369,11 +392,13 @@ function MetricCard({ icon, label, value, accent, scanDelay }: {
 }) {
     const isCyan = accent === 'cyan'
     return (
-        <div className={`relative group bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border transition-all duration-300 overflow-hidden ${
-            isCyan
-                ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-                : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-        }`}>
+        <div
+            className={`relative group bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border transition-all duration-300 overflow-hidden ${
+                isCyan
+                    ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                    : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+            }`}
+        >
             {scanDelay !== undefined && <ScanLine accent={accent} delay={scanDelay} />}
 
             <div className="p-4 relative">
@@ -381,9 +406,7 @@ function MetricCard({ icon, label, value, accent, scanDelay }: {
                     <div className={isCyan ? 'text-cyan-400' : 'text-purple-400'}>{icon}</div>
                     <span className="text-[10px] tracking-[0.2em] text-slate-500 uppercase">{label}</span>
                 </div>
-                <div className={`text-3xl font-bold font-mono ${isCyan ? 'text-cyan-400' : 'text-purple-400'}`}>
-                    {value.toLocaleString()}
-                </div>
+                <div className={`text-3xl font-bold font-mono ${isCyan ? 'text-cyan-400' : 'text-purple-400'}`}>{value.toLocaleString()}</div>
             </div>
         </div>
     )
@@ -396,9 +419,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></div>
                 <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">{title}</span>
             </header>
-            <div className="p-4 text-white">
-                {children}
-            </div>
+            <div className="p-4 text-white">{children}</div>
         </section>
     )
 }

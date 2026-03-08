@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from 'react'
 
 type MultiEnumSelectProps = {
     options: string[]
@@ -7,21 +7,14 @@ type MultiEnumSelectProps = {
     placeholder?: string
 }
 
-export default function MultiEnumSelect({
-    options,
-    selected,
-    onChange,
-    placeholder = "Select...",
-}: MultiEnumSelectProps) {
-    const [query, setQuery] = useState("")
+export default function MultiEnumSelect({ options, selected, onChange, placeholder = 'Select...' }: MultiEnumSelectProps) {
+    const [query, setQuery] = useState('')
     const [open, setOpen] = useState(false)
     const [highlightIndex, setHighlightIndex] = useState(-1)
     const containerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const filtered = query
-        ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
-        : options
+    const filtered = query ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase())) : options
 
     useEffect(() => {
         setHighlightIndex(-1)
@@ -39,14 +32,14 @@ export default function MultiEnumSelect({
 
     const handleToggle = (option: string) => {
         if (selected.includes(option)) {
-            onChange(selected.filter(s => s !== option))
+            onChange(selected.filter((s) => s !== option))
         } else {
             onChange([...selected, option])
         }
     }
 
     const handleRemove = (option: string) => {
-        onChange(selected.filter(s => s !== option))
+        onChange(selected.filter((s) => s !== option))
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -56,10 +49,10 @@ export default function MultiEnumSelect({
 
         if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setHighlightIndex(i => Math.min(i + 1, filtered.length - 1))
+            setHighlightIndex((i) => Math.min(i + 1, filtered.length - 1))
         } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setHighlightIndex(i => Math.max(i - 1, 0))
+            setHighlightIndex((i) => Math.max(i - 1, 0))
         } else if (e.key === 'Enter') {
             e.preventDefault()
             if (highlightIndex >= 0 && highlightIndex < filtered.length) {
@@ -79,17 +72,13 @@ export default function MultiEnumSelect({
         <div ref={containerRef} className="relative">
             {selected.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-1">
-                    {selected.map(s => (
+                    {selected.map((s) => (
                         <span
                             key={s}
                             className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-400 border border-cyan-400/30"
                         >
                             {s}
-                            <button
-                                type="button"
-                                onClick={() => handleRemove(s)}
-                                className="hover:text-cyan-200 transition-colors"
-                            >
+                            <button type="button" onClick={() => handleRemove(s)} className="hover:text-cyan-200 transition-colors">
                                 ✕
                             </button>
                         </span>
@@ -115,18 +104,12 @@ export default function MultiEnumSelect({
                                 key={option}
                                 type="button"
                                 className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2 ${
-                                    i === highlightIndex
-                                        ? 'bg-cyan-500/20 text-cyan-400'
-                                        : 'text-white hover:bg-slate-700'
+                                    i === highlightIndex ? 'bg-cyan-500/20 text-cyan-400' : 'text-white hover:bg-slate-700'
                                 }`}
                                 onMouseEnter={() => setHighlightIndex(i)}
                                 onClick={() => handleToggle(option)}
                             >
-                                <span
-                                    className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${
-                                        isSelected ? 'bg-cyan-400' : 'bg-slate-600'
-                                    }`}
-                                />
+                                <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${isSelected ? 'bg-cyan-400' : 'bg-slate-600'}`} />
                                 {option}
                             </button>
                         )

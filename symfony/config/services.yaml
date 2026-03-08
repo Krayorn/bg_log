@@ -29,6 +29,8 @@ services:
             - '../src/Campaign/CampaignEvent/CampaignEvent.php'
             - '../src/Player/Player.php'
             - '../src/Player/PlayerNickname.php'
+            - '../src/Player/PlayerSearchResult.php'
+            - '../src/Player/CirclePlayer.php'
             - '../src/StatisticsQuery/StatisticsQuery.php'
             - '../src/Kernel.php'
 

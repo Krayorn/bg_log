@@ -1,9 +1,26 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom"
+import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '../hooks/useQuery'
 import { updatePlayerEmail } from '../api/players'
 
-import { Landmark, User, Check, X, Pencil, ExternalLink, Gamepad2, Activity, Users, Trophy, Calendar, Settings, BookOpen, BarChart3, Zap, UserPlus } from 'lucide-react'
+import {
+    Landmark,
+    User,
+    Check,
+    X,
+    Pencil,
+    ExternalLink,
+    Gamepad2,
+    Activity,
+    Users,
+    Trophy,
+    Calendar,
+    Settings,
+    BookOpen,
+    BarChart3,
+    Zap,
+    UserPlus,
+} from 'lucide-react'
 import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer, PlayerUsageStats } from '../types'
 import { MissionBriefing } from '../components/MissionBriefing'
 import { SciFiPanel, MetricCard } from '../components/SciFi'
@@ -15,14 +32,13 @@ function Home() {
     const { data: usageStats } = useQuery<PlayerUsageStats>(`/players/${playerId}/usage`)
     const [tutorialDismissed, setTutorialDismissed] = useLocalStorage('tutorial_dismissed', false)
 
-    const showTutorial = generalStats !== null && !tutorialDismissed && (
-        generalStats.gamesOwned === 0 ||
-        generalStats.entriesPlayed === 0 ||
-        generalStats.gamePartners === 0
-    )
+    const showTutorial =
+        generalStats !== null &&
+        !tutorialDismissed &&
+        (generalStats.gamesOwned === 0 || generalStats.entriesPlayed === 0 || generalStats.gamePartners === 0)
 
     return (
-        <> 
+        <>
             <header className="border-b border-slate-500/50 pb-4 flex justify-between mb-8">
                 <div className="flex">
                     <div className="border-b border-slate-600">
@@ -32,9 +48,7 @@ function Home() {
                     </div>
                     <div className="ml-4 text-white flex-col border-b border-slate-600">
                         <h1 className="text-xl font-semibold">Game Log</h1>
-                        <h2 className="text-sm text-slate-400">
-                            Welcome to your personalized game log network
-                        </h2>
+                        <h2 className="text-sm text-slate-400">Welcome to your personalized game log network</h2>
                     </div>
                 </div>
                 <div className="text-slate-600 flex flex-col text-right text-sm">
@@ -48,38 +62,70 @@ function Home() {
                     <SciFiPanel title="Personal details" className="min-h-[180px]">
                         <PlayerBox playerId={playerId} />
                     </SciFiPanel>
-                    <MissionBriefing
-                        playerId={playerId}
-                        stats={generalStats}
-                        onDismiss={() => setTutorialDismissed(true)}
-                    />
+                    <MissionBriefing playerId={playerId} stats={generalStats} onDismiss={() => setTutorialDismissed(true)} />
                 </div>
             ) : (
                 <div className="space-y-4">
-                    <GeneralStatisticsPanel stats={generalStats}/>
+                    <GeneralStatisticsPanel stats={generalStats} />
 
                     <div className="grid grid-cols-2 gap-4">
                         <SciFiPanel title="Personal details" className="min-h-[180px]">
                             <PlayerBox playerId={playerId} />
                         </SciFiPanel>
                         <SciFiPanel title="Games Statistics" className="min-h-[180px]">
-                            <GameStatistics playerId={playerId}/>
+                            <GameStatistics playerId={playerId} />
                         </SciFiPanel>
                         <SciFiPanel title="Players Statistics" className="min-h-[180px]">
-                            <PlayerStatistics playerId={playerId}/>
+                            <PlayerStatistics playerId={playerId} />
                         </SciFiPanel>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                        <MetricCard icon={<Settings className="w-5 h-5" />} label="Custom Fields" value={usageStats?.customFieldsCreated ?? '—'} accent="purple" noScanLine />
-                        <MetricCard icon={<BookOpen className="w-5 h-5" />} label="Campaigns" value={usageStats?.campaignsCreated ?? '—'} accent="purple" delay={0.6} />
-                        <MetricCard icon={<BarChart3 className="w-5 h-5" />} label="Saved Stats" value={usageStats?.savedQueries ?? '—'} accent="cyan" noScanLine />
+                        <MetricCard
+                            icon={<Settings className="w-5 h-5" />}
+                            label="Custom Fields"
+                            value={usageStats?.customFieldsCreated ?? '—'}
+                            accent="purple"
+                            noScanLine
+                        />
+                        <MetricCard
+                            icon={<BookOpen className="w-5 h-5" />}
+                            label="Campaigns"
+                            value={usageStats?.campaignsCreated ?? '—'}
+                            accent="purple"
+                            delay={0.6}
+                        />
+                        <MetricCard
+                            icon={<BarChart3 className="w-5 h-5" />}
+                            label="Saved Stats"
+                            value={usageStats?.savedQueries ?? '—'}
+                            accent="cyan"
+                            noScanLine
+                        />
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                        <MetricCard icon={<UserPlus className="w-5 h-5" />} label="Guest Players" value={usageStats?.guestPlayersCreated ?? '—'} accent="cyan" delay={1.2} />
-                        <MetricCard icon={<Calendar className="w-5 h-5" />} label="Plays This Month" value={usageStats?.entriesThisMonth ?? '—'} accent="cyan" noScanLine />
-                        <MetricCard icon={<Trophy className="w-5 h-5" />} label="Campaign Entries" value={usageStats?.entriesInCampaigns ?? '—'} accent="purple" delay={1.8} />
+                        <MetricCard
+                            icon={<UserPlus className="w-5 h-5" />}
+                            label="Guest Players"
+                            value={usageStats?.guestPlayersCreated ?? '—'}
+                            accent="cyan"
+                            delay={1.2}
+                        />
+                        <MetricCard
+                            icon={<Calendar className="w-5 h-5" />}
+                            label="Plays This Month"
+                            value={usageStats?.entriesThisMonth ?? '—'}
+                            accent="cyan"
+                            noScanLine
+                        />
+                        <MetricCard
+                            icon={<Trophy className="w-5 h-5" />}
+                            label="Campaign Entries"
+                            value={usageStats?.entriesInCampaigns ?? '—'}
+                            accent="purple"
+                            delay={1.8}
+                        />
                     </div>
 
                     <SciFiPanel title="Recent Activity">
@@ -90,7 +136,11 @@ function Home() {
                         ) : (
                             <div className="space-y-2">
                                 {usageStats.recentActivity.map((entry) => (
-                                    <Link key={entry.entry_id} to={`/games/${entry.game_id}?playerId=${playerId}&entryId=${entry.entry_id}`} className="flex items-center gap-2 text-sm group hover:bg-slate-800/50 rounded px-1 -mx-1 py-0.5 transition-colors">
+                                    <Link
+                                        key={entry.entry_id}
+                                        to={`/games/${entry.game_id}?playerId=${playerId}&entryId=${entry.entry_id}`}
+                                        className="flex items-center gap-2 text-sm group hover:bg-slate-800/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                                    >
                                         <Zap className="w-3 h-3 text-cyan-400 shrink-0" />
                                         <span className="text-slate-400 font-mono text-xs shrink-0">
                                             {new Date(entry.played_at).toLocaleDateString('fr-FR')}
@@ -105,18 +155,17 @@ function Home() {
                 </div>
             )}
         </>
-  )
+    )
 }
 
 export default Home
 
-
-function PlayerBox({ playerId }: {playerId: string}) {
+function PlayerBox({ playerId }: { playerId: string }) {
     const { data: playerInfos, refetch } = useQuery<Player>(`/players/${playerId}`)
     const [isEditingEmail, setIsEditingEmail] = useState(false)
     const [emailInput, setEmailInput] = useState('')
-    const [emailError, setEmailError] = useState<string|null>(null)
-    
+    const [emailError, setEmailError] = useState<string | null>(null)
+
     if (playerInfos === null) {
         return <div className="text-slate-500">Loading...</div>
     }
@@ -145,7 +194,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex items-center pb-4 border-b border-slate-600/30">    
+            <div className="flex items-center pb-4 border-b border-slate-600/30">
                 <div className="rounded-lg border border-slate-600/50 p-2 bg-slate-800/50 mr-3">
                     <User className="w-8 h-8 text-slate-400" />
                 </div>
@@ -155,10 +204,11 @@ function PlayerBox({ playerId }: {playerId: string}) {
                 </div>
             </div>
             <div className="flex flex-col mt-4 text-sm text-slate-300 gap-2">
-                {playerInfos.registeredOn === null 
-                    ? <span className="text-slate-500">Guest user</span>
-                    : <span>Registered on {(new Date(playerInfos.registeredOn)).toLocaleDateString('fr-FR')}</span>
-                }
+                {playerInfos.registeredOn === null ? (
+                    <span className="text-slate-500">Guest user</span>
+                ) : (
+                    <span>Registered on {new Date(playerInfos.registeredOn).toLocaleDateString('fr-FR')}</span>
+                )}
                 {'email' in playerInfos && (
                     <div className="flex items-center gap-2">
                         {isEditingEmail ? (
@@ -182,9 +232,7 @@ function PlayerBox({ playerId }: {playerId: string}) {
                             </div>
                         ) : (
                             <>
-                                <span className={playerInfos.email ? '' : 'text-slate-500'}>
-                                    {playerInfos.email ?? 'No email set'}
-                                </span>
+                                <span className={playerInfos.email ? '' : 'text-slate-500'}>{playerInfos.email ?? 'No email set'}</span>
                                 <button onClick={handleEditEmail} className="text-slate-400 hover:text-cyan-400">
                                     <Pencil className="w-4 h-4" />
                                 </button>
@@ -226,7 +274,7 @@ function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null
     )
 }
 
-function GameStatistics({ playerId }: {playerId: string}) {
+function GameStatistics({ playerId }: { playerId: string }) {
     const { data: gameStats } = useQuery<PlayerGameStats[]>(`/players/${playerId}/games`)
 
     if (gameStats === null) {
@@ -238,14 +286,17 @@ function GameStatistics({ playerId }: {playerId: string}) {
     }
 
     const mostPlayed = [...gameStats].sort((a, b) => b.play_count - a.play_count).slice(0, 4)
-    const leastPlayed = [...gameStats].sort((a, b) => a.play_count - b.play_count).filter(a => a.game_owned_id !== null).slice(0, 4)
+    const leastPlayed = [...gameStats]
+        .sort((a, b) => a.play_count - b.play_count)
+        .filter((a) => a.game_owned_id !== null)
+        .slice(0, 4)
 
     return (
         <div className="flex gap-6">
             <div className="flex-1">
                 <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Most played</h3>
                 <div className="space-y-1">
-                    {mostPlayed.map(game => (
+                    {mostPlayed.map((game) => (
                         <div key={game.game_id} className="flex justify-between text-sm">
                             <span className="truncate text-slate-300">{game.game_name}</span>
                             <span className="text-cyan-400 font-medium ml-2">{game.play_count}</span>
@@ -256,7 +307,7 @@ function GameStatistics({ playerId }: {playerId: string}) {
             <div className="flex-1">
                 <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Least played</h3>
                 <div className="space-y-1">
-                    {leastPlayed.map(game => (
+                    {leastPlayed.map((game) => (
                         <div key={game.game_id} className="flex justify-between text-sm">
                             <span className="truncate text-slate-300">{game.game_name}</span>
                             <span className="text-slate-500 font-medium ml-2">{game.play_count}</span>
@@ -268,7 +319,7 @@ function GameStatistics({ playerId }: {playerId: string}) {
     )
 }
 
-function PlayerStatistics({ playerId }: {playerId: string}) {
+function PlayerStatistics({ playerId }: { playerId: string }) {
     const { data: playerStats } = useQuery<CirclePlayer[]>(`/players/${playerId}/circle`)
 
     if (playerStats === null) {
@@ -288,7 +339,7 @@ function PlayerStatistics({ playerId }: {playerId: string}) {
             <div className="flex-1">
                 <h3 className="text-xs uppercase text-slate-500 mb-2 font-medium">Most played with</h3>
                 <div className="space-y-1 max-h-28 overflow-y-auto">
-                    {sortedByCount.slice(0, 5).map(player => (
+                    {sortedByCount.slice(0, 5).map((player) => (
                         <div key={player.id} className="flex justify-between items-center text-sm group">
                             <span className="truncate text-slate-300">{player.name}</span>
                             <div className="flex items-center gap-2">

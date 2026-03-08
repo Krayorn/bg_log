@@ -23,12 +23,7 @@ export function CornerBrackets({ color = 'cyan' }: { color?: 'cyan' | 'purple' }
     )
 }
 
-export function SciFiPanel({ title, children, actions, className }: {
-    title: string
-    children: ReactNode
-    actions?: ReactNode
-    className?: string
-}) {
+export function SciFiPanel({ title, children, actions, className }: { title: string; children: ReactNode; actions?: ReactNode; className?: string }) {
     return (
         <section className="relative bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden hover:border-cyan-400/40 transition-colors duration-300">
             <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70 flex items-center gap-2">
@@ -36,14 +31,19 @@ export function SciFiPanel({ title, children, actions, className }: {
                 <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">{title}</span>
                 {actions && <div className="ml-auto">{actions}</div>}
             </header>
-            <div className={`text-white p-4 ${className ?? ''}`}>
-                {children}
-            </div>
+            <div className={`text-white p-4 ${className ?? ''}`}>{children}</div>
         </section>
     )
 }
 
-export function MetricCard({ icon, label, value, accent = 'cyan', delay = 0, noScanLine }: {
+export function MetricCard({
+    icon,
+    label,
+    value,
+    accent = 'cyan',
+    delay = 0,
+    noScanLine,
+}: {
     icon: ReactNode
     label: string
     value: string | number
@@ -53,11 +53,13 @@ export function MetricCard({ icon, label, value, accent = 'cyan', delay = 0, noS
 }) {
     const isCyan = accent === 'cyan'
     return (
-        <div className={`relative group bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border transition-all duration-300 overflow-hidden ${
-            isCyan
-                ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-                : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-        }`}>
+        <div
+            className={`relative group bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border transition-all duration-300 overflow-hidden ${
+                isCyan
+                    ? 'border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                    : 'border-purple-400/30 hover:border-purple-400/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+            }`}
+        >
             {!noScanLine && <ScanLine accent={accent} delay={delay} />}
             <CornerBrackets color={accent} />
 

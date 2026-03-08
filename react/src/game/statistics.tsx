@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck — recharts types are incompatible with React 19's stricter JSX types
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from 'react'
 import { getSavedQueries, createSavedQuery, updateSavedQuery, deleteSavedQuery, executeStatsQuery } from '../api/statistics'
 import { X, BarChart3, PieChart as PieChartIcon, User, Save, Trash2, Pencil, Plus, ChevronUp, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
@@ -19,7 +19,15 @@ const HUD_TOOLTIP_STYLE = {
     fontSize: '12px',
 }
 
-function HudTooltipContent({ active, payload, label }: { active?: boolean; label?: string; payload?: { name: string; value: number; color: string; payload: { fill?: string } }[] }) {
+function HudTooltipContent({
+    active,
+    payload,
+    label,
+}: {
+    active?: boolean
+    label?: string
+    payload?: { name: string; value: number; color: string; payload: { fill?: string } }[]
+}) {
     if (!active || !payload?.length) return null
     return (
         <div style={{ ...HUD_TOOLTIP_STYLE, padding: '8px 12px' }}>
@@ -36,7 +44,15 @@ function HudTooltipContent({ active, payload, label }: { active?: boolean; label
     )
 }
 
-function WinrateTooltipContent({ active, payload, label }: { active?: boolean; label?: string; payload?: { value: number; payload: { fill?: string; wins: number; total: number; rate: number } }[] }) {
+function WinrateTooltipContent({
+    active,
+    payload,
+    label,
+}: {
+    active?: boolean
+    label?: string
+    payload?: { value: number; payload: { fill?: string; wins: number; total: number; rate: number } }[]
+}) {
     if (!active || !payload?.length) return null
     const entry = payload[0]
     const color = entry.payload?.fill ?? '#e2e8f0'
@@ -81,21 +97,21 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
         if (!playerId) return
         const { data, ok } = await createSavedQuery({ ...query, gameId, playerId })
         if (ok && data) {
-            setSavedQueries(prev => [...prev, data])
+            setSavedQueries((prev) => [...prev, data])
         }
     }
 
     const handleUpdate = async (id: string, query: Omit<SavedQuery, 'id'>) => {
         const { data, ok } = await updateSavedQuery(id, query)
         if (ok && data) {
-            setSavedQueries(prev => prev.map(q => q.id === id ? data : q))
+            setSavedQueries((prev) => prev.map((q) => (q.id === id ? data : q)))
         }
     }
 
     const handleDelete = async (id: string) => {
         const { ok } = await deleteSavedQuery(id)
         if (ok) {
-            setSavedQueries(prev => prev.filter(q => q.id !== id))
+            setSavedQueries((prev) => prev.filter((q) => q.id !== id))
         }
     }
 
@@ -111,16 +127,9 @@ export function StatisticsPanel({ gameId, playerId, customFields }: StatisticsPa
                 {showExplorer ? 'Hide Explorer' : 'New Query'}
             </button>
 
-            {showExplorer && (
-                <QueryExplorer
-                    gameId={gameId}
-                    playerId={playerId}
-                    customFields={customFields}
-                    onSave={handleSave}
-                />
-            )}
+            {showExplorer && <QueryExplorer gameId={gameId} playerId={playerId} customFields={customFields} onSave={handleSave} />}
 
-            {savedQueries.map(sq => (
+            {savedQueries.map((sq) => (
                 <SavedQueryCard
                     key={sq.id}
                     savedQuery={sq}
@@ -157,9 +166,14 @@ function SavedQueryCard({
     const [editName, setEditName] = useState(savedQuery.name)
     const [deleting, setDeleting] = useState(false)
 
-    const selectedField = customFields.find(cf => cf.id === savedQuery.customFieldId)
-    const groupByField = savedQuery.groupByFieldId ? customFields.find(cf => cf.id === savedQuery.groupByFieldId) : null
-    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
+    const selectedField = customFields.find((cf) => cf.id === savedQuery.customFieldId)
+    const groupByField = savedQuery.groupByFieldId ? customFields.find((cf) => cf.id === savedQuery.groupByFieldId) : null
+    const hasChartData =
+        statsResult &&
+        (statsResult.type === 'breakdown' ||
+            statsResult.type === 'grouped' ||
+            (statsResult.type === 'winrate' && 'data' in statsResult) ||
+            statsResult.type === 'winrate_by_player')
     const hasPieOption = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
@@ -182,7 +196,9 @@ function SavedQueryCard({
         setLoading(false)
     }, [gameId, playerId, savedQuery])
 
-    useEffect(() => { fetchStats() }, [fetchStats])
+    useEffect(() => {
+        fetchStats()
+    }, [fetchStats])
 
     const handleSaveEdit = async () => {
         await onUpdate(savedQuery.id, {
@@ -203,7 +219,7 @@ function SavedQueryCard({
 
     const getStackedChartData = () => {
         if (statsResult?.type !== 'stacked' && statsResult?.type !== 'crosstab') return []
-        return statsResult.data.map(item => ({ group: item.group, ...item.values }))
+        return statsResult.data.map((item) => ({ group: item.group, ...item.values }))
     }
 
     return (
@@ -215,13 +231,25 @@ function SavedQueryCard({
                     <div className="flex items-center gap-2">
                         <input
                             value={editName}
-                            onChange={e => setEditName(e.target.value)}
+                            onChange={(e) => setEditName(e.target.value)}
                             className="bg-slate-800/80 border border-cyan-400/30 rounded px-2 py-1 text-white text-sm font-mono focus:border-cyan-400/60 focus:outline-none"
                             autoFocus
-                            onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit() }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit()
+                            }}
                         />
-                        <button onClick={handleSaveEdit} className="text-emerald-400 hover:text-emerald-300 text-sm font-mono">Save</button>
-                        <button onClick={() => { setEditing(false); setEditName(savedQuery.name) }} className="text-slate-400 hover:text-white text-sm font-mono">Cancel</button>
+                        <button onClick={handleSaveEdit} className="text-emerald-400 hover:text-emerald-300 text-sm font-mono">
+                            Save
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditing(false)
+                                setEditName(savedQuery.name)
+                            }}
+                            className="text-slate-400 hover:text-white text-sm font-mono"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 ) : (
                     <h3 className="text-white font-medium tracking-wide">{savedQuery.name}</h3>
@@ -246,10 +274,17 @@ function SavedQueryCard({
                             <div className="w-px h-5 bg-cyan-400/20 mx-1" />
                         </>
                     )}
-                    <button onClick={() => setEditing(true)} className="p-1.5 rounded text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200">
+                    <button
+                        onClick={() => setEditing(true)}
+                        className="p-1.5 rounded text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200"
+                    >
                         <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={handleDelete} disabled={deleting} className="p-1.5 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200">
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="p-1.5 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                    >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
@@ -298,10 +333,15 @@ function QueryExplorer({
     const [showSaveInput, setShowSaveInput] = useState(false)
     const [metric, setMetric] = useState<string | null>(null)
 
-    const selectedField = customFields.find(cf => cf.id === selectedFieldId)
-    const groupByField = customFields.find(cf => cf.id === groupByFieldId)
+    const selectedField = customFields.find((cf) => cf.id === selectedFieldId)
+    const groupByField = customFields.find((cf) => cf.id === groupByFieldId)
     const isNumberField = selectedField?.kind === 'number'
-    const hasChartData = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped' || (statsResult.type === 'winrate' && 'data' in statsResult) || statsResult.type === 'winrate_by_player')
+    const hasChartData =
+        statsResult &&
+        (statsResult.type === 'breakdown' ||
+            statsResult.type === 'grouped' ||
+            (statsResult.type === 'winrate' && 'data' in statsResult) ||
+            statsResult.type === 'winrate_by_player')
     const hasPieOption = statsResult && (statsResult.type === 'breakdown' || statsResult.type === 'grouped')
     const isStackedChart = statsResult?.type === 'stacked' || statsResult?.type === 'crosstab'
 
@@ -341,7 +381,7 @@ function QueryExplorer({
 
     const handlePlayerClick = () => {
         if (selectedFieldId === null && metric === null) return
-        
+
         if (groupByPlayer) {
             setGroupByPlayer(false)
         } else {
@@ -384,10 +424,10 @@ function QueryExplorer({
 
     const fetchStats = async () => {
         if (!selectedFieldId && !metric) return
-        
+
         setLoading(true)
         setStatsResult(null)
-        
+
         const params = new URLSearchParams()
         if (metric) {
             params.set('metric', metric)
@@ -407,9 +447,9 @@ function QueryExplorer({
         if (!metric && isNumberField) {
             params.set('aggregation', aggregation)
         }
-        
+
         const { data, ok } = await executeStatsQuery(params)
-        
+
         if (ok && data) {
             setStatsResult(data)
         }
@@ -420,10 +460,10 @@ function QueryExplorer({
         if ((!selectedFieldId && !metric) || !saveName.trim()) return
         await onSave({
             name: saveName.trim(),
-            customFieldId: metric ? '' : selectedFieldId!,
+            customFieldId: metric ? null : selectedFieldId!,
             groupByFieldId: groupByFieldId,
             groupByPlayer: groupByPlayer,
-            aggregation: metric ? null : (isNumberField ? aggregation : null),
+            aggregation: metric ? null : isNumberField ? aggregation : null,
             metric: metric,
         })
         setSaveName('')
@@ -433,14 +473,14 @@ function QueryExplorer({
 
     const getStackedChartData = () => {
         if (statsResult?.type !== 'stacked' && statsResult?.type !== 'crosstab') return []
-        return statsResult.data.map(item => ({
+        return statsResult.data.map((item) => ({
             group: item.group,
-            ...item.values
+            ...item.values,
         }))
     }
 
-    const entryFields = customFields.filter(cf => cf.scope === 'entry')
-    const playerFields = customFields.filter(cf => cf.scope === 'playerResult')
+    const entryFields = customFields.filter((cf) => cf.scope === 'entry')
+    const playerFields = customFields.filter((cf) => cf.scope === 'playerResult')
 
     return (
         <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border border-purple-400/20 hover:border-purple-400/40 transition-all duration-300 overflow-hidden p-6">
@@ -450,19 +490,17 @@ function QueryExplorer({
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-slate-400 text-sm font-mono">
                         {metric !== null
-                            ? (groupByFieldId || groupByPlayer ? 'Selection complete' : 'Optionally select a field or player to group by')
-                            : selectedFieldId === null 
-                                ? 'Select a metric or field to aggregate'
-                                : groupByFieldId || groupByPlayer 
-                                    ? 'Selection complete' 
-                                    : 'Optionally select a field or player to group by'
-                        }
+                            ? groupByFieldId || groupByPlayer
+                                ? 'Selection complete'
+                                : 'Optionally select a field or player to group by'
+                            : selectedFieldId === null
+                              ? 'Select a metric or field to aggregate'
+                              : groupByFieldId || groupByPlayer
+                                ? 'Selection complete'
+                                : 'Optionally select a field or player to group by'}
                     </p>
                     {(selectedFieldId || metric) && (
-                        <button
-                            onClick={clearSelection}
-                            className="text-slate-400 hover:text-white text-sm flex items-center gap-1"
-                        >
+                        <button onClick={clearSelection} className="text-slate-400 hover:text-white text-sm flex items-center gap-1">
                             <X className="w-4 h-4" />
                             Clear
                         </button>
@@ -501,8 +539,8 @@ function QueryExplorer({
                     <div className="mb-4">
                         <p className="text-xs text-emerald-400 mb-2 font-medium">Entry Fields</p>
                         <div className="flex flex-wrap gap-2">
-                            {entryFields.map(cf => (
-                                <FieldBox 
+                            {entryFields.map((cf) => (
+                                <FieldBox
                                     key={cf.id}
                                     field={cf}
                                     state={getFieldState(cf.id)}
@@ -518,8 +556,8 @@ function QueryExplorer({
                     <div className="mb-4">
                         <p className="text-xs text-violet-400 mb-2 font-medium">Player Fields</p>
                         <div className="flex flex-wrap gap-2">
-                            {playerFields.map(cf => (
-                                <FieldBox 
+                            {playerFields.map((cf) => (
+                                <FieldBox
                                     key={cf.id}
                                     field={cf}
                                     state={getFieldState(cf.id)}
@@ -534,11 +572,7 @@ function QueryExplorer({
                 <div className="mb-4">
                     <p className="text-xs text-cyan-400 mb-2 font-medium">Group By</p>
                     <div className="flex flex-wrap gap-2">
-                        <PlayerBox 
-                            state={getPlayerState()}
-                            onClick={handlePlayerClick}
-                            disabled={selectedFieldId === null && metric === null}
-                        />
+                        <PlayerBox state={getPlayerState()} onClick={handlePlayerClick} disabled={selectedFieldId === null && metric === null} />
                     </div>
                 </div>
             </div>
@@ -546,10 +580,13 @@ function QueryExplorer({
             {isNumberField && !metric && (
                 <div className="relative flex items-center gap-3 mb-4 pb-4 border-b border-slate-600/50">
                     <span className="text-slate-500 text-[10px] uppercase tracking-[0.15em] font-mono">Aggregation:</span>
-                    {(['sum', 'avg', 'min', 'max'] as AggregationType[]).map(agg => (
+                    {(['sum', 'avg', 'min', 'max'] as AggregationType[]).map((agg) => (
                         <button
                             key={agg}
-                            onClick={() => { setAggregation(agg); setStatsResult(null); }}
+                            onClick={() => {
+                                setAggregation(agg)
+                                setStatsResult(null)
+                            }}
                             className={`px-3 py-1 rounded text-sm font-mono transition-all duration-200 ${
                                 aggregation === agg
                                     ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
@@ -565,7 +602,7 @@ function QueryExplorer({
             {canQuery && (
                 <div className="relative mb-6">
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={fetchStats}
                             disabled={loading}
                             className="px-6 py-2 rounded-lg bg-cyan-500/20 border border-cyan-400/50 hover:bg-cyan-500/30 hover:shadow-[0_0_15px_rgba(34,211,238,0.25)] disabled:bg-slate-800/50 disabled:border-slate-600/50 disabled:text-slate-500 disabled:cursor-not-allowed text-cyan-400 font-medium font-mono transition-all duration-200"
@@ -575,7 +612,7 @@ function QueryExplorer({
                         {statsResult && !showSaveInput && (
                             <button
                                 onClick={() => {
-                                    const primary = metric === 'winrate' ? 'Win Rate' : selectedField?.name ?? ''
+                                    const primary = metric === 'winrate' ? 'Win Rate' : (selectedField?.name ?? '')
                                     const groupBy = groupByPlayer ? 'Player' : groupByField?.name
                                     setSaveName(groupBy ? `${primary} by ${groupBy}` : primary)
                                     setShowSaveInput(true)
@@ -591,11 +628,13 @@ function QueryExplorer({
                         <div className="flex items-center gap-2 mt-3">
                             <input
                                 value={saveName}
-                                onChange={e => setSaveName(e.target.value)}
+                                onChange={(e) => setSaveName(e.target.value)}
                                 placeholder="Query name..."
                                 className="bg-slate-800/80 border border-cyan-400/30 rounded px-3 py-2 text-white text-sm font-mono flex-1 focus:border-cyan-400/60 focus:outline-none"
                                 autoFocus
-                                onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSave()
+                                }}
                             />
                             <button
                                 onClick={handleSave}
@@ -605,7 +644,10 @@ function QueryExplorer({
                                 Save
                             </button>
                             <button
-                                onClick={() => { setShowSaveInput(false); setSaveName('') }}
+                                onClick={() => {
+                                    setShowSaveInput(false)
+                                    setSaveName('')
+                                }}
                                 className="px-3 py-2 rounded-lg text-slate-500 hover:text-white text-sm font-mono transition-all duration-200"
                             >
                                 Cancel
@@ -695,7 +737,7 @@ function StatsResultDisplay({
                     </p>
                 </div>
             )}
-            
+
             {statsResult.type === 'grouped' && (
                 <div>
                     <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">
@@ -708,12 +750,7 @@ function StatsResultDisplay({
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" {...HUD_AXIS.x} />
-                                    <YAxis 
-                                        type="category" 
-                                        dataKey="label" 
-                                        width={150}
-                                        {...HUD_AXIS.y}
-                                    />
+                                    <YAxis type="category" dataKey="label" width={150} {...HUD_AXIS.y} />
                                     <Tooltip content={<HudTooltipContent />} />
                                     <Bar dataKey="total" radius={[0, 4, 4, 0]}>
                                         {statsResult.data.map((_, i) => (
@@ -736,7 +773,14 @@ function StatsResultDisplay({
                                         outerRadius={100}
                                         innerRadius={50}
                                         label={({ x, y, index, label, percent, textAnchor }) => (
-                                            <text x={x} y={y} textAnchor={textAnchor} fill={CHART_COLORS[index % CHART_COLORS.length]} fontSize={12} fontFamily="ui-monospace, monospace">
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                textAnchor={textAnchor}
+                                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                                fontSize={12}
+                                                fontFamily="ui-monospace, monospace"
+                                            >
                                                 {`${label} (${(percent * 100).toFixed(0)}%)`}
                                             </text>
                                         )}
@@ -754,7 +798,7 @@ function StatsResultDisplay({
                     )}
                 </div>
             )}
-            
+
             {statsResult.type === 'breakdown' && (
                 <div>
                     <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono mb-4 text-center">
@@ -767,12 +811,7 @@ function StatsResultDisplay({
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={statsResult.data} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" {...HUD_AXIS.x} />
-                                    <YAxis 
-                                        type="category" 
-                                        dataKey="value" 
-                                        width={150}
-                                        {...HUD_AXIS.y}
-                                    />
+                                    <YAxis type="category" dataKey="value" width={150} {...HUD_AXIS.y} />
                                     <Tooltip content={<HudTooltipContent />} />
                                     <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                                         {statsResult.data.map((_, i) => (
@@ -795,7 +834,14 @@ function StatsResultDisplay({
                                         outerRadius={100}
                                         innerRadius={50}
                                         label={({ x, y, index, value, percent, textAnchor }) => (
-                                            <text x={x} y={y} textAnchor={textAnchor} fill={CHART_COLORS[index % CHART_COLORS.length]} fontSize={12} fontFamily="ui-monospace, monospace">
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                textAnchor={textAnchor}
+                                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                                fontSize={12}
+                                                fontFamily="ui-monospace, monospace"
+                                            >
                                                 {`${value} (${(percent * 100).toFixed(0)}%)`}
                                             </text>
                                         )}
@@ -826,21 +872,11 @@ function StatsResultDisplay({
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={getStackedChartData()} layout="vertical" margin={{ left: 20, right: 20 }}>
                                     <XAxis type="number" {...HUD_AXIS.x} />
-                                    <YAxis 
-                                        type="category" 
-                                        dataKey="group" 
-                                        width={120}
-                                        {...HUD_AXIS.y}
-                                    />
+                                    <YAxis type="category" dataKey="group" width={120} {...HUD_AXIS.y} />
                                     <Tooltip content={<HudTooltipContent />} />
                                     <Legend wrapperStyle={{ color: '#94a3b8', fontFamily: 'ui-monospace, monospace', fontSize: '11px' }} />
                                     {statsResult.keys.map((key, index) => (
-                                        <Bar 
-                                            key={key} 
-                                            dataKey={key} 
-                                            stackId="stack" 
-                                            fill={CHART_COLORS[index % CHART_COLORS.length]}
-                                        />
+                                        <Bar key={key} dataKey={key} stackId="stack" fill={CHART_COLORS[index % CHART_COLORS.length]} />
                                     ))}
                                 </BarChart>
                             </ResponsiveContainer>
@@ -868,20 +904,24 @@ function StatsResultDisplay({
                     {(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length === 0 ? (
                         <p className="text-slate-500 text-center font-mono text-sm">No data available</p>
                     ) : (
-                        <div style={{ height: chartHeight((statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.length) }}>
+                        <div
+                            style={{
+                                height: chartHeight(
+                                    (statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data
+                                        .length,
+                                ),
+                            }}
+                        >
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
-                                    data={(statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }).data.map(d => ({ ...d, rate: d.rate * 100 }))}
+                                    data={(
+                                        statsResult as { type: 'winrate'; data: { label: string; wins: number; total: number; rate: number }[] }
+                                    ).data.map((d) => ({ ...d, rate: d.rate * 100 }))}
                                     layout="vertical"
                                     margin={{ left: 20, right: 20 }}
                                 >
                                     <XAxis type="number" domain={[0, 100]} unit="%" {...HUD_AXIS.x} />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="label"
-                                        width={150}
-                                        {...HUD_AXIS.y}
-                                    />
+                                    <YAxis type="category" dataKey="label" width={150} {...HUD_AXIS.y} />
                                     <Tooltip content={<WinrateTooltipContent />} />
                                     <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
                                         {(statsResult as { data: { label: string }[] }).data.map((_, i) => (
@@ -904,17 +944,12 @@ function StatsResultDisplay({
                         <div style={{ height: chartHeight(statsResult.data.length) }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
-                                    data={statsResult.data.map(d => ({ ...d, rate: d.rate * 100, displayLabel: `${d.label} — ${d.player}` }))}
+                                    data={statsResult.data.map((d) => ({ ...d, rate: d.rate * 100, displayLabel: `${d.label} — ${d.player}` }))}
                                     layout="vertical"
                                     margin={{ left: 20, right: 20 }}
                                 >
                                     <XAxis type="number" domain={[0, 100]} unit="%" {...HUD_AXIS.x} />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="displayLabel"
-                                        width={200}
-                                        {...HUD_AXIS.y}
-                                    />
+                                    <YAxis type="category" dataKey="displayLabel" width={200} {...HUD_AXIS.y} />
                                     <Tooltip content={<WinrateTooltipContent />} />
                                     <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
                                         {statsResult.data.map((_, i) => (
@@ -931,31 +966,34 @@ function StatsResultDisplay({
     )
 }
 
-function FieldBox({ 
-    field, 
-    state, 
-    onClick, 
-    colorClass 
-}: { 
+function FieldBox({
+    field,
+    state,
+    onClick,
+    colorClass,
+}: {
     field: CustomField
     state: 'selected-aggregate' | 'selected-groupby' | 'compatible' | 'incompatible' | 'idle'
     onClick: () => void
     colorClass: 'emerald' | 'violet'
 }) {
-    const baseClasses = "px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
-    
+    const baseClasses = 'px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer'
+
     const stateClasses = {
-        'selected-aggregate': colorClass === 'emerald' 
-            ? 'bg-emerald-500/30 border-2 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/50'
-            : 'bg-violet-500/30 border-2 border-violet-400 text-violet-300 ring-2 ring-violet-400/50',
+        'selected-aggregate':
+            colorClass === 'emerald'
+                ? 'bg-emerald-500/30 border-2 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/50'
+                : 'bg-violet-500/30 border-2 border-violet-400 text-violet-300 ring-2 ring-violet-400/50',
         'selected-groupby': 'bg-cyan-500/30 border-2 border-cyan-400 text-cyan-300 ring-2 ring-cyan-400/50',
-        'compatible': colorClass === 'emerald'
-            ? 'bg-slate-800 border border-emerald-500/50 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10'
-            : 'bg-slate-800 border border-violet-500/50 text-violet-300 hover:border-violet-400 hover:bg-violet-500/10',
-        'incompatible': 'bg-slate-800/50 border border-slate-600 text-slate-500 cursor-not-allowed opacity-50',
-        'idle': colorClass === 'emerald'
-            ? 'bg-slate-800 border border-emerald-500/50 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10'
-            : 'bg-slate-800 border border-violet-500/50 text-violet-300 hover:border-violet-400 hover:bg-violet-500/10',
+        compatible:
+            colorClass === 'emerald'
+                ? 'bg-slate-800 border border-emerald-500/50 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10'
+                : 'bg-slate-800 border border-violet-500/50 text-violet-300 hover:border-violet-400 hover:bg-violet-500/10',
+        incompatible: 'bg-slate-800/50 border border-slate-600 text-slate-500 cursor-not-allowed opacity-50',
+        idle:
+            colorClass === 'emerald'
+                ? 'bg-slate-800 border border-emerald-500/50 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10'
+                : 'bg-slate-800 border border-violet-500/50 text-violet-300 hover:border-violet-400 hover:bg-violet-500/10',
     }
 
     return (
@@ -970,31 +1008,19 @@ function FieldBox({
     )
 }
 
-function PlayerBox({ 
-    state, 
-    onClick, 
-    disabled 
-}: { 
-    state: 'selected-groupby' | 'compatible' | 'idle'
-    onClick: () => void
-    disabled: boolean
-}) {
-    const baseClasses = "px-3 py-2 rounded-lg text-sm font-medium transition-all"
-    
+function PlayerBox({ state, onClick, disabled }: { state: 'selected-groupby' | 'compatible' | 'idle'; onClick: () => void; disabled: boolean }) {
+    const baseClasses = 'px-3 py-2 rounded-lg text-sm font-medium transition-all'
+
     const stateClasses = {
         'selected-groupby': 'bg-cyan-500/30 border-2 border-cyan-400 text-cyan-300 ring-2 ring-cyan-400/50 cursor-pointer',
-        'compatible': 'bg-slate-800 border border-cyan-500/50 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-500/10 cursor-pointer',
-        'idle': disabled 
+        compatible: 'bg-slate-800 border border-cyan-500/50 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-500/10 cursor-pointer',
+        idle: disabled
             ? 'bg-slate-800/50 border border-slate-600 text-slate-500 cursor-not-allowed opacity-50'
             : 'bg-slate-800 border border-cyan-500/50 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-500/10 cursor-pointer',
     }
 
     return (
-        <button
-            onClick={!disabled ? onClick : undefined}
-            className={`${baseClasses} ${stateClasses[state]}`}
-            disabled={disabled}
-        >
+        <button onClick={!disabled ? onClick : undefined} className={`${baseClasses} ${stateClasses[state]}`} disabled={disabled}>
             <User className="w-4 h-4 inline-block mr-1" />
             Player
         </button>

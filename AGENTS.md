@@ -14,8 +14,11 @@
 - Backend structure: DDD-inspired (group by domain, not by technical type).
 - Frontend styling: Tailwind CSS utility classes.
 - Keep changes within the relevant app directory.
+- **Frontend linting**: oxlint (not ESLint). Config-free — runs with sensible defaults.
+- **Frontend formatting**: Prettier. Config in `react/.prettierrc.json`. Run `npm run fmt` to format, `npm run fmt:check` to verify.
 - **Frontend types**: Shared API/domain types live in `react/src/types.ts`, derived from backend `view()` method shapes. Don't redeclare types locally in components — import from `types.ts`. Component-specific prop types stay local.
 - **Frontend API calls**: Typed API functions live in `react/src/api/`, grouped by domain (e.g., `entries.ts`, `campaigns.ts`, `players.ts`). Don't call `apiGet`/`apiPost`/etc. directly from components — import named functions from `api/`. The low-level helpers in `react/src/hooks/useApi.ts` are only used by the `api/` layer.
+- **Frontend data fetching**: `useQuery` returns `{ data, loading, error, refetch, setData }`. Use `setData` for optimistic updates (e.g., after create/update/delete) instead of duplicating state with separate `useState` + `useEffect` sync.
 
 ## Testing
 - Run tests: `make test` (runs PHPUnit inside Docker).
@@ -30,6 +33,8 @@
 - **Exceptions**: Domain exceptions go in `Exception/` folders (e.g., `Player/Exception/DuplicateGuestPlayerException`). Controllers catch them and return appropriate HTTP responses.
 - **Controllers** extend `App\Utils\BaseController`. Use `$this->getPlayer()` (returns `Player`, non-nullable) instead of `$this->getUser()`.
 - **Request parsing**: Use `JsonPayload::fromRequest($request)` with typed accessors (`getString`, `getNonEmptyString`, `getOptionalString`) instead of manual `json_decode`. `JsonPayload` owns input shape validation (missing/empty/type); handlers own domain validation (duplicates, email format, business rules).
+- **Entity validation**: Domain validation that applies everywhere (e.g., email format) belongs in entity setters, not in handlers or controllers. Handlers and controllers catch the exceptions. See `Player::setEmail()` as an example.
+- **Repository DTOs**: When repositories return raw SQL/DQL rows, map them to readonly DTO classes (e.g., `PlayerSearchResult`, `CirclePlayer`) in the repository — don't map raw arrays in controllers. DTOs get a `view()` method for serialization and must be excluded from autowiring in `services.yaml`.
 - **Static factories**: Prefer named static factory methods on entities when construction involves related setup (e.g., `Player::newGuest(name, number, owner)`).
 - **Never use `view()` for internal access**: `view()` is a serialization method for HTTP responses. To read entity state in handlers or tests, use typed getters (e.g., `$game->getName()`, not `$game->view()['name']`). Add a getter if one doesn't exist.
 - **Cross-domain utilities** live in `App\Utils\` (e.g., `BaseController`, `JsonPayload`).

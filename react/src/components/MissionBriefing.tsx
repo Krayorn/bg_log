@@ -33,7 +33,7 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
         },
     ]
 
-    const completedCount = objectives.filter(o => o.completed).length
+    const completedCount = objectives.filter((o) => o.completed).length
     const allComplete = completedCount === objectives.length
 
     return (
@@ -45,15 +45,9 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
             <header className="border-b border-cyan-400/20 px-6 py-3 bg-slate-800/70 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="uppercase text-xs font-mono font-medium text-cyan-400 tracking-[0.3em]">
-                        System Initialization
-                    </span>
+                    <span className="uppercase text-xs font-mono font-medium text-cyan-400 tracking-[0.3em]">System Initialization</span>
                 </div>
-                <button
-                    onClick={onDismiss}
-                    className="text-slate-500 hover:text-slate-300 transition-colors"
-                    title="Dismiss tutorial"
-                >
+                <button onClick={onDismiss} className="text-slate-500 hover:text-slate-300 transition-colors" title="Dismiss tutorial">
                     <X className="w-4 h-4" />
                 </button>
             </header>
@@ -70,32 +64,24 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
                         <div
                             key={obj.id}
                             className={`flex items-start gap-4 p-4 rounded-lg border transition-all ${
-                                obj.completed
-                                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                                    : 'border-slate-600/30 bg-slate-800/30'
+                                obj.completed ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-600/30 bg-slate-800/30'
                             }`}
                         >
-                            <div className={`shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center mt-0.5 ${
-                                obj.completed
-                                    ? 'border-emerald-400 bg-emerald-500/20'
-                                    : 'border-slate-500'
-                            }`}>
+                            <div
+                                className={`shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center mt-0.5 ${
+                                    obj.completed ? 'border-emerald-400 bg-emerald-500/20' : 'border-slate-500'
+                                }`}
+                            >
                                 {obj.completed && <Check className="w-4 h-4 text-emerald-400" />}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-slate-500 font-mono text-xs">
-                                        {String(obj.id).padStart(2, '0')}
-                                    </span>
-                                    <span className={`font-mono text-sm ${
-                                        obj.completed ? 'text-emerald-400 line-through' : 'text-white'
-                                    }`}>
+                                    <span className="text-slate-500 font-mono text-xs">{String(obj.id).padStart(2, '0')}</span>
+                                    <span className={`font-mono text-sm ${obj.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>
                                         {obj.label}
                                     </span>
                                 </div>
-                                <p className="text-slate-500 text-xs mt-1 font-mono">
-                                    {obj.description}
-                                </p>
+                                <p className="text-slate-500 text-xs mt-1 font-mono">{obj.description}</p>
                             </div>
                             {obj.link && !obj.completed && (
                                 <Link
@@ -111,9 +97,7 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <span className="text-slate-500 font-mono text-xs uppercase tracking-wider shrink-0">
-                        Init Progress
-                    </span>
+                    <span className="text-slate-500 font-mono text-xs uppercase tracking-wider shrink-0">Init Progress</span>
                     <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-cyan-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(34,211,238,0.4)]"
@@ -127,9 +111,7 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
 
                 {allComplete && (
                     <div className="mt-6 text-center">
-                        <p className="text-emerald-400 font-mono text-sm mb-3">
-                            ▸ System initialized. All objectives complete.
-                        </p>
+                        <p className="text-emerald-400 font-mono text-sm mb-3">▸ System initialized. All objectives complete.</p>
                         <button
                             onClick={onDismiss}
                             className="px-4 py-2 rounded border border-cyan-400/30 bg-cyan-500/10 text-cyan-400 text-sm font-mono hover:bg-cyan-500/20 transition-colors"

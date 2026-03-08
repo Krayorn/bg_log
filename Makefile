@@ -20,6 +20,7 @@ backend-precommit: test
 frontend-precommit:
 	cd react && npx tsc --noEmit
 	cd react && npm run lint
+	cd react && npm run fmt:check
 
 test:
 	docker exec bg_log-symfony-1 vendor/bin/phpunit

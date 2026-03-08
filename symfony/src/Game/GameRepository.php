@@ -5,6 +5,7 @@ namespace App\Game;
 use App\Player\Player;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @extends ServiceEntityRepository<Game>
@@ -100,6 +101,19 @@ class GameRepository extends ServiceEntityRepository
         }
 
         return $result;
+    }
+
+    public function getPlayCount(UuidInterface $gameId, UuidInterface $playerId): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        return (int) $conn->executeQuery(
+            'SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE e.game_id = :gameId AND pr.player_id = :playerId',
+            [
+                'gameId' => $gameId,
+                'playerId' => $playerId,
+            ]
+        )->fetchOne();
     }
 
     /**

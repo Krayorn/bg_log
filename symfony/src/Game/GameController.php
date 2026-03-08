@@ -38,7 +38,7 @@ class GameController extends BaseController
     }
 
     #[Route('api/players/{player}/games', methods: 'POST')]
-    public function addToCollection(Player $player, Request $request, EntityManagerInterface $entityManager, AddGameToCollectionHandler $handler): Response
+    public function addToCollection(Player $player, Request $request, GameRepository $gameRepository, AddGameToCollectionHandler $handler): Response
     {
         $this->denyAccessUnlessGranted(GameOwnedVoter::GAME_OWNED_ADD, $player);
 
@@ -56,14 +56,7 @@ class GameController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $conn = $entityManager->getConnection();
-        $playCount = (int) $conn->executeQuery(
-            'SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE e.game_id = :gameId AND pr.player_id = :playerId',
-            [
-                'gameId' => $gameOwned->getGame()->getId(),
-                'playerId' => $player->getId(),
-            ]
-        )->fetchOne();
+        $playCount = $gameRepository->getPlayCount($gameOwned->getGame()->getId(), $player->getId());
 
         return new JsonResponse([
             'game_id' => $gameOwned->getGame()->getId(),
@@ -75,7 +68,7 @@ class GameController extends BaseController
     }
 
     #[Route('api/players/{player}/games/{gameOwned}', methods: 'PATCH')]
-    public function updatePlayerGame(Player $player, GameOwned $gameOwned, Request $request, EntityManagerInterface $entityManager, UpdatePlayerGameHandler $handler): Response
+    public function updatePlayerGame(Player $player, GameOwned $gameOwned, Request $request, GameRepository $gameRepository, UpdatePlayerGameHandler $handler): Response
     {
         $this->denyAccessUnlessGranted(GameOwnedVoter::GAME_OWNED_EDIT, $gameOwned);
 
@@ -94,14 +87,7 @@ class GameController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $conn = $entityManager->getConnection();
-        $playCount = (int) $conn->executeQuery(
-            'SELECT COUNT(DISTINCT e.id) FROM entry e JOIN player_result pr ON pr.entry_id = e.id WHERE e.game_id = :gameId AND pr.player_id = :playerId',
-            [
-                'gameId' => $gameOwned->getGame()->getId(),
-                'playerId' => $player->getId(),
-            ]
-        )->fetchOne();
+        $playCount = $gameRepository->getPlayCount($gameOwned->getGame()->getId(), $player->getId());
 
         return new JsonResponse([
             'game_id' => $gameOwned->getGame()->getId(),
@@ -168,7 +154,7 @@ class GameController extends BaseController
             'game' => $game,
         ]);
 
-        return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_CREATED);
+        return new JsonResponse(array_map(fn ($gameOwned): array => $gameOwned->view(), $games), Response::HTTP_OK);
     }
 
     #[Route('api/game/{game}/customFields', methods: 'POST')]

@@ -3,7 +3,6 @@
 namespace App\Player\Action;
 
 use App\Player\Exception\DuplicatePlayerNameException;
-use App\Player\Exception\InvalidEmailException;
 use App\Player\Player;
 use App\Player\PlayerRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -20,10 +19,6 @@ class RegisterPlayerHandler
 
     public function handle(string $name, string $password, ?string $email): Player
     {
-        if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            throw new InvalidEmailException('Invalid email format');
-        }
-
         $existingPlayer = $this->playerRepository->findOneBy([
             'name' => $name,
         ]);

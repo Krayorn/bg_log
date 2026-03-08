@@ -1,8 +1,7 @@
 import { apiPost, apiPatch } from '../hooks/useApi'
 import type { Game, PlayerGameStats } from '../types'
 
-export const createGame = (name: string) =>
-    apiPost<Game>('/games', { name })
+export const createGame = (name: string) => apiPost<Game>('/games', { name })
 
 export const addGameToLibrary = (playerId: string, body: { gameId: string; price?: number }) =>
     apiPost<PlayerGameStats>(`/players/${playerId}/games`, body)

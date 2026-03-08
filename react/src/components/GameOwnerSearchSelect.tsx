@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from 'react'
 import { addGameToLibrary } from '../api/games'
 import { searchPlayers } from '../api/players'
 import { Package, Plus, Search, ArrowLeft } from 'lucide-react'
@@ -25,7 +25,7 @@ export default function GameOwnerSearchSelect({
     onChange,
     autoSelectOwner = false,
     initialOwnerPlayerName,
-    placeholder = "Search player...",
+    placeholder = 'Search player...',
 }: GameOwnerSearchSelectProps) {
     const { players: circlePlayers } = useCircle()
     const [scope, setScope] = useState<'circle' | 'all'>('circle')
@@ -40,7 +40,7 @@ export default function GameOwnerSearchSelect({
         if (fetchedGameOwners) setGameOwners(fetchedGameOwners)
     }, [fetchedGameOwners])
 
-    const [query, setQuery] = useState("")
+    const [query, setQuery] = useState('')
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState(false)
     const [highlightIndex, setHighlightIndex] = useState(-1)
@@ -78,18 +78,18 @@ export default function GameOwnerSearchSelect({
 
     useEffect(() => {
         if (autoSelectOwner && !value && gameOwners.length > 0) {
-            const currentPlayerOwnership = gameOwners.find(go => go.player.id === playerId)
+            const currentPlayerOwnership = gameOwners.find((go) => go.player.id === playerId)
             if (currentPlayerOwnership) {
                 onChange(currentPlayerOwnership.id)
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [autoSelectOwner, value, gameOwners, playerId])
 
-    const selectedOwner = gameOwners.find(go => go.id === value)
-    const ownersByPlayerId = new Map(gameOwners.map(go => [go.player.id, go]))
+    const selectedOwner = gameOwners.find((go) => go.id === value)
+    const ownersByPlayerId = new Map(gameOwners.map((go) => [go.player.id, go]))
 
-    const isSearching = query.trim() !== ""
+    const isSearching = query.trim() !== ''
 
     const filtered = (() => {
         if (isSearching) {
@@ -103,7 +103,7 @@ export default function GameOwnerSearchSelect({
             const all = [...map.values()]
             const q = query.toLowerCase()
             return all
-                .filter(p => p.name.toLowerCase().includes(q))
+                .filter((p) => p.name.toLowerCase().includes(q))
                 .sort((a, b) => {
                     const aOwns = ownersByPlayerId.has(a.id) ? 0 : 1
                     const bOwns = ownersByPlayerId.has(b.id) ? 0 : 1
@@ -111,9 +111,7 @@ export default function GameOwnerSearchSelect({
                     return a.name.localeCompare(b.name)
                 })
         }
-        return gameOwners
-            .map(go => ({ id: go.player.id, name: go.player.name }))
-            .sort((a, b) => a.name.localeCompare(b.name))
+        return gameOwners.map((go) => ({ id: go.player.id, name: go.player.name })).sort((a, b) => a.name.localeCompare(b.name))
     })()
 
     const showScopeAction = isSearching
@@ -129,7 +127,7 @@ export default function GameOwnerSearchSelect({
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setOpen(false)
                 setEditing(false)
-                setQuery("")
+                setQuery('')
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -140,13 +138,13 @@ export default function GameOwnerSearchSelect({
         setActivated(true)
         setEditing(true)
         setOpen(true)
-        setQuery("")
+        setQuery('')
         setTimeout(() => inputRef.current?.focus(), 0)
     }
 
     const handleSelectOwner = (gameOwnerId: string) => {
         onChange(gameOwnerId)
-        setQuery("")
+        setQuery('')
         setOpen(false)
         setEditing(false)
         setScope('circle')
@@ -168,9 +166,9 @@ export default function GameOwnerSearchSelect({
                 price: data.price,
                 player: { id: player.id, name: player.name },
             }
-            setGameOwners(prev => [...prev, newOwner])
+            setGameOwners((prev) => [...prev, newOwner])
             onChange(data.game_owned_id)
-            setQuery("")
+            setQuery('')
             setOpen(false)
             setEditing(false)
             setScope('circle')
@@ -187,10 +185,10 @@ export default function GameOwnerSearchSelect({
 
         if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setHighlightIndex(i => Math.min(i + 1, totalItems - 1))
+            setHighlightIndex((i) => Math.min(i + 1, totalItems - 1))
         } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setHighlightIndex(i => Math.max(i - 1, 0))
+            setHighlightIndex((i) => Math.max(i - 1, 0))
         } else if (e.key === 'Enter') {
             e.preventDefault()
             if (highlightIndex >= 0 && highlightIndex < filtered.length) {
@@ -214,15 +212,15 @@ export default function GameOwnerSearchSelect({
         } else if (e.key === 'Escape') {
             setOpen(false)
             setEditing(false)
-            setQuery("")
+            setQuery('')
         }
     }
 
     const ownerLabel = selectedOwner
         ? `${selectedOwner.player.name}'s copy${selectedOwner.player.id === playerId ? ' (yours)' : ''}`
         : initialOwnerPlayerName
-            ? `${initialOwnerPlayerName}'s copy`
-            : null
+          ? `${initialOwnerPlayerName}'s copy`
+          : null
     const showInput = editing || !value || !ownerLabel
 
     return (
@@ -232,8 +230,15 @@ export default function GameOwnerSearchSelect({
                     ref={inputRef}
                     type="text"
                     value={query}
-                    onChange={e => { setQuery(e.target.value); setOpen(true); setAddError(null) }}
-                    onFocus={() => { setActivated(true); setOpen(true) }}
+                    onChange={(e) => {
+                        setQuery(e.target.value)
+                        setOpen(true)
+                        setAddError(null)
+                    }}
+                    onFocus={() => {
+                        setActivated(true)
+                        setOpen(true)
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     className="w-full p-2 rounded bg-slate-700 text-white border border-slate-500 text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-400/50"
@@ -254,9 +259,7 @@ export default function GameOwnerSearchSelect({
                             Type a name to select an existing owner or add the game to their collection
                         </div>
                     )}
-                    {scope === 'all' && searching && (
-                        <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>
-                    )}
+                    {scope === 'all' && searching && <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>}
                     {scope === 'all' && !searching && isSearching && filtered.length === 0 && (
                         <div className="px-3 py-2 text-xs text-slate-400">No players found</div>
                     )}
@@ -268,9 +271,7 @@ export default function GameOwnerSearchSelect({
                                 key={player.id}
                                 type="button"
                                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
-                                    i === highlightIndex
-                                        ? 'bg-cyan-500/20 text-cyan-400'
-                                        : 'text-white hover:bg-slate-700'
+                                    i === highlightIndex ? 'bg-cyan-500/20 text-cyan-400' : 'text-white hover:bg-slate-700'
                                 }`}
                                 onMouseEnter={() => setHighlightIndex(i)}
                                 onClick={() => {
@@ -300,9 +301,7 @@ export default function GameOwnerSearchSelect({
                         <button
                             type="button"
                             className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 border-t border-slate-600 transition-colors ${
-                                highlightIndex === totalItems - 1
-                                    ? 'bg-cyan-500/20 text-cyan-400'
-                                    : 'text-slate-300 hover:bg-slate-700'
+                                highlightIndex === totalItems - 1 ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-300 hover:bg-slate-700'
                             }`}
                             onMouseEnter={() => setHighlightIndex(totalItems - 1)}
                             onClick={() => {
@@ -317,17 +316,19 @@ export default function GameOwnerSearchSelect({
                             }}
                         >
                             {scope === 'circle' ? (
-                                <><Search className="w-4 h-4" /> Search all users</>
+                                <>
+                                    <Search className="w-4 h-4" /> Search all users
+                                </>
                             ) : (
-                                <><ArrowLeft className="w-4 h-4" /> Back to circle</>
+                                <>
+                                    <ArrowLeft className="w-4 h-4" /> Back to circle
+                                </>
                             )}
                         </button>
                     )}
                 </div>
             )}
-            {addError && (
-                <p className="text-red-400 text-xs mt-1">{addError}</p>
-            )}
+            {addError && <p className="text-red-400 text-xs mt-1">{addError}</p>}
         </div>
     )
 }

@@ -14,7 +14,7 @@ export function useQuery<T>(uri: string | null): QueryResult<T> {
     const [error, setError] = useState<string | null>(null)
     const [tick, setTick] = useState(0)
 
-    const refetch = useCallback(() => setTick(t => t + 1), [])
+    const refetch = useCallback(() => setTick((t) => t + 1), [])
 
     useEffect(() => {
         if (!uri) return
@@ -22,7 +22,7 @@ export function useQuery<T>(uri: string | null): QueryResult<T> {
         let ignore = false
         setLoading(true)
 
-        apiGet<T>(uri).then(res => {
+        apiGet<T>(uri).then((res) => {
             if (ignore) return
             if (res.ok) {
                 setData(res.data)
@@ -33,7 +33,9 @@ export function useQuery<T>(uri: string | null): QueryResult<T> {
             setLoading(false)
         })
 
-        return () => { ignore = true }
+        return () => {
+            ignore = true
+        }
     }, [uri, tick])
 
     return { data, loading, error, refetch }

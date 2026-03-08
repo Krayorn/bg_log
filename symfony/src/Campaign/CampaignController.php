@@ -2,13 +2,19 @@
 
 namespace App\Campaign;
 
+use App\Campaign\Action\CreateCampaignEventHandler;
 use App\Campaign\Action\CreateCampaignHandler;
 use App\Campaign\CampaignEvent\CampaignEvent;
-use App\Campaign\CampaignEvent\CampaignEventVerb;
+use App\Campaign\CampaignEvent\CampaignKeyNotFoundException;
+use App\Campaign\CampaignEvent\CampaignKeyNotInGameException;
+use App\Campaign\CampaignEvent\CustomFieldValueNotFoundException;
+use App\Campaign\CampaignEvent\EntryNotFoundException;
+use App\Campaign\CampaignEvent\EntryNotInCampaignException;
 use App\Campaign\CampaignEvent\InvalidEventPayloadException;
+use App\Campaign\CampaignEvent\InvalidVerbException;
+use App\Campaign\CampaignEvent\PlayerResultNotFoundException;
+use App\Campaign\CampaignEvent\PlayerResultRequiredException;
 use App\Entry\EntryRepository;
-use App\Game\CampaignKey\CampaignKey;
-use App\Game\CustomField\CustomFieldScope;
 use App\Game\Exception\GameNotFoundException;
 use App\Game\GameRepository;
 use App\Utils\BaseController;
@@ -131,8 +137,7 @@ class CampaignController extends BaseController
     public function createEvent(
         Campaign $campaign,
         Request $request,
-        EntityManagerInterface $entityManager,
-        EntryRepository $entryRepository,
+        CreateCampaignEventHandler $handler,
     ): Response {
         $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_EDIT, $campaign);
 
@@ -141,7 +146,6 @@ class CampaignController extends BaseController
         $entryId = $body->getOptionalString('entry');
         $campaignKeyId = $body->getOptionalString('campaignKey');
         $eventPayload = $body->getOptionalArray('payload');
-        $customFieldValueId = $body->getOptionalString('customFieldValue');
 
         $errors = [];
 
@@ -163,102 +167,28 @@ class CampaignController extends BaseController
             ], Response::HTTP_BAD_REQUEST);
         }
 
+        assert(is_string($entryId));
+        assert(is_string($campaignKeyId));
         assert(is_array($eventPayload));
 
-        $entry = $entryRepository->find($entryId);
-        if ($entry === null) {
-            throw new NotFoundHttpException('Entry not found');
-        }
-
-        if ($entry->getCampaign() === null || ! $entry->getCampaign()->getId()->equals($campaign->getId())) {
-            throw new BadRequestHttpException('Entry does not belong to this campaign');
-        }
-
-        $campaignKey = $entityManager->getRepository(CampaignKey::class)->find($campaignKeyId);
-        if (! $campaignKey instanceof CampaignKey) {
-            throw new NotFoundHttpException('Campaign key not found');
-        }
-
-        if (! $campaignKey->getGame()->getId()->equals($campaign->getGame()->getId())) {
-            throw new BadRequestHttpException('Campaign key does not belong to this game');
-        }
-
-        $verbString = $eventPayload['verb'] ?? null;
-        $verb = $verbString !== null ? CampaignEventVerb::tryFrom($verbString) : null;
-        if (! $verb instanceof CampaignEventVerb) {
-            return new JsonResponse([
-                'errors' => ['Invalid or missing verb'],
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
         try {
-            $verb->validatePayload($campaignKey->getType(), $eventPayload);
-        } catch (InvalidEventPayloadException $e) {
+            $handler->handle(
+                $campaign,
+                $entryId,
+                $campaignKeyId,
+                $eventPayload,
+                $body->getOptionalString('playerResult'),
+                $body->getOptionalString('customFieldValue'),
+            );
+        } catch (EntryNotFoundException | CampaignKeyNotFoundException | PlayerResultNotFoundException $e) {
+            throw new NotFoundHttpException($e->getMessage(), $e);
+        } catch (EntryNotInCampaignException | CampaignKeyNotInGameException $e) {
+            throw new BadRequestHttpException($e->getMessage(), $e);
+        } catch (InvalidVerbException | InvalidEventPayloadException | PlayerResultRequiredException | CustomFieldValueNotFoundException $e) {
             return new JsonResponse([
                 'errors' => [$e->getMessage()],
             ], Response::HTTP_BAD_REQUEST);
         }
-
-        $playerResult = null;
-        if ($campaignKey->getScope() !== CustomFieldScope::ENTRY) {
-            $playerResultId = $body->getOptionalString('playerResult');
-            if ($playerResultId === null) {
-                return new JsonResponse([
-                    'errors' => ['Player result is required for player-scoped keys'],
-                ], Response::HTTP_BAD_REQUEST);
-            }
-
-            foreach ($entry->getPlayerResults() as $pr) {
-                if ((string) $pr->id === $playerResultId) {
-                    $playerResult = $pr;
-                    break;
-                }
-            }
-
-            if ($playerResult === null) {
-                throw new NotFoundHttpException('Player result not found in this entry');
-            }
-        }
-
-        $customFieldValue = null;
-        $scopedCustomField = $campaignKey->getScopedToCustomField();
-        if ($scopedCustomField instanceof \App\Game\CustomField\CustomField && $playerResult !== null) {
-            if ($customFieldValueId !== null) {
-                foreach ($playerResult->getCustomFieldValues() as $cfv) {
-                    if ((string) $cfv->getId() === $customFieldValueId) {
-                        if ((string) $cfv->getCustomField()->getId() !== (string) $scopedCustomField->getId()) {
-                            return new JsonResponse([
-                                'errors' => ['The provided custom field value does not belong to the expected custom field'],
-                            ], Response::HTTP_BAD_REQUEST);
-                        }
-                        $customFieldValue = $cfv;
-                        break;
-                    }
-                }
-                if ($customFieldValue === null) {
-                    return new JsonResponse([
-                        'errors' => ['The provided custom field value was not found in the player result'],
-                    ], Response::HTTP_BAD_REQUEST);
-                }
-            } else {
-                foreach ($playerResult->getCustomFieldValues() as $cfv) {
-                    if ((string) $cfv->getCustomField()->getId() === (string) $scopedCustomField->getId()) {
-                        $customFieldValue = $cfv;
-                        break;
-                    }
-                }
-                if ($customFieldValue === null) {
-                    return new JsonResponse([
-                        'errors' => ['Player does not have a value for the scoped custom field on this entry'],
-                    ], Response::HTTP_BAD_REQUEST);
-                }
-            }
-        }
-
-        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $eventPayload, $customFieldValue);
-
-        $entityManager->persist($event);
-        $entityManager->flush();
 
         return new JsonResponse($this->campaignView($campaign), Response::HTTP_CREATED);
     }
