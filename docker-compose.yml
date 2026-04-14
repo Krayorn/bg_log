@@ -11,6 +11,9 @@ services:
       - ./symfony:/var/www/html/symfony
     environment:
       APP_ENV: dev
+      JWT_SECRET_KEY_BASE64: ${JWT_SECRET_KEY_BASE64}
+      JWT_PUBLIC_KEY_BASE64: ${JWT_PUBLIC_KEY_BASE64}
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE}
     depends_on:
       - postgres
 
