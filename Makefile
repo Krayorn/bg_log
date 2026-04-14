@@ -1,13 +1,13 @@
 .PHONY: build up down symfony deploy test
 
 build:
-	docker-compose up -d --build
+	docker compose up -d --build
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down
+	docker compose down
 
 symfony:
 	docker exec -it bg_log-symfony-1 bash
@@ -48,5 +48,5 @@ deploy:
 	sed -i "s/^VITE_APP_VERSION=.*/VITE_APP_VERSION=$$new_version/" react/.env; \
 	sed -i "s/^VITE_RELEASE_DATE=.*/VITE_RELEASE_DATE=$$today/" react/.env; \
 	echo "Updated to version $$new_version (released $$today)"
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
