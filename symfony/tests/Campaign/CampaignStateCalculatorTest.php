@@ -163,7 +163,7 @@ class CampaignStateCalculatorTest extends TestCase
         $this->assertInstanceOf(CustomFieldValue::class, $cfv);
 
         $key = new CampaignKey($this->game, 'XP', CampaignKeyType::NUMBER, CustomFieldScope::PLAYER_RESULT, $customField);
-        $event = new CampaignEvent($this->campaign, $entry, $aliceResult, $key, ['verb' => 'increase', 'amount' => 10], $cfv);
+        $event = new CampaignEvent($this->campaign, $entry, $aliceResult, $key, ['verb' => 'increase', 'amount' => 10], 0, $cfv);
 
         $result = $this->calculator->computeEntryStates([$entry], [$event]);
         $sections = $result[(string) $entry->id];

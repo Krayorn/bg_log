@@ -27,6 +27,17 @@ export default function Game() {
     const [searchParams] = useSearchParams()
 
     const playerId = searchParams.get('playerId')
+    const isOwner = (() => {
+        if (!playerId) return true
+        const token = localStorage.getItem('jwt')
+        if (!token) return false
+        try {
+            const decoded = parseJwt(JSON.parse(token))
+            return decoded.id === playerId
+        } catch {
+            return false
+        }
+    })()
     const isAdmin = (() => {
         const token = localStorage.getItem('jwt')
         if (!token) return false
@@ -202,7 +213,7 @@ export default function Game() {
                         </aside>
                         <section className="flex-1 overflow-y-auto rounded-r-lg border border-slate-600/30 border-l-cyan-400/20 p-4">
                             {showCampaigns ? (
-                                <CampaignPanel gameId={gameId} />
+                                <CampaignPanel gameId={gameId} isOwner={isOwner} />
                             ) : showStatistics ? (
                                 <StatisticsPanel gameId={gameId} playerId={playerId} customFields={customFields} />
                             ) : selectedEntry ? (
@@ -215,6 +226,7 @@ export default function Game() {
                                     onEntryDeleted={onEntryDeleted}
                                     customFields={customFields}
                                     campaigns={campaigns}
+                                    isOwner={isOwner}
                                 />
                             ) : (
                                 <GameDetailPanel
@@ -230,6 +242,7 @@ export default function Game() {
                                         setShareableFields(shareableFieldsUpdated)
                                     }}
                                     isAdmin={isAdmin}
+                                    isOwner={isOwner}
                                 />
                             )}
                         </section>

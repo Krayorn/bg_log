@@ -2,8 +2,8 @@ import { ReactNode, useState, useEffect } from 'react'
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from './hooks/useQuery'
 import { useLocalStorage, parseJwt } from './hooks/useLocalStorage'
-import { Landmark, Puzzle, Users, Search, X, Shield } from 'lucide-react'
-import { Game } from './types'
+import { Landmark, Puzzle, Users, Search, X, Shield, ArrowLeft } from 'lucide-react'
+import { Game, Player } from './types'
 
 type LayoutProps = {
     children: ReactNode
@@ -17,20 +17,23 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
     const [searchModalOpen, setSearchModalOpen] = useState(false)
     const location = useLocation()
 
-    let playerId = playerIdFromParams
-    if (!playerId && token) {
+    let myPlayerId: string | undefined
+    if (token) {
         try {
             const decoded = parseJwt(token)
-            playerId = decoded.id
-        } catch (e) {
+            myPlayerId = decoded.id
+        } catch {
             // Invalid token
         }
     }
 
+    const viewingOtherPlayer = playerIdFromParams && myPlayerId && playerIdFromParams !== myPlayerId
+    const { data: viewedPlayer } = useQuery<Player>(viewingOtherPlayer ? `/players/${playerIdFromParams}` : null)
+
     const isAdmin = token ? (parseJwt(token).roles || []).includes('ROLE_ADMIN') : false
 
     const isActive = (path: string) => {
-        if (path === `/players/${playerId}`) {
+        if (path === `/players/${myPlayerId}`) {
             return location.pathname === path
         }
         return location.pathname.startsWith(path)
@@ -38,41 +41,53 @@ export default function Layout({ children, noNav = false }: LayoutProps) {
 
     return (
         <div className="bg-[radial-gradient(ellipse_at_center,rgba(40,69,102,1),rgba(14,21,32,1))] h-screen overflow-y-auto overflow-x-hidden">
-            {searchModalOpen && playerId && <SearchModal playerId={playerId} close={() => setSearchModalOpen(false)} />}
-            <main className={`p-6 ${!noNav && playerId ? 'pb-24' : ''}`}>{children}</main>
-            {!noNav && playerId && (
+            {searchModalOpen && myPlayerId && <SearchModal playerId={myPlayerId} close={() => setSearchModalOpen(false)} />}
+            {viewingOtherPlayer && (
+                <div className="sticky top-0 z-40 bg-amber-500/10 backdrop-blur-md border-b border-amber-400/30 px-4 py-2 flex items-center gap-3">
+                    <Link
+                        to={`/players/${myPlayerId}`}
+                        className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors text-sm font-medium"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to my profile
+                    </Link>
+                    <span className="text-amber-400/60 text-sm">— Viewing {viewedPlayer?.name ?? 'another player'}&apos;s profile</span>
+                </div>
+            )}
+            <main className={`p-6 ${!noNav && myPlayerId ? 'pb-24' : ''}`}>{children}</main>
+            {!noNav && myPlayerId && (
                 <nav className="fixed bottom-0 left-0 right-0">
                     <div className="border-t border-slate-500/50 w-full"></div>
                     <div className="flex justify-center py-4 gap-10 bg-slate-900/80 backdrop-blur-md">
                         <Link
-                            to={`/players/${playerId}`}
+                            to={`/players/${myPlayerId}`}
                             className={`rounded-full p-3 backdrop-blur-md border transition-all duration-200 ${
-                                isActive(`/players/${playerId}`)
+                                isActive(`/players/${myPlayerId}`)
                                     ? 'bg-cyan-500/20 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                                     : 'bg-slate-800/50 border-slate-600/30 hover:bg-slate-700/50 hover:border-slate-500/50'
                             }`}
                         >
-                            <Landmark className={`w-6 h-6 ${isActive(`/players/${playerId}`) ? 'text-cyan-400' : 'text-slate-400'}`} />
+                            <Landmark className={`w-6 h-6 ${isActive(`/players/${myPlayerId}`) ? 'text-cyan-400' : 'text-slate-400'}`} />
                         </Link>
                         <Link
-                            to={`/players/${playerId}/games`}
+                            to={`/players/${myPlayerId}/games`}
                             className={`rounded-full p-3 backdrop-blur-md border transition-all duration-200 ${
-                                isActive(`/players/${playerId}/games`)
+                                isActive(`/players/${myPlayerId}/games`)
                                     ? 'bg-cyan-500/20 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                                     : 'bg-slate-800/50 border-slate-600/30 hover:bg-slate-700/50 hover:border-slate-500/50'
                             }`}
                         >
-                            <Puzzle className={`w-6 h-6 ${isActive(`/players/${playerId}/games`) ? 'text-cyan-400' : 'text-slate-400'}`} />
+                            <Puzzle className={`w-6 h-6 ${isActive(`/players/${myPlayerId}/games`) ? 'text-cyan-400' : 'text-slate-400'}`} />
                         </Link>
                         <Link
-                            to={`/players/${playerId}/circle`}
+                            to={`/players/${myPlayerId}/circle`}
                             className={`rounded-full p-3 backdrop-blur-md border transition-all duration-200 ${
-                                isActive(`/players/${playerId}/circle`)
+                                isActive(`/players/${myPlayerId}/circle`)
                                     ? 'bg-cyan-500/20 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                                     : 'bg-slate-800/50 border-slate-600/30 hover:bg-slate-700/50 hover:border-slate-500/50'
                             }`}
                         >
-                            <Users className={`w-6 h-6 ${isActive(`/players/${playerId}/circle`) ? 'text-cyan-400' : 'text-slate-400'}`} />
+                            <Users className={`w-6 h-6 ${isActive(`/players/${myPlayerId}/circle`) ? 'text-cyan-400' : 'text-slate-400'}`} />
                         </Link>
                         <button
                             onClick={() => setSearchModalOpen(true)}

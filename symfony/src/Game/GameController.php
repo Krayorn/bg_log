@@ -44,11 +44,14 @@ class GameController extends BaseController
 
         $payload = JsonPayload::fromRequest($request);
 
+        $isOwner = $this->getPlayer()->getId()->equals($player->getId());
+        $price = $isOwner ? $payload->getOptionalInt('price') : null;
+
         try {
             $gameOwned = $handler->handle(
                 $payload->getString('gameId'),
                 $player,
-                $payload->getOptionalInt('price'),
+                $price,
             );
         } catch (GameNotFoundException | GameAlreadyOwnedException | \InvalidArgumentException $e) {
             return new JsonResponse([

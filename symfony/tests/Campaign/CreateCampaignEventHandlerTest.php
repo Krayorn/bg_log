@@ -4,6 +4,7 @@ namespace App\Tests\Campaign;
 
 use App\Campaign\Action\CreateCampaignEventHandler;
 use App\Campaign\Campaign;
+use App\Campaign\CampaignEvent\CampaignEvent;
 use App\Campaign\CampaignEvent\CampaignKeyNotFoundException;
 use App\Campaign\CampaignEvent\CampaignKeyNotInGameException;
 use App\Campaign\CampaignEvent\EntryNotInCampaignException;
@@ -35,9 +36,14 @@ class CreateCampaignEventHandlerTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->campaignKeyRepository = $this->createMock(EntityRepository::class);
 
+        $campaignEventRepository = $this->createMock(EntityRepository::class);
+        $campaignEventRepository->method('findBy')->willReturn([]);
+
         $this->entityManager->method('getRepository')
-            ->with(CampaignKey::class)
-            ->willReturn($this->campaignKeyRepository);
+            ->willReturnMap([
+                [CampaignKey::class, $this->campaignKeyRepository],
+                [CampaignEvent::class, $campaignEventRepository],
+            ]);
 
         $this->handler = new CreateCampaignEventHandler($this->entryRepository, $this->entityManager);
     }

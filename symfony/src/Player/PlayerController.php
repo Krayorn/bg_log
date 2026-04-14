@@ -139,6 +139,17 @@ class PlayerController extends BaseController
         ], Response::HTTP_OK);
     }
 
+    #[Route('api/players/{player}/circle/graph', methods: 'GET')]
+    public function circleGraph(Player $player, PlayerRepository $playerRepository): Response
+    {
+        $graph = $playerRepository->getCircleGraph($player);
+
+        return new JsonResponse([
+            'nodes' => array_map(fn (CirclePlayer $p): array => $p->view(), $graph['nodes']),
+            'edges' => array_map(fn (CircleGraphEdge $e): array => $e->view(), $graph['edges']),
+        ], Response::HTTP_OK);
+    }
+
     #[Route('api/players/{player}/circle', methods: 'GET')]
     public function circle(Player $player, Request $request, PlayerRepository $playerRepository): Response
     {

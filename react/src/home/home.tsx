@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '../hooks/useQuery'
 import { updatePlayerEmail } from '../api/players'
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { Player, GeneralStatistics as GeneralStatisticsType, PlayerGameStats, CirclePlayer, PlayerUsageStats } from '../types'
 import { MissionBriefing } from '../components/MissionBriefing'
-import { SciFiPanel, MetricCard } from '../components/SciFi'
+import { SciFiPanel, MetricCard, SegmentBar, CornerBrackets } from '../components/SciFi'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
 function Home() {
@@ -68,40 +68,45 @@ function Home() {
                 <div className="space-y-4">
                     <GeneralStatisticsPanel stats={generalStats} />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <SciFiPanel title="Personal details" className="min-h-[180px]">
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2">
+                            <RecentActivityPanel playerId={playerId} entries={usageStats?.recentActivity ?? null} />
+                        </div>
+                        <SciFiPanel title="Personal details">
                             <PlayerBox playerId={playerId} />
-                        </SciFiPanel>
-                        <SciFiPanel title="Games Statistics" className="min-h-[180px]">
-                            <GameStatistics playerId={playerId} />
-                        </SciFiPanel>
-                        <SciFiPanel title="Players Statistics" className="min-h-[180px]">
-                            <PlayerStatistics playerId={playerId} />
                         </SciFiPanel>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                        <MetricCard
-                            icon={<Settings className="w-5 h-5" />}
-                            label="Custom Fields"
-                            value={usageStats?.customFieldsCreated ?? '—'}
-                            accent="purple"
-                            noScanLine
-                        />
-                        <MetricCard
-                            icon={<BookOpen className="w-5 h-5" />}
-                            label="Campaigns"
-                            value={usageStats?.campaignsCreated ?? '—'}
-                            accent="purple"
-                            delay={0.6}
-                        />
-                        <MetricCard
-                            icon={<BarChart3 className="w-5 h-5" />}
-                            label="Saved Stats"
-                            value={usageStats?.savedQueries ?? '—'}
-                            accent="cyan"
-                            noScanLine
-                        />
+                        <SciFiPanel title="Games Statistics">
+                            <GameStatistics playerId={playerId} />
+                        </SciFiPanel>
+                        <SciFiPanel title="Players Statistics">
+                            <PlayerStatistics playerId={playerId} />
+                        </SciFiPanel>
+                        <div className="flex flex-col gap-4">
+                            <MetricCard
+                                icon={<Settings className="w-5 h-5" />}
+                                label="Custom Fields"
+                                value={usageStats?.customFieldsCreated ?? '—'}
+                                accent="purple"
+                                noScanLine
+                            />
+                            <MetricCard
+                                icon={<BookOpen className="w-5 h-5" />}
+                                label="Campaigns"
+                                value={usageStats?.campaignsCreated ?? '—'}
+                                accent="purple"
+                                delay={0.6}
+                            />
+                            <MetricCard
+                                icon={<BarChart3 className="w-5 h-5" />}
+                                label="Saved Stats"
+                                value={usageStats?.savedQueries ?? '—'}
+                                accent="cyan"
+                                noScanLine
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
@@ -127,31 +132,6 @@ function Home() {
                             delay={1.8}
                         />
                     </div>
-
-                    <SciFiPanel title="Recent Activity">
-                        {usageStats === null ? (
-                            <div className="text-slate-500">Loading...</div>
-                        ) : usageStats.recentActivity.length === 0 ? (
-                            <div className="text-slate-500">No recent activity</div>
-                        ) : (
-                            <div className="space-y-2">
-                                {usageStats.recentActivity.map((entry) => (
-                                    <Link
-                                        key={entry.entry_id}
-                                        to={`/games/${entry.game_id}?playerId=${playerId}&entryId=${entry.entry_id}`}
-                                        className="flex items-center gap-2 text-sm group hover:bg-slate-800/50 rounded px-1 -mx-1 py-0.5 transition-colors"
-                                    >
-                                        <Zap className="w-3 h-3 text-cyan-400 shrink-0" />
-                                        <span className="text-slate-400 font-mono text-xs shrink-0">
-                                            {new Date(entry.played_at).toLocaleDateString('fr-FR')}
-                                        </span>
-                                        <span className="text-slate-300 truncate group-hover:text-cyan-400 transition-colors">{entry.game_name}</span>
-                                        <ExternalLink className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 shrink-0 ml-auto transition-colors" />
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </SciFiPanel>
                 </div>
             )}
         </>
@@ -268,7 +248,19 @@ function GeneralStatisticsPanel({ stats }: { stats: GeneralStatisticsType | null
             <MetricCard icon={<Gamepad2 className="w-5 h-5" />} label="Games Owned" value={stats.gamesOwned} accent="cyan" noScanLine />
             <MetricCard icon={<Activity className="w-5 h-5" />} label="Total Plays" value={stats.entriesPlayed} accent="cyan" delay={0.6} />
             <MetricCard icon={<Users className="w-5 h-5" />} label="Circle Size" value={stats.gamePartners} accent="purple" noScanLine />
-            <MetricCard icon={<Trophy className="w-5 h-5" />} label="Win Rate" value={`${stats.globalWinrate ?? 0}%`} accent="cyan" delay={1.8} />
+            <div className="relative group bg-gradient-to-br from-slate-900/80 to-slate-800/50 backdrop-blur-sm rounded-lg border border-cyan-400/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300 overflow-hidden">
+                <CornerBrackets color="cyan" />
+                <div className="p-4 relative">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="text-cyan-400">
+                            <Trophy className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] tracking-[0.2em] text-slate-500 uppercase">Win Rate</span>
+                    </div>
+                    <div className="text-3xl font-bold font-mono text-cyan-400">{stats.globalWinrate ?? 0}%</div>
+                    <SegmentBar segments={10} value={(stats.globalWinrate ?? 0) / 100} accent="cyan" className="mt-3" />
+                </div>
+            </div>
             <MetricCard icon={<Calendar className="w-5 h-5" />} label="Days Idle" value={daysSinceLastGame} accent="purple" noScanLine />
         </div>
     )
@@ -369,5 +361,77 @@ function PlayerStatistics({ playerId }: { playerId: string }) {
                 </div>
             </div>
         </div>
+    )
+}
+
+const PAGE_SIZE = 5
+
+function RecentActivityPanel({
+    playerId,
+    entries,
+}: {
+    playerId: string
+    entries: { entry_id: string; game_id: string; played_at: string; game_name: string }[] | null
+}) {
+    const [page, setPage] = useState(0)
+    const [paused, setPaused] = useState(false)
+
+    const totalPages = entries ? Math.ceil(entries.length / PAGE_SIZE) : 0
+
+    const goToPage = useCallback((p: number) => {
+        setPage(p)
+        setPaused(true)
+    }, [])
+
+    useEffect(() => {
+        if (paused || totalPages <= 1) return
+        const timer = setInterval(() => {
+            setPage((p) => (p + 1) % totalPages)
+        }, 5000)
+        return () => clearInterval(timer)
+    }, [paused, totalPages])
+
+    if (entries === null) {
+        return (
+            <SciFiPanel title="Recent Activity">
+                <div className="text-slate-500">Loading...</div>
+            </SciFiPanel>
+        )
+    }
+
+    if (entries.length === 0) {
+        return (
+            <SciFiPanel title="Recent Activity">
+                <div className="text-slate-500">No recent activity</div>
+            </SciFiPanel>
+        )
+    }
+
+    const pageEntries = entries.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+    return (
+        <SciFiPanel
+            title="Recent Activity"
+            actions={
+                totalPages > 1 ? (
+                    <SegmentBar segments={totalPages} activeIndex={page} onSegmentClick={goToPage} accent="cyan" className="w-20" />
+                ) : undefined
+            }
+        >
+            <div className="space-y-2">
+                {pageEntries.map((entry) => (
+                    <Link
+                        key={entry.entry_id}
+                        to={`/games/${entry.game_id}?playerId=${playerId}&entryId=${entry.entry_id}`}
+                        className="flex items-center gap-2 text-sm group hover:bg-slate-800/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                    >
+                        <Zap className="w-3 h-3 text-cyan-400 shrink-0" />
+                        <span className="text-slate-400 font-mono text-xs shrink-0">{new Date(entry.played_at).toLocaleDateString('fr-FR')}</span>
+                        <span className="text-slate-300 truncate group-hover:text-cyan-400 transition-colors">{entry.game_name}</span>
+                        <ExternalLink className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 shrink-0 ml-auto transition-colors" />
+                    </Link>
+                ))}
+            </div>
+        </SciFiPanel>
     )
 }

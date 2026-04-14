@@ -111,7 +111,18 @@ class CreateCampaignEventHandler
             }
         }
 
-        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $payload, $customFieldValue);
+        $existingEvents = $this->entityManager->getRepository(CampaignEvent::class)->findBy([
+            'campaign' => $campaign,
+            'entry' => $entry,
+        ]);
+        $maxPosition = 0;
+        foreach ($existingEvents as $existing) {
+            if ($existing->getPosition() > $maxPosition) {
+                $maxPosition = $existing->getPosition();
+            }
+        }
+
+        $event = new CampaignEvent($campaign, $entry, $playerResult, $campaignKey, $payload, $maxPosition + 1, $customFieldValue);
 
         $this->entityManager->persist($event);
         $this->entityManager->flush();

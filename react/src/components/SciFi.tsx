@@ -1,5 +1,60 @@
 import type { ReactNode } from 'react'
 
+/**
+ * Segmented progress/charge bar — horizontal or vertical.
+ * `value` is 0-1 representing fill ratio.
+ */
+export function SegmentBar({
+    segments = 5,
+    value = 0,
+    activeIndex,
+    onSegmentClick,
+    accent = 'cyan',
+    direction = 'horizontal',
+    className,
+}: {
+    segments?: number
+    value?: number
+    activeIndex?: number
+    onSegmentClick?: (index: number) => void
+    accent?: 'cyan' | 'purple'
+    direction?: 'horizontal' | 'vertical'
+    className?: string
+}) {
+    const isCyan = accent === 'cyan'
+    const activeBg = isCyan ? 'bg-cyan-400/70 shadow-[0_0_6px_rgba(34,211,238,0.5)]' : 'bg-purple-400/70 shadow-[0_0_6px_rgba(168,85,247,0.5)]'
+    const inactiveBg = isCyan ? 'bg-cyan-400/10 border border-cyan-400/20' : 'bg-purple-400/10 border border-purple-400/20'
+    const isVertical = direction === 'vertical'
+    const isPageMode = activeIndex !== undefined
+
+    const isActive = (i: number) => {
+        if (isPageMode) return i === activeIndex
+        return i < Math.round(value * segments)
+    }
+
+    return (
+        <div
+            className={`flex ${isVertical ? 'flex-col gap-1' : 'gap-1'} ${className ?? ''}`}
+            role={isPageMode ? 'tablist' : 'meter'}
+            aria-valuenow={isPageMode ? undefined : value}
+            aria-valuemin={isPageMode ? undefined : 0}
+            aria-valuemax={isPageMode ? undefined : 1}
+        >
+            {Array.from({ length: segments }, (_, i) => (
+                <div
+                    key={i}
+                    role={isPageMode ? 'tab' : undefined}
+                    aria-selected={isPageMode ? i === activeIndex : undefined}
+                    onClick={onSegmentClick ? () => onSegmentClick(i) : undefined}
+                    className={`${isVertical ? 'w-1.5 h-2.5' : 'h-1.5 flex-1'} rounded-[1px] transition-all duration-300 ${
+                        isActive(i) ? activeBg : inactiveBg
+                    } ${onSegmentClick ? 'cursor-pointer hover:opacity-80' : ''}`}
+                />
+            ))}
+        </div>
+    )
+}
+
 export function ScanLine({ accent = 'cyan', delay = 0 }: { accent?: 'cyan' | 'purple'; delay?: number }) {
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -23,15 +78,27 @@ export function CornerBrackets({ color = 'cyan' }: { color?: 'cyan' | 'purple' }
     )
 }
 
+export function CircuitTitle({ children }: { children: ReactNode }) {
+    return (
+        <div className="flex items-end">
+            <svg width="24" height="12" viewBox="0 0 24 12" className="shrink-0 -mb-px" aria-hidden="true">
+                <path d="M0,1 L6,1 L14,10.5" stroke="rgba(34,211,238,0.3)" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M0,6 L6,6 L14,10.5" stroke="rgba(34,211,238,0.3)" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M0,10.5 L24,10.5" stroke="rgba(34,211,238,0.4)" strokeWidth="1" fill="none" strokeLinecap="round" />
+            </svg>
+            <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em] border-b border-cyan-400/40 pb-0.5">{children}</span>
+        </div>
+    )
+}
+
 export function SciFiPanel({ title, children, actions, className }: { title: string; children: ReactNode; actions?: ReactNode; className?: string }) {
     return (
         <section className="relative bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden hover:border-cyan-400/40 transition-colors duration-300">
-            <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-pulse-glow" />
-                <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">{title}</span>
+            <header className="px-4 py-2 bg-slate-800/70 flex items-center gap-2">
+                <CircuitTitle>{title}</CircuitTitle>
                 {actions && <div className="ml-auto">{actions}</div>}
             </header>
-            <div className={`text-white p-4 ${className ?? ''}`}>{children}</div>
+            <div className={`text-white p-4 relative ${className ?? ''}`}>{children}</div>
         </section>
     )
 }

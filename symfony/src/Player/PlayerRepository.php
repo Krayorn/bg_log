@@ -187,6 +187,51 @@ class PlayerRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return array{nodes: CirclePlayer[], edges: CircleGraphEdge[]}
+     */
+    public function getCircleGraph(Player $player): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $circle = $this->getCircle($player, true);
+        if (count($circle) < 2) {
+            return [
+                'nodes' => $circle,
+                'edges' => [],
+            ];
+        }
+
+        $playerIds = array_map(fn (CirclePlayer $p) => $p->id, $circle);
+
+        $placeholders = implode(',', array_map(fn ($i) => ':id' . $i, array_keys($playerIds)));
+        $params = [];
+        foreach ($playerIds as $i => $id) {
+            $params['id' . $i] = $id;
+        }
+
+        $sql = "
+            SELECT pr1.player_id AS source, pr2.player_id AS target, COUNT(*) AS weight
+            FROM player_result pr1
+            JOIN player_result pr2 ON pr1.entry_id = pr2.entry_id AND pr1.player_id < pr2.player_id
+            WHERE pr1.player_id IN ({$placeholders}) AND pr2.player_id IN ({$placeholders})
+            GROUP BY pr1.player_id, pr2.player_id
+        ";
+
+        $rows = $conn->executeQuery($sql, $params)->fetchAllAssociative();
+
+        $edges = array_map(fn (array $row) => new CircleGraphEdge(
+            $row['source'],
+            $row['target'],
+            (int) $row['weight'],
+        ), $rows);
+
+        return [
+            'nodes' => $circle,
+            'edges' => $edges,
+        ];
+    }
+
+    /**
      * @return Player[]
      */
     public function findRegistered(): array
@@ -237,7 +282,7 @@ class PlayerRepository extends ServiceEntityRepository
             JOIN game g ON e.game_id = g.id
             WHERE pr.player_id = :playerId
             ORDER BY e.played_at DESC
-            LIMIT 5
+            LIMIT 15
         ', [
             'playerId' => $player->getId(),
         ])->fetchAllAssociative();

@@ -5,6 +5,7 @@ import { deleteAdminUser, toggleAdminRole } from '../api/admin'
 import { AdminLayout } from './dashboard'
 import { Shield, Trash2, UserCheck, UserX, Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import type { AdminUser } from '../types'
+import { CircuitTitle } from '../components/SciFi'
 
 type SortKey = 'number' | 'name' | 'registeredOn' | 'email' | 'admin'
 type SortDir = 'asc' | 'desc'
@@ -112,8 +113,7 @@ export default function AdminUsers() {
             ) : (
                 <div className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden">
                     <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></div>
-                        <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">ALL USERS</span>
+                        <CircuitTitle>ALL USERS</CircuitTitle>
                         <div className="ml-auto relative">
                             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                             <input

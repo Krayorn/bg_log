@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, Check, X } from 'lucide-react'
 import { GeneralStatistics } from '../types'
+import { CircuitTitle } from './SciFi'
 
 type Props = {
     playerId: string
@@ -43,10 +44,7 @@ export function MissionBriefing({ playerId, stats, onDismiss }: Props) {
             </div>
 
             <header className="border-b border-cyan-400/20 px-6 py-3 bg-slate-800/70 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="uppercase text-xs font-mono font-medium text-cyan-400 tracking-[0.3em]">System Initialization</span>
-                </div>
+                <CircuitTitle>System Initialization</CircuitTitle>
                 <button onClick={onDismiss} className="text-slate-500 hover:text-slate-300 transition-colors" title="Dismiss tutorial">
                     <X className="w-4 h-4" />
                 </button>

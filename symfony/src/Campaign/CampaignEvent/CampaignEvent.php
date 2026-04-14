@@ -43,6 +43,8 @@ class CampaignEvent
             'jsonb' => true,
         ])]
         private readonly array $payload,
+        #[ORM\Column(type: 'integer')]
+        private int $position = 0,
         #[ORM\ManyToOne(targetEntity: CustomFieldValue::class)]
         #[ORM\JoinColumn(name: 'custom_field_value_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
         private readonly ?CustomFieldValue $customFieldValue = null,
@@ -89,6 +91,16 @@ class CampaignEvent
         return $this->customFieldValue;
     }
 
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(int $position): void
+    {
+        $this->position = $position;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -100,6 +112,7 @@ class CampaignEvent
             'playerResult' => $this->playerResult?->id,
             'campaignKey' => $this->campaignKey->view(),
             'payload' => $this->payload,
+            'position' => $this->position,
             'customFieldValue' => $this->customFieldValue?->view(),
             'createdAt' => $this->createdAt->format('c'),
         ];

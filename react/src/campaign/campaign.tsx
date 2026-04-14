@@ -11,11 +11,13 @@ import {
     deleteCampaignKey,
     toggleCampaignKeyShareable,
     copyCampaignKey,
+    updateCampaignEventPosition,
+    updateCampaignEvent,
 } from '../api/campaigns'
 import { getGameCustomFields } from '../api/customFields'
 import { parseJwt } from '../hooks/useLocalStorage'
 import Layout from '../Layout'
-import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye } from 'lucide-react'
+import { ArrowLeft, Pencil, Check, X, Scroll, Plus, Trash2, Settings, Eye, ArrowUp, ArrowDown } from 'lucide-react'
 import { AddEntryForm } from '../components/AddEntryForm'
 import { CustomField, CampaignKey, CampaignEvent, StateValue, CampaignState, CampaignEntry, Campaign } from '../types'
 
@@ -129,6 +131,7 @@ export default function CampaignPage() {
     const [editingName, setEditingName] = useState(false)
     const [nameInput, setNameInput] = useState('')
     const [addingEventFor, setAddingEventFor] = useState<string | null>(null)
+    const [editingEventId, setEditingEventId] = useState<string | null>(null)
     const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
     const [showKeyManager, setShowKeyManager] = useState(false)
     const [myCampaignKeys, setMyCampaignKeys] = useState<CampaignKey[]>([])
@@ -210,6 +213,50 @@ export default function CampaignPage() {
         if (ok && data) {
             setCampaign(data)
         }
+    }
+
+    const handleReorderEvent = async (entryId: string, eventIndex: number, direction: 'up' | 'down') => {
+        if (!campaign) return
+        const entry = campaign.entries.find((e) => e.id === entryId)
+        if (!entry) return
+        const events = [...entry.events]
+        const targetIndex = direction === 'up' ? eventIndex - 1 : eventIndex + 1
+        if (targetIndex < 0 || targetIndex >= events.length) return
+        const event = events[eventIndex]
+        ;[events[eventIndex], events[targetIndex]] = [events[targetIndex], events[eventIndex]]
+        setCampaign((prev) => {
+            if (!prev) return prev
+            return {
+                ...prev,
+                entries: prev.entries.map((e) => (e.id === entryId ? { ...e, events } : e)),
+            }
+        })
+        const { data, ok } = await updateCampaignEventPosition(campaignId, event.id, targetIndex)
+        if (ok && data) {
+            setCampaign(data)
+        }
+    }
+
+    const handleEditEvent = async (
+        eventId: string,
+        campaignKeyId: string,
+        playerResultId: string | null,
+        payloads: Record<string, unknown>[],
+        customFieldValueId: string | null = null,
+    ) => {
+        const payload = payloads[0]
+        if (!payload) return
+        const body: Record<string, unknown> = {
+            campaignKey: campaignKeyId,
+            payload,
+            playerResult: playerResultId,
+            ...(customFieldValueId ? { customFieldValue: customFieldValueId } : {}),
+        }
+        const { data, ok } = await updateCampaignEvent(campaignId, eventId, body)
+        if (ok && data) {
+            setCampaign(data)
+        }
+        setEditingEventId(null)
     }
 
     const handleAddKey = async (name: string, type: string, scope: string, scopedToCustomField?: string) => {
@@ -487,14 +534,38 @@ export default function CampaignPage() {
                                         <div className="mt-3 pt-3 border-t border-slate-700">
                                             {entry.events.length > 0 && (
                                                 <div className="flex flex-col gap-1.5 mb-3">
-                                                    {entry.events.map((event) => {
+                                                    {entry.events.map((event, eventIndex) => {
+                                                        if (editingEventId === event.id) {
+                                                            return (
+                                                                <AddEventForm
+                                                                    key={event.id}
+                                                                    entry={entry}
+                                                                    campaignKeys={campaignKeys}
+                                                                    initialEvent={event}
+                                                                    onSubmit={(campaignKeyId, playerResultId, payloads, customFieldValueId) =>
+                                                                        handleEditEvent(
+                                                                            event.id,
+                                                                            campaignKeyId,
+                                                                            playerResultId,
+                                                                            payloads,
+                                                                            customFieldValueId,
+                                                                        )
+                                                                    }
+                                                                    onCancel={() => setEditingEventId(null)}
+                                                                    submitLabel="Save"
+                                                                />
+                                                            )
+                                                        }
                                                         const playerResult = event.playerResult
                                                             ? entry.players.find((pr) => pr.id === event.playerResult)
                                                             : null
                                                         const verb = event.payload.verb as string
                                                         return (
                                                             <div key={event.id} className="flex items-center justify-between group">
-                                                                <div className="flex items-center gap-2 text-sm">
+                                                                <button
+                                                                    onClick={() => setEditingEventId(event.id)}
+                                                                    className="flex items-center gap-2 text-sm text-left"
+                                                                >
                                                                     <span className={`text-xs px-1.5 py-0.5 rounded ${verbColor(verb)}`}>{verb}</span>
                                                                     {playerResult && (
                                                                         <span className="text-xs text-cyan-400">
@@ -509,13 +580,29 @@ export default function CampaignPage() {
                                                                         </span>
                                                                     )}
                                                                     <span className="text-slate-300">{formatEventLabel(event)}</span>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => handleDeleteEvent(event.id)}
-                                                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                                                                >
-                                                                    <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
+                                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                                    <button
+                                                                        onClick={() => handleReorderEvent(entry.id, eventIndex, 'up')}
+                                                                        disabled={eventIndex === 0}
+                                                                        className="text-slate-600 hover:text-cyan-400 disabled:opacity-30 disabled:hover:text-slate-600"
+                                                                    >
+                                                                        <ArrowUp className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleReorderEvent(entry.id, eventIndex, 'down')}
+                                                                        disabled={eventIndex === entry.events.length - 1}
+                                                                        className="text-slate-600 hover:text-cyan-400 disabled:opacity-30 disabled:hover:text-slate-600"
+                                                                    >
+                                                                        <ArrowDown className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteEvent(event.id)}
+                                                                        className="text-slate-600 hover:text-red-400"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         )
                                                     })}
@@ -735,23 +822,48 @@ function AddEventForm({
     campaignKeys,
     onSubmit,
     onCancel,
+    initialEvent,
+    submitLabel = 'Create event',
 }: {
     entry: CampaignEntry
     campaignKeys: CampaignKey[]
     onSubmit: (campaignKeyId: string, playerResultId: string | null, payloads: Record<string, unknown>[], customFieldValueId: string | null) => void
     onCancel: () => void
+    initialEvent?: CampaignEvent
+    submitLabel?: string
 }) {
-    const [selectedKeyId, setSelectedKeyId] = useState(campaignKeys[0]?.id ?? '')
+    const initKeyId = initialEvent?.campaignKey.id ?? campaignKeys[0]?.id ?? ''
+    const initKey = campaignKeys.find((k) => k.id === initKeyId)
+    const initVerb = (initialEvent?.payload.verb as string) ?? (initKey ? VERBS_BY_TYPE[initKey.type][0] : '') ?? ''
+
+    const [selectedKeyId, setSelectedKeyId] = useState(initKeyId)
     const selectedKey = campaignKeys.find((k) => k.id === selectedKeyId)
     const allowedVerbs = selectedKey ? VERBS_BY_TYPE[selectedKey.type] : []
-    const [verb, setVerb] = useState(allowedVerbs[0] ?? '')
-    const [playerResultId, setPlayerResultId] = useState<string>(entry.players[0]?.id ?? '')
-    const [customFieldValueId, setCustomFieldValueId] = useState<string>('')
+    const [verb, setVerb] = useState(initVerb)
+    const [playerResultId, setPlayerResultId] = useState<string>(initialEvent?.playerResult ?? entry.players[0]?.id ?? '')
+    const [customFieldValueId, setCustomFieldValueId] = useState<string>(initialEvent?.customFieldValue?.id ?? '')
 
-    const [stringValue, setStringValue] = useState('')
-    const [numberAmount, setNumberAmount] = useState('')
-    const [listItems, setListItems] = useState<string[]>([''])
-    const [countedItems, setCountedItems] = useState<{ item: string; quantity: string }[]>([{ item: '', quantity: '1' }])
+    const initStringValue = initialEvent?.campaignKey.type === 'string' ? String(initialEvent.payload.value ?? '') : ''
+    const initNumberAmount = initialEvent?.campaignKey.type === 'number' ? String(initialEvent.payload.amount ?? '') : ''
+    const initListItems =
+        initialEvent?.campaignKey.type === 'list' && Array.isArray(initialEvent.payload.values)
+            ? [...(initialEvent.payload.values as string[]), '']
+            : ['']
+    const initCountedItems =
+        initialEvent?.campaignKey.type === 'counted_list' && Array.isArray(initialEvent.payload.items)
+            ? [
+                  ...(initialEvent.payload.items as { item: string; quantity: number }[]).map((i) => ({
+                      item: i.item,
+                      quantity: String(i.quantity),
+                  })),
+                  { item: '', quantity: '1' },
+              ]
+            : [{ item: '', quantity: '1' }]
+
+    const [stringValue, setStringValue] = useState(initStringValue)
+    const [numberAmount, setNumberAmount] = useState(initNumberAmount)
+    const [listItems, setListItems] = useState<string[]>(initListItems)
+    const [countedItems, setCountedItems] = useState<{ item: string; quantity: string }[]>(initCountedItems)
 
     const handleKeyChange = (keyId: string) => {
         setSelectedKeyId(keyId)
@@ -760,6 +872,8 @@ function AddEventForm({
             const verbs = VERBS_BY_TYPE[key.type]
             setVerb(verbs[0] ?? '')
         }
+        setStringValue('')
+        setNumberAmount('')
         setListItems([''])
         setCountedItems([{ item: '', quantity: '1' }])
     }
@@ -1024,7 +1138,7 @@ function AddEventForm({
                     Cancel
                 </button>
                 <button onClick={handleSubmit} className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded transition-colors">
-                    Create event
+                    {submitLabel}
                 </button>
             </div>
         </div>

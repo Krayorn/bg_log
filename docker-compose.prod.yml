@@ -6,6 +6,9 @@ services:
     environment:
       APP_ENV: prod
       DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY_BASE64: ${JWT_SECRET_KEY_BASE64}
+      JWT_PUBLIC_KEY_BASE64: ${JWT_PUBLIC_KEY_BASE64}
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE}
 
   nginx:
     ports:

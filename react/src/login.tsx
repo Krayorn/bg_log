@@ -16,7 +16,7 @@ export default function Login() {
             try {
                 const obj = parseJwt(token)
                 navigate('/players/' + obj.id)
-            } catch (e) {
+            } catch {
                 // Invalid token, stay on login page
             }
         }

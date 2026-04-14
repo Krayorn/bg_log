@@ -53,7 +53,7 @@ class StatisticsQueryController extends BaseController
         try {
             $query = $handler->handle(
                 $payload->getString('gameId'),
-                $payload->getString('playerId'),
+                (string) $this->getPlayer()->getId(),
                 $payload->getNonEmptyString('name'),
                 $payload->getOptionalUuid('customFieldId'),
                 $payload->getOptionalUuid('groupByFieldId'),

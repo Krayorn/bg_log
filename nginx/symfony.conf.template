@@ -11,7 +11,17 @@ server {
   add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,If-None-Match,Cache-Control,Content-Type,Range,Authorization';
   add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
 
-  location /api {
+  location ~ /\. {
+    deny all;
+    access_log off;
+    return 404;
+  }
+
+  location ~* \.(php|env|sql|log|bak|old|save|swp|dist|config|yml|yaml|toml|ini|conf|cfg|lock|sh|py|rb|pl|cgi|asp|aspx|jsp|xml)$ {
+    return 404;
+  }
+
+  location ^~ /api {
     if ($request_method = 'OPTIONS') {
         add_header 'Access-Control-Allow-Origin' '${CORS_ALLOW_ORIGIN}' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, DELETE, PUT, OPTIONS, PATCH';
@@ -61,8 +71,8 @@ server {
 
 
   error_log /dev/stderr;
-  access_log /dev/stdout;
+  access_log /dev/stdout main;
 
   error_log /var/log/nginx/symfony_error.log;
-  access_log /var/log/nginx/symfony_access.log;
+  access_log /var/log/nginx/symfony_access.log main;
 }

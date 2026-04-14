@@ -248,3 +248,27 @@ export type PublicStats = {
     topGames: { name: string; play_count: number }[]
     entriesPerMonth: { month: string; count: number }[]
 }
+
+export type CircleGraphNode = {
+    id: string
+    name: string
+    number: number
+    registeredOn: string | null
+    isGuest: boolean
+    inPartyOf: { id: string } | null
+    nickname: string | null
+    gamesPlayed: number
+    wins: number
+    losses: number
+}
+
+export type CircleGraphEdge = {
+    source: string
+    target: string
+    weight: number
+}
+
+export type CircleGraphData = {
+    nodes: CircleGraphNode[]
+    edges: CircleGraphEdge[]
+}

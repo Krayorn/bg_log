@@ -64,7 +64,7 @@ class Campaign
 
         foreach ($sortedEntries as $entry) {
             $entryEvents = $this->events->filter(fn (CampaignEvent $e) => $e->getEntry()->id->equals($entry->id))->toArray();
-            usort($entryEvents, fn (CampaignEvent $a, CampaignEvent $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
+            usort($entryEvents, fn (CampaignEvent $a, CampaignEvent $b) => $a->getPosition() <=> $b->getPosition());
 
             $entryView = $entry->view();
             $entryView['events'] = array_values(array_map(fn (CampaignEvent $e) => $e->view(), $entryEvents));

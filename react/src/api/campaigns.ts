@@ -20,3 +20,9 @@ export const deleteCampaignKey = (keyId: string) => apiDelete(`/campaignKeys/${k
 export const toggleCampaignKeyShareable = (key: CampaignKey) => apiPatch<CampaignKey>(`/campaignKeys/${key.id}`, { shareable: !key.shareable })
 
 export const copyCampaignKey = (keyId: string) => apiPost<CampaignKey>(`/campaignKeys/${keyId}/copy`)
+
+export const updateCampaignEventPosition = (campaignId: string, eventId: string, position: number) =>
+    apiPatch<Campaign>(`/campaigns/${campaignId}/events/${eventId}`, { position })
+
+export const updateCampaignEvent = (campaignId: string, eventId: string, body: Record<string, unknown>) =>
+    apiPatch<Campaign>(`/campaigns/${campaignId}/events/${eventId}`, body)

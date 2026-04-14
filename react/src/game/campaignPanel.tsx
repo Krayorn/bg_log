@@ -7,9 +7,10 @@ import { Campaign } from '../types'
 
 type CampaignPanelProps = {
     gameId: string
+    isOwner: boolean
 }
 
-export function CampaignPanel({ gameId }: CampaignPanelProps) {
+export function CampaignPanel({ gameId, isOwner }: CampaignPanelProps) {
     const { data: fetchedCampaigns } = useQuery<Campaign[]>(`/campaigns?game=${gameId}`)
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [newCampaignName, setNewCampaignName] = useState('')
@@ -53,15 +54,17 @@ export function CampaignPanel({ gameId }: CampaignPanelProps) {
         <div className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold text-white">Campaigns</h2>
 
-            <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 transition-colors"
-            >
-                <Plus className="w-4 h-4" />
-                New Campaign
-            </button>
+            {isOwner && (
+                <button
+                    onClick={() => setShowCreateForm(!showCreateForm)}
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 transition-colors"
+                >
+                    <Plus className="w-4 h-4" />
+                    New Campaign
+                </button>
+            )}
 
-            {showCreateForm && (
+            {isOwner && showCreateForm && (
                 <form onSubmit={createCampaign} className="border border-slate-600 rounded-lg p-4 bg-slate-900/30">
                     <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-1">

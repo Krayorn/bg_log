@@ -8,6 +8,7 @@ import MultiEnumSelect from '../components/MultiEnumSelect'
 import { Plus, X, Scroll, Trash2 } from 'lucide-react'
 import GameOwnerSearchSelect from '../components/GameOwnerSearchSelect'
 import { CustomField, Entry, CampaignSummary } from '../types'
+import { CircuitTitle } from '../components/SciFi'
 
 type EntryListItemProps = {
     entry: Entry
@@ -75,6 +76,7 @@ type EntryDetailPanelProps = {
     onEntryDeleted: (id: string) => void
     customFields: CustomField[]
     campaigns: CampaignSummary[]
+    isOwner: boolean
 }
 
 export function EntryDetailPanel({
@@ -85,6 +87,7 @@ export function EntryDetailPanel({
     onEntryDeleted,
     customFields: gameCustomFields,
     campaigns,
+    isOwner,
 }: EntryDetailPanelProps) {
     const { players: circlePlayers, displayName } = useCircle()
     const [editField, setEditField] = useState<string | null>(null)
@@ -293,42 +296,40 @@ export function EntryDetailPanel({
     return (
         <div className="overflow-y-auto h-full space-y-6">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-pulse-glow" />
-                    <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">Entry Details</span>
-                </div>
-                {showDeleteConfirm ? (
-                    <div className="flex items-center gap-2">
-                        <span className="text-red-400 text-sm">Delete?</span>
+                <CircuitTitle>Entry Details</CircuitTitle>
+                {isOwner &&
+                    (showDeleteConfirm ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-red-400 text-sm">Delete?</span>
+                            <button
+                                onClick={handleDelete}
+                                className="px-2 py-1 rounded text-xs bg-red-500/20 border border-red-400/50 text-red-400 hover:bg-red-500/30"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
                         <button
-                            onClick={handleDelete}
-                            className="px-2 py-1 rounded text-xs bg-red-500/20 border border-red-400/50 text-red-400 hover:bg-red-500/30"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="text-slate-500 hover:text-red-400 transition-colors"
+                            title="Delete entry"
                         >
-                            Confirm
+                            <Trash2 className="w-4 h-4" />
                         </button>
-                        <button
-                            onClick={() => setShowDeleteConfirm(false)}
-                            className="px-2 py-1 rounded text-xs bg-slate-700 border border-slate-500 text-slate-300 hover:bg-slate-600"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="text-slate-500 hover:text-red-400 transition-colors"
-                        title="Delete entry"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                )}
+                    ))}
             </div>
 
             <div className="border-b border-slate-600/30 pb-6">
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Date Played</label>
-                        {editField === 'date' ? (
+                        {isOwner && editField === 'date' ? (
                             <input
                                 type="date"
                                 autoFocus
@@ -339,8 +340,8 @@ export function EntryDetailPanel({
                             />
                         ) : (
                             <div
-                                onClick={() => setEditField('date')}
-                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 w-fit min-w-[150px]"
+                                onClick={isOwner ? () => setEditField('date') : undefined}
+                                className={`p-2 rounded bg-slate-800 text-white border border-slate-600 w-fit min-w-[150px] ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                             >
                                 {playedAt.toLocaleDateString('fr-FR')}
                             </div>
@@ -349,18 +350,24 @@ export function EntryDetailPanel({
 
                     <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Campaign</label>
-                        <select
-                            className="p-2 rounded bg-slate-700 text-white border border-slate-500"
-                            value={selectedCampaignId}
-                            onChange={(e) => handleCampaignChange(e.target.value)}
-                        >
-                            <option value="">No campaign</option>
-                            {campaigns.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
+                        {isOwner ? (
+                            <select
+                                className="p-2 rounded bg-slate-700 text-white border border-slate-500"
+                                value={selectedCampaignId}
+                                onChange={(e) => handleCampaignChange(e.target.value)}
+                            >
+                                <option value="">No campaign</option>
+                                {campaigns.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <div className="p-2 rounded bg-slate-800 text-white border border-slate-600">
+                                {entry.campaign?.name || <span className="text-slate-500">No campaign</span>}
+                            </div>
+                        )}
                         {entry.campaign && (
                             <Link
                                 to={`/campaigns/${entry.campaign.id}?playerId=${playerId}`}
@@ -374,21 +381,27 @@ export function EntryDetailPanel({
 
                     <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Game Copy Used</label>
-                        <GameOwnerSearchSelect
-                            gameId={gameId}
-                            playerId={playerId}
-                            value={selectedGameUsed}
-                            initialOwnerPlayerName={entry.gameUsed?.player.name}
-                            onChange={async (v) => {
-                                setSelectedGameUsed(v)
-                                await patchEntry({ gameUsed: v || 'null', customFields: [], players: [] })
-                            }}
-                        />
+                        {isOwner ? (
+                            <GameOwnerSearchSelect
+                                gameId={gameId}
+                                playerId={playerId}
+                                value={selectedGameUsed}
+                                initialOwnerPlayerName={entry.gameUsed?.player.name}
+                                onChange={async (v) => {
+                                    setSelectedGameUsed(v)
+                                    await patchEntry({ gameUsed: v || 'null', customFields: [], players: [] })
+                                }}
+                            />
+                        ) : (
+                            <div className="p-2 rounded bg-slate-800 text-white border border-slate-600">
+                                {entry.gameUsed?.player.name || <span className="text-slate-500">Not set</span>}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-1">
                         <label className="text-slate-300 text-xs">Session Notes</label>
-                        {editField === 'note' ? (
+                        {isOwner && editField === 'note' ? (
                             <textarea
                                 autoFocus
                                 value={note}
@@ -400,8 +413,8 @@ export function EntryDetailPanel({
                             />
                         ) : (
                             <div
-                                onClick={() => setEditField('note')}
-                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 min-h-[60px]"
+                                onClick={isOwner ? () => setEditField('note') : undefined}
+                                className={`p-2 rounded bg-slate-800 text-white border border-slate-600 min-h-[60px] ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                             >
                                 {note || <span className="text-slate-500">No notes...</span>}
                             </div>
@@ -420,7 +433,7 @@ export function EntryDetailPanel({
                                         <div key={cf.id} className="flex flex-col gap-1 flex-1 min-w-[150px]">
                                             <div className="flex items-center gap-2">
                                                 <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                {cfValues.length > 0 && cfValues.some((v) => v.id) && (
+                                                {isOwner && cfValues.some((v) => v.id) && (
                                                     <button
                                                         onClick={async () => {
                                                             for (const cv of cfValues) {
@@ -435,7 +448,7 @@ export function EntryDetailPanel({
                                                 )}
                                             </div>
                                             {cf.multiple ? (
-                                                editField === fieldKey ? (
+                                                isOwner && editField === fieldKey ? (
                                                     cf.kind === 'enum' ? (
                                                         <div className="flex flex-wrap gap-2">
                                                             <MultiEnumSelect
@@ -526,8 +539,8 @@ export function EntryDetailPanel({
                                                     )
                                                 ) : (
                                                     <div
-                                                        onClick={() => setEditField(fieldKey)}
-                                                        className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400"
+                                                        onClick={isOwner ? () => setEditField(fieldKey) : undefined}
+                                                        className={`p-2 rounded bg-slate-800 text-white border border-slate-600 ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                                                     >
                                                         {cfValues.length > 0 ? (
                                                             cfValues.map((v) => v.value).join(', ')
@@ -536,7 +549,7 @@ export function EntryDetailPanel({
                                                         )}
                                                     </div>
                                                 )
-                                            ) : editField === fieldKey ? (
+                                            ) : isOwner && editField === fieldKey ? (
                                                 cf.kind === 'enum' ? (
                                                     <EnumSelect
                                                         options={cf.enumValues.map((v) => v.value)}
@@ -560,8 +573,8 @@ export function EntryDetailPanel({
                                                 )
                                             ) : (
                                                 <div
-                                                    onClick={() => setEditField(fieldKey)}
-                                                    className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400"
+                                                    onClick={isOwner ? () => setEditField(fieldKey) : undefined}
+                                                    className={`p-2 rounded bg-slate-800 text-white border border-slate-600 ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                                                 >
                                                     {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
                                                 </div>
@@ -577,20 +590,19 @@ export function EntryDetailPanel({
 
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 animate-pulse-glow" />
-                        <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">Players</span>
-                    </div>
-                    <button
-                        onClick={() => setShowAddPlayer(!showAddPlayer)}
-                        className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Player
-                    </button>
+                    <CircuitTitle>Players</CircuitTitle>
+                    {isOwner && (
+                        <button
+                            onClick={() => setShowAddPlayer(!showAddPlayer)}
+                            className="text-cyan-400 text-sm hover:text-cyan-300 flex items-center gap-1"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Player
+                        </button>
+                    )}
                 </div>
 
-                {showAddPlayer && (
+                {isOwner && showAddPlayer && (
                     <div className="mb-4 p-3 border border-slate-500 rounded-lg bg-slate-800/50 flex gap-2 items-end">
                         <div className="flex-1">
                             <label className="text-slate-300 text-xs block mb-1">Search Player</label>
@@ -640,31 +652,47 @@ export function EntryDetailPanel({
                                     <span className="text-white font-medium flex-1 truncate">
                                         {displayName(playerResult.player.id, playerResult.player.name)}
                                     </span>
-                                    <button
-                                        onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
-                                        className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${
-                                            playerResult.won === true
-                                                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400'
-                                                : playerResult.won === false
-                                                  ? 'bg-red-500/20 border-red-400/50 text-red-400'
-                                                  : 'bg-slate-700 border-slate-500 text-slate-400'
-                                        }`}
-                                        title="Click to toggle: Win → Loss → Not set"
-                                    >
-                                        {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
-                                    </button>
-                                    <button
-                                        onClick={() => handleRemovePlayer(playerResult.id)}
-                                        className="text-red-400 hover:text-red-300 shrink-0"
-                                        title="Remove player"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
+                                    {isOwner ? (
+                                        <button
+                                            onClick={() => handleToggleWon(playerResult.id, playerResult.won)}
+                                            className={`px-2 py-1 rounded text-xs border transition-all shrink-0 ${
+                                                playerResult.won === true
+                                                    ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400'
+                                                    : playerResult.won === false
+                                                      ? 'bg-red-500/20 border-red-400/50 text-red-400'
+                                                      : 'bg-slate-700 border-slate-500 text-slate-400'
+                                            }`}
+                                            title="Click to toggle: Win → Loss → Not set"
+                                        >
+                                            {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
+                                        </button>
+                                    ) : (
+                                        <span
+                                            className={`px-2 py-1 rounded text-xs border shrink-0 ${
+                                                playerResult.won === true
+                                                    ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-400'
+                                                    : playerResult.won === false
+                                                      ? 'bg-red-500/20 border-red-400/50 text-red-400'
+                                                      : 'bg-slate-700 border-slate-500 text-slate-400'
+                                            }`}
+                                        >
+                                            {playerResult.won === true ? 'Won' : playerResult.won === false ? 'Lost' : '—'}
+                                        </span>
+                                    )}
+                                    {isOwner && (
+                                        <button
+                                            onClick={() => handleRemovePlayer(playerResult.id)}
+                                            className="text-red-400 hover:text-red-300 shrink-0"
+                                            title="Remove player"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col gap-1">
                                     <label className="text-slate-300 text-xs">Notes</label>
-                                    {editField === `player-${playerResult.id}-note` ? (
+                                    {isOwner && editField === `player-${playerResult.id}-note` ? (
                                         <textarea
                                             autoFocus
                                             value={playerResult.note}
@@ -676,8 +704,8 @@ export function EntryDetailPanel({
                                         />
                                     ) : (
                                         <div
-                                            onClick={() => setEditField(`player-${playerResult.id}-note`)}
-                                            className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm min-h-[40px]"
+                                            onClick={isOwner ? () => setEditField(`player-${playerResult.id}-note`) : undefined}
+                                            className={`p-2 rounded bg-slate-800 text-white border border-slate-600 text-sm min-h-[40px] ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                                         >
                                             {playerResult.note || <span className="text-slate-500">No notes...</span>}
                                         </div>
@@ -695,7 +723,7 @@ export function EntryDetailPanel({
                                                 <div key={cf.id} className="flex flex-col gap-1 mt-2">
                                                     <div className="flex items-center gap-2">
                                                         <label className="text-slate-300 text-xs">{cf.name}</label>
-                                                        {cfValues.length > 0 && cfValues.some((v) => v.id) && (
+                                                        {isOwner && cfValues.some((v) => v.id) && (
                                                             <button
                                                                 onClick={async () => {
                                                                     for (const cv of cfValues) {
@@ -710,7 +738,7 @@ export function EntryDetailPanel({
                                                         )}
                                                     </div>
                                                     {cf.multiple ? (
-                                                        editField === fieldKey ? (
+                                                        isOwner && editField === fieldKey ? (
                                                             cf.kind === 'enum' ? (
                                                                 <div className="flex flex-wrap gap-2">
                                                                     <MultiEnumSelect
@@ -845,8 +873,8 @@ export function EntryDetailPanel({
                                                             )
                                                         ) : (
                                                             <div
-                                                                onClick={() => setEditField(fieldKey)}
-                                                                className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm"
+                                                                onClick={isOwner ? () => setEditField(fieldKey) : undefined}
+                                                                className={`p-2 rounded bg-slate-800 text-white border border-slate-600 text-sm ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                                                             >
                                                                 {cfValues.length > 0 ? (
                                                                     cfValues.map((v) => v.value).join(', ')
@@ -855,7 +883,7 @@ export function EntryDetailPanel({
                                                                 )}
                                                             </div>
                                                         )
-                                                    ) : editField === fieldKey ? (
+                                                    ) : isOwner && editField === fieldKey ? (
                                                         cf.kind === 'enum' ? (
                                                             <EnumSelect
                                                                 options={cf.enumValues.map((v) => v.value)}
@@ -881,8 +909,8 @@ export function EntryDetailPanel({
                                                         )
                                                     ) : (
                                                         <div
-                                                            onClick={() => setEditField(fieldKey)}
-                                                            className="p-2 rounded bg-slate-800 text-white border border-slate-600 cursor-pointer hover:border-slate-400 text-sm"
+                                                            onClick={isOwner ? () => setEditField(fieldKey) : undefined}
+                                                            className={`p-2 rounded bg-slate-800 text-white border border-slate-600 text-sm ${isOwner ? 'cursor-pointer hover:border-slate-400' : ''}`}
                                                         >
                                                             {cfValue ? cfValue.value : <span className="text-slate-500">Not set</span>}
                                                         </div>

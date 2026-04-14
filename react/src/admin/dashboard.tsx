@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import type { AdminStats } from '../types'
 import type { ReactNode } from 'react'
-import { ScanLine } from '../components/SciFi'
+import { ScanLine, CircuitTitle } from '../components/SciFi'
 
 function AdminLayout({ children }: { children: ReactNode }) {
     const location = useLocation()
@@ -416,8 +416,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
     return (
         <section className="bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-500/50 overflow-hidden hover:border-cyan-400/40 transition-colors duration-300">
             <header className="border-b border-slate-500/50 px-4 py-2 bg-slate-800/70 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></div>
-                <span className="uppercase text-[10px] font-medium text-slate-400 tracking-[0.2em]">{title}</span>
+                <CircuitTitle>{title}</CircuitTitle>
             </header>
             <div className="p-4 text-white">{children}</div>
         </section>

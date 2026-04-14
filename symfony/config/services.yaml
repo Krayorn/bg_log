@@ -31,6 +31,7 @@ services:
             - '../src/Player/PlayerNickname.php'
             - '../src/Player/PlayerSearchResult.php'
             - '../src/Player/CirclePlayer.php'
+            - '../src/Player/CircleGraphEdge.php'
             - '../src/StatisticsQuery/StatisticsQuery.php'
             - '../src/Kernel.php'
 

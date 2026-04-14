@@ -27,7 +27,7 @@ class CampaignStateCalculator
 
         foreach ($sortedEntries as $entry) {
             $entryEvents = array_filter($events, fn (CampaignEvent $e) => $e->getEntry()->id->equals($entry->id));
-            usort($entryEvents, fn (CampaignEvent $a, CampaignEvent $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
+            usort($entryEvents, fn (CampaignEvent $a, CampaignEvent $b) => $a->getPosition() <=> $b->getPosition());
 
             foreach ($entryEvents as $event) {
                 $this->applyEvent($internal, $event);

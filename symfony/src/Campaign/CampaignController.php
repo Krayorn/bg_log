@@ -193,6 +193,80 @@ class CampaignController extends BaseController
         return new JsonResponse($this->campaignView($campaign), Response::HTTP_CREATED);
     }
 
+    #[Route('api/campaigns/{campaign}/events/{eventId}', methods: 'PATCH')]
+    public function updateEvent(
+        Campaign $campaign,
+        string $eventId,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        CreateCampaignEventHandler $handler,
+    ): Response {
+        $this->denyAccessUnlessGranted(CampaignVoter::CAMPAIGN_EDIT, $campaign);
+
+        $event = $entityManager->getRepository(CampaignEvent::class)->find($eventId);
+
+        if ($event === null || ! $event->getCampaign()->getId()->equals($campaign->getId())) {
+            throw new NotFoundHttpException('Event not found');
+        }
+
+        $body = JsonPayload::fromRequest($request);
+
+        $newPosition = $body->getOptionalInt('position');
+        $campaignKeyId = $body->getOptionalString('campaignKey');
+        $eventPayload = $body->getOptionalArray('payload');
+
+        if ($campaignKeyId !== null && $eventPayload !== null) {
+            $position = $event->getPosition();
+            $entryId = (string) $event->getEntry()->id;
+
+            $entityManager->remove($event);
+            $entityManager->flush();
+
+            try {
+                $newEvent = $handler->handle(
+                    $campaign,
+                    $entryId,
+                    $campaignKeyId,
+                    $eventPayload,
+                    $body->getOptionalString('playerResult'),
+                    $body->getOptionalString('customFieldValue'),
+                );
+                $newEvent->setPosition($position);
+                $entityManager->flush();
+            } catch (EntryNotFoundException | CampaignKeyNotFoundException | PlayerResultNotFoundException $e) {
+                throw new NotFoundHttpException($e->getMessage(), $e);
+            } catch (EntryNotInCampaignException | CampaignKeyNotInGameException $e) {
+                throw new BadRequestHttpException($e->getMessage(), $e);
+            } catch (InvalidVerbException | InvalidEventPayloadException | PlayerResultRequiredException | CustomFieldValueNotFoundException $e) {
+                return new JsonResponse([
+                    'errors' => [$e->getMessage()],
+                ], Response::HTTP_BAD_REQUEST);
+            }
+        } elseif ($newPosition !== null) {
+            $oldPosition = $event->getPosition();
+            if ($newPosition !== $oldPosition) {
+                $siblingEvents = $entityManager->getRepository(CampaignEvent::class)->findBy([
+                    'campaign' => $campaign,
+                    'entry' => $event->getEntry(),
+                ]);
+
+                foreach ($siblingEvents as $sibling) {
+                    $pos = $sibling->getPosition();
+                    if ($oldPosition < $newPosition && $pos > $oldPosition && $pos <= $newPosition) {
+                        $sibling->setPosition($pos - 1);
+                    } elseif ($oldPosition > $newPosition && $pos >= $newPosition && $pos < $oldPosition) {
+                        $sibling->setPosition($pos + 1);
+                    }
+                }
+
+                $event->setPosition($newPosition);
+                $entityManager->flush();
+            }
+        }
+
+        return new JsonResponse($this->campaignView($campaign), Response::HTTP_OK);
+    }
+
     #[Route('api/campaigns/{campaign}/events/{eventId}', methods: 'DELETE')]
     public function deleteEvent(
         Campaign $campaign,

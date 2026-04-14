@@ -33,7 +33,7 @@ export async function api<T = unknown>(uri: string, method: HttpMethod = 'GET', 
         const response = await fetch(`${host}${uri}`, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            ...(method !== 'GET' && body ? { body: JSON.stringify(body) } : {}),
         })
 
         if (response.status === 204) {
