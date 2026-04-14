@@ -1,15 +1,43 @@
+volumes:
+  db:
+
 services:
   symfony:
     build:
+      context: ./symfony
       target: prod
-    volumes: []
+    restart: unless-stopped
     environment:
       APP_ENV: prod
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET_KEY_BASE64: ${JWT_SECRET_KEY_BASE64}
       JWT_PUBLIC_KEY_BASE64: ${JWT_PUBLIC_KEY_BASE64}
       JWT_PASSPHRASE: ${JWT_PASSPHRASE}
+    depends_on:
+      - postgres
 
   nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
     ports:
       - "80:80"
+    depends_on:
+      - symfony
+    environment:
+      HOSTNAME_INTERNAL_PHP: symfony:9000
+      HOSTNAME_PUBLIC_BACKEND: ${HOSTNAME_PUBLIC_BACKEND:-localhost}
+      HOSTNAME_INTERNAL_NGINX: nginx
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
+      ENABLE_PROFILER: ""
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: ${POSTGRES_DB:-bg_log}
